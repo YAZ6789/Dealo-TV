@@ -1,0 +1,272 @@
+/* ==========================================================================
+   Theme-switch transitions (View Transitions API).
+   The effect is chosen by the theme you are switching TO:
+     hud      → holographic scan: a light-bar sweeps down and "prints" the new UI
+     neon     → glitch: sliced, jittering, hue-split frames
+     aurora   → bloom: a soft circle of light grows from where you clicked
+     terminal → CRT: the old screen collapses to a line, the new one powers on
+   ========================================================================== */
+
+@property --vt-p {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 0%;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* the scan-bar element only exists during HUD transitions */
+.vt-scanbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 9999;
+  pointer-events: none;
+  display: none;
+  view-transition-name: vt-scanbar;
+  background: #9ff6ff;
+  box-shadow: 0 0 12px 3px rgba(0, 229, 255, 0.9), 0 0 60px 18px rgba(0, 229, 255, 0.35), 0 -40px 60px rgba(0, 229, 255, 0.15);
+}
+html[data-transition='hud'] .vt-scanbar {
+  display: block;
+}
+html[data-transition='hud'][data-vt-phase='old'] .vt-scanbar {
+  top: -4px;
+}
+html[data-transition='hud'][data-vt-phase='new'] .vt-scanbar {
+  top: calc(100vh + 4px);
+}
+
+/* ── HUD: scan ── */
+html[data-transition='hud']::view-transition-new(root) {
+  animation: vt-scan 0.9s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+html[data-transition='hud']::view-transition-old(root) {
+  animation: vt-dim 0.9s ease both;
+}
+html[data-transition='hud']::view-transition-group(vt-scanbar) {
+  animation-duration: 0.9s;
+  animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+}
+html[data-transition='hud']::view-transition-old(vt-scanbar),
+html[data-transition='hud']::view-transition-new(vt-scanbar) {
+  animation: none;
+}
+@keyframes vt-scan {
+  from {
+    clip-path: inset(0 0 100% 0);
+    filter: brightness(1.8) saturate(1.4);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    filter: none;
+  }
+}
+@keyframes vt-dim {
+  to {
+    filter: brightness(0.6) blur(1px);
+  }
+}
+
+/* ── NEON: glitch ── */
+html[data-transition='neon']::view-transition-old(root) {
+  animation: vt-glitch-out 0.7s steps(1) both;
+}
+html[data-transition='neon']::view-transition-new(root) {
+  animation: vt-glitch-in 0.7s steps(1) both;
+}
+@keyframes vt-glitch-out {
+  0% {
+    transform: none;
+  }
+  10% {
+    transform: translateX(-14px) skewX(-4deg);
+    filter: hue-rotate(90deg) saturate(3);
+  }
+  20% {
+    transform: translateX(10px);
+    clip-path: inset(0 0 55% 0);
+  }
+  35% {
+    transform: translateX(-6px);
+    clip-path: inset(30% 0 0 0);
+    filter: invert(1) hue-rotate(180deg);
+  }
+  50% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes vt-glitch-in {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+    clip-path: inset(62% 0 18% 0);
+    transform: translateX(22px);
+    filter: hue-rotate(-90deg) saturate(4);
+  }
+  30% {
+    clip-path: inset(10% 0 70% 0);
+    transform: translateX(-18px);
+  }
+  40% {
+    clip-path: inset(40% 0 30% 0);
+    transform: translateX(8px) skewX(6deg);
+    filter: drop-shadow(6px 0 0 #ff2a6d) drop-shadow(-6px 0 0 #05d9e8);
+  }
+  55% {
+    clip-path: inset(0 0 45% 0);
+    transform: translateX(-4px);
+  }
+  70% {
+    clip-path: inset(0 0 0 0);
+    transform: translateX(3px);
+    filter: drop-shadow(3px 0 0 #ff2a6d) drop-shadow(-3px 0 0 #05d9e8);
+  }
+  85% {
+    transform: translateX(-1px);
+    filter: none;
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    transform: none;
+    filter: none;
+  }
+}
+
+/* ── AURORA: bloom from the click point ── */
+html[data-transition='aurora']::view-transition-new(root) {
+  animation: vt-bloom 1s cubic-bezier(0.22, 0.8, 0.2, 1) both;
+}
+html[data-transition='aurora']::view-transition-old(root) {
+  animation: vt-soften 1s ease both;
+}
+@keyframes vt-bloom {
+  from {
+    clip-path: circle(0px at var(--vt-x, 50%) var(--vt-y, 50%));
+    filter: blur(14px) brightness(1.5);
+  }
+  60% {
+    filter: blur(0) brightness(1.1);
+  }
+  to {
+    clip-path: circle(var(--vt-r, 150vmax) at var(--vt-x, 50%) var(--vt-y, 50%));
+    filter: none;
+  }
+}
+@keyframes vt-soften {
+  to {
+    filter: blur(10px) saturate(0.6) brightness(0.8);
+    transform: scale(1.04);
+  }
+}
+
+/* ── TERMINAL: CRT power-off → power-on ── */
+html[data-transition='terminal']::view-transition {
+  background: #000;
+}
+html[data-transition='terminal']::view-transition-old(root) {
+  animation: vt-crt-off 0.42s cubic-bezier(0.6, 0, 0.9, 0.3) both;
+  transform-origin: center;
+}
+html[data-transition='terminal']::view-transition-new(root) {
+  animation: vt-crt-on 0.5s cubic-bezier(0.1, 0.7, 0.2, 1) 0.4s both;
+  transform-origin: center;
+}
+@keyframes vt-crt-off {
+  0% {
+    transform: none;
+    filter: brightness(1);
+  }
+  55% {
+    transform: scale(1, 0.006);
+    filter: brightness(4);
+  }
+  80% {
+    transform: scale(0.25, 0.004);
+    filter: brightness(6);
+  }
+  100% {
+    transform: scale(0, 0);
+    filter: brightness(8);
+  }
+}
+@keyframes vt-crt-on {
+  0% {
+    transform: scale(0.1, 0.004);
+    filter: brightness(8);
+    opacity: 1;
+  }
+  35% {
+    transform: scale(1, 0.006);
+    filter: brightness(5);
+  }
+  70% {
+    transform: scale(1, 1.02);
+    filter: brightness(1.6) contrast(1.2);
+  }
+  100% {
+    transform: none;
+    filter: none;
+  }
+}
+
+/* Fallback when the View Transitions API isn't available */
+.vt-fallback {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  animation: vt-fallback 0.6s ease both;
+  background: radial-gradient(circle at var(--vt-x, 50%) var(--vt-y, 50%), color-mix(in srgb, var(--accent) 45%, transparent), transparent 60%);
+}
+@keyframes vt-fallback {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* ── Design switch: warp ── */
+html[data-transition='design']::view-transition {
+  background: var(--bg);
+}
+html[data-transition='design']::view-transition-old(root) {
+  animation: vt-warp-out 0.45s cubic-bezier(0.7, 0, 0.84, 0) both;
+}
+html[data-transition='design']::view-transition-new(root) {
+  animation: vt-warp-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+}
+@keyframes vt-warp-out {
+  to {
+    transform: scale(1.35);
+    opacity: 0;
+    filter: blur(14px) brightness(1.8);
+  }
+}
+@keyframes vt-warp-in {
+  from {
+    transform: scale(0.82);
+    opacity: 0;
+    filter: blur(10px) brightness(2);
+  }
+}

@@ -1,0 +1,1004 @@
+/* ==========================================================================
+   Immersive designs — Holo Ring · Constellation · Warp Tunnel.
+   All colours/fonts come from the active skin's tokens.
+   ========================================================================== */
+
+/* ───────────── Shared HUD readout ───────────── */
+.hud-info,
+.hud-actions {
+  display: grid;
+  gap: 12px;
+  animation: hud-in 0.45s var(--ease) both;
+}
+@keyframes hud-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(3px);
+  }
+}
+.hud-eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.hud-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--hero-weight);
+  font-size: clamp(1.6rem, 2.6vw, 2.5rem);
+  line-height: 1.02;
+  text-transform: var(--title-transform);
+  letter-spacing: 0.01em;
+  text-wrap: balance;
+  text-shadow: 0 0 24px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.hud-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+.hud-overview {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+  color: var(--text-dim);
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.hud-match {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.hud-reasons {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 3px;
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+.hud-reasons li::before {
+  content: '▸ ';
+  color: var(--accent);
+}
+.hud-stat {
+  display: grid;
+  gap: 6px;
+}
+.hud-stat__v {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+/* ───────────── HOLO RING ───────────── */
+.ring-stage {
+  position: relative;
+  min-height: calc(100vh - var(--topbar-h));
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  overflow: hidden;
+  padding: 18px var(--gutter) 22px;
+}
+@media (max-width: 860px) {
+  .ring-stage {
+    min-height: calc(100vh - var(--topbar-h) - 70px);
+  }
+}
+.ring-dial {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px 4px;
+  padding-bottom: 6px;
+  z-index: 5;
+}
+.ring-dial button {
+  position: relative;
+  padding: 8px 14px 10px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  transition: color 0.2s, transform 0.4s var(--ease);
+}
+.ring-dial button .n {
+  margin-left: 6px;
+  opacity: 0.6;
+}
+.ring-dial button:hover {
+  color: var(--text);
+}
+.ring-dial button.on {
+  color: var(--accent);
+  text-shadow: 0 0 12px var(--accent);
+}
+.ring-dial button.on::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 2px;
+  height: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+}
+
+.ring-body {
+  display: grid;
+  grid-template-columns: minmax(240px, 330px) minmax(0, 1fr) minmax(240px, 310px);
+  align-items: center;
+  gap: 12px;
+  min-height: 0;
+}
+.ring-panel {
+  position: relative;
+  z-index: 4;
+  align-self: center;
+  padding: 20px;
+  min-height: 200px;
+  background: color-mix(in srgb, var(--panel-solid) 72%, transparent);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  box-shadow: var(--shadow);
+}
+.ring-panel::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 18px;
+  width: 60px;
+  height: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+}
+.ring-panel--right {
+  justify-self: end;
+  width: 100%;
+}
+.ring-viewport {
+  position: relative;
+  height: clamp(380px, 64vh, 660px);
+  perspective: 1300px;
+  perspective-origin: 50% 20%;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.ring-viewport.dragging {
+  cursor: grabbing;
+}
+.ring-scene {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+.ring-carousel {
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  transition: transform 0.85s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.ring-viewport.dragging .ring-carousel {
+  transition: none;
+}
+.ring-item {
+  position: absolute;
+  width: var(--card-w);
+  aspect-ratio: 2 / 3;
+  left: calc(var(--card-w) / -2);
+  top: calc(var(--card-w) * -0.75);
+  transform-style: preserve-3d;
+  transition: transform 0.5s var(--ease), opacity 0.4s, filter 0.4s;
+}
+.ring-card {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: var(--radius);
+  border: 1px solid var(--panel-border);
+  background: var(--bg-2);
+  clip-path: var(--card-clip);
+  animation: ring-deal 0.7s var(--ease) both;
+  animation-delay: calc(var(--i) * 35ms);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+@keyframes ring-deal {
+  from {
+    opacity: 0;
+    transform: translateY(-80px) scale(0.85);
+    filter: brightness(3);
+  }
+}
+.ring-card > img,
+.ring-card > .art,
+.ring-reflect > img,
+.ring-reflect > .art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+.ring-item.active .ring-card {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 40px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.ring-item.active .ring-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent 0%, color-mix(in srgb, var(--accent) 22%, transparent) 49%, color-mix(in srgb, var(--accent) 55%, transparent) 50%, transparent 51%);
+  background-size: 100% 300%;
+  animation: ring-scan 3.2s linear infinite;
+  mix-blend-mode: screen;
+}
+@keyframes ring-scan {
+  from {
+    background-position: 0 100%;
+  }
+  to {
+    background-position: 0 -200%;
+  }
+}
+.ring-card__match {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 2px 7px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-radius: var(--radius-sm);
+}
+.ring-card__bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+}
+.ring-card__bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+.ring-reflect {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: var(--radius);
+  transform: translateY(calc(100% + 10px)) scaleY(-1);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 58%, rgba(0, 0, 0, 0.32) 100%);
+  mask-image: linear-gradient(to bottom, transparent 58%, rgba(0, 0, 0, 0.32) 100%);
+  pointer-events: none;
+}
+.ring-beam {
+  position: absolute;
+  left: 50%;
+  top: calc(45% - var(--card-w) * 0.95);
+  width: calc(var(--card-w) * 1.5);
+  height: calc(var(--card-w) * 2.1);
+  transform: translateX(-50%) translateZ(-40px);
+  background: radial-gradient(60% 50% at 50% 100%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 70%);
+  pointer-events: none;
+  filter: blur(6px);
+}
+.ring-floor {
+  position: absolute;
+  left: 50%;
+  top: calc(45% + var(--card-w) * 0.75 + 18px);
+  width: calc(var(--ring-r) * 2 + var(--card-w) * 1.6);
+  height: calc(var(--ring-r) * 2 + var(--card-w) * 1.6);
+  transform: translate(-50%, -50%) translateZ(calc(var(--ring-r) * -1)) rotateX(83deg);
+  pointer-events: none;
+}
+.ring-floor > div {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+.ring-floor__disc {
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--accent) 16%, transparent) 0%, transparent 42%),
+    repeating-radial-gradient(circle, color-mix(in srgb, var(--accent) 22%, transparent) 0 1px, transparent 1px 34px);
+  -webkit-mask-image: radial-gradient(circle, black 30%, transparent 70%);
+  mask-image: radial-gradient(circle, black 30%, transparent 70%);
+}
+.ring-floor__ticks {
+  inset: 6% !important;
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--accent) 55%, transparent) 0deg 0.6deg, transparent 0.6deg 6deg);
+  -webkit-mask-image: radial-gradient(circle, transparent 66%, black 67%, black 70%, transparent 71%);
+  mask-image: radial-gradient(circle, transparent 66%, black 67%, black 70%, transparent 71%);
+  animation: ring-spin 60s linear infinite;
+}
+.ring-floor__ring {
+  inset: 14% !important;
+  border: 2px solid color-mix(in srgb, var(--accent-2) 60%, transparent);
+  box-shadow: 0 0 40px color-mix(in srgb, var(--accent-2) 40%, transparent), inset 0 0 40px color-mix(in srgb, var(--accent) 25%, transparent);
+  border-style: dashed;
+  animation: ring-spin 90s linear infinite reverse;
+}
+@keyframes ring-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.ring-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+}
+.ring-ticker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding-top: 10px;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.14em;
+  color: var(--text-dim);
+  z-index: 5;
+}
+.ring-hint {
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+  text-transform: uppercase;
+}
+
+@media (max-width: 1100px) {
+  .ring-body {
+    grid-template-columns: 1fr;
+  }
+  .ring-viewport {
+    order: -1;
+    height: clamp(330px, 52vh, 480px);
+  }
+  .ring-panel {
+    min-height: 0;
+  }
+  .ring-hint {
+    display: none;
+  }
+}
+
+/* ───────────── CONSTELLATION ───────────── */
+.sky-stage {
+  position: relative;
+  height: calc(100vh - var(--topbar-h));
+  overflow: hidden;
+}
+@media (max-width: 860px) {
+  .sky-stage {
+    height: calc(100vh - var(--topbar-h) - 70px);
+  }
+}
+.sky {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+.sky:active {
+  cursor: grabbing;
+}
+.sky-orbit {
+  fill: none;
+  stroke: color-mix(in srgb, var(--accent) 26%, transparent);
+  stroke-width: 1.6;
+  stroke-dasharray: 2 10;
+}
+.sky-orbit.split {
+  stroke: color-mix(in srgb, var(--accent) 40%, transparent);
+  stroke-dasharray: 14 10;
+  stroke-width: 1.6;
+}
+.sky-ring-label {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  letter-spacing: 0.3em;
+  fill: var(--text-faint);
+}
+.sky-sector {
+  stroke: color-mix(in srgb, var(--text) 9%, transparent);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 8;
+}
+.sky-sector-label {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  fill: var(--text-dim);
+}
+.sky-link {
+  stroke: color-mix(in srgb, var(--accent) 30%, transparent);
+  stroke-width: 1.5;
+  transition: stroke 0.2s, opacity 0.2s;
+}
+.sky-link.on {
+  stroke: var(--accent);
+  stroke-width: 3;
+  filter: drop-shadow(0 0 6px var(--accent));
+}
+.sky-link.dim {
+  opacity: 0.15;
+}
+.sky-core {
+  fill: var(--bg);
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+.sky-core-ring {
+  fill: none;
+  stroke: var(--accent-2);
+  stroke-width: 2;
+  stroke-dasharray: 6 8;
+  transform-origin: 0 0;
+  animation: ring-spin 30s linear infinite;
+}
+.sky-core-glow {
+  animation: sky-breathe 4s ease-in-out infinite;
+  transform-origin: 0 0;
+}
+@keyframes sky-breathe {
+  50% {
+    transform: scale(1.12);
+    opacity: 0.75;
+  }
+}
+.sky-core-label {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: 0.2em;
+  fill: var(--text);
+}
+.star {
+  cursor: pointer;
+  transition: opacity 0.25s;
+}
+.star.dim {
+  opacity: 0.18;
+}
+.star-hit {
+  fill: transparent;
+}
+.star-dot {
+  transition: transform 0.2s var(--ease);
+}
+.star:hover .star-dot,
+.star.sel .star-dot {
+  transform: scale(1.5);
+}
+.star--library .star-dot {
+  fill: var(--accent-2);
+  stroke: color-mix(in srgb, var(--accent-2) 50%, white);
+  stroke-width: 1.5;
+}
+.star--rec .star-dot {
+  fill: color-mix(in srgb, var(--accent) 15%, var(--bg));
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+.star--plan .star-dot {
+  fill: var(--bg);
+  stroke: var(--accent-2);
+  stroke-dasharray: 4 3;
+  stroke-width: 2.5;
+}
+.star--dropped .star-dot {
+  opacity: 0.45;
+}
+.star-pulse {
+  fill: none;
+  stroke: var(--accent-2);
+  stroke-width: 2;
+  transform-origin: 0 0;
+  animation: star-pulse 2s ease-out infinite;
+}
+@keyframes star-pulse {
+  from {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  to {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+.star.sel .star-dot {
+  stroke: var(--text);
+  stroke-width: 3;
+}
+.star-label {
+  font-family: var(--font-body);
+  font-size: 20px;
+  font-weight: 600;
+  fill: var(--text);
+  paint-order: stroke;
+  stroke: var(--bg);
+  stroke-width: 4px;
+  pointer-events: none;
+}
+.sky-top {
+  position: absolute;
+  top: 16px;
+  left: var(--gutter);
+  right: var(--gutter);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  pointer-events: none;
+}
+.sky-top > * {
+  pointer-events: auto;
+}
+.sky-traits {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: var(--title-transform);
+}
+.sky-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: flex-start;
+}
+.sky-zoom {
+  position: absolute;
+  right: var(--gutter);
+  bottom: 18px;
+  display: grid;
+  gap: 6px;
+}
+.sky-legend {
+  position: absolute;
+  left: var(--gutter);
+  bottom: 18px;
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+  background: color-mix(in srgb, var(--panel-solid) 70%, transparent);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(8px);
+}
+.sky-legend span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lg {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.lg--lib {
+  background: var(--accent-2);
+}
+.lg--rec {
+  border: 2px solid var(--accent);
+}
+.lg--watch {
+  background: var(--accent-2);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-2) 40%, transparent);
+}
+.lg--plan {
+  border: 2px dashed var(--accent-2);
+}
+@media (max-width: 700px) {
+  .sky-legend {
+    display: none;
+  }
+}
+.sky-hover {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  gap: 10px;
+  width: 280px;
+  padding: 10px;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--panel-solid) 94%, transparent);
+  border: 1px solid var(--panel-border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow), var(--glow-soft);
+  animation: pop-in 0.15s var(--ease) both;
+}
+.sky-hover__poster {
+  position: relative;
+  width: 54px;
+  aspect-ratio: 2 / 3;
+  flex: none;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+}
+.sky-hover__poster img,
+.sky-hover__poster .art,
+.sky-panel__poster img,
+.sky-panel__poster .art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sky-hover__poster .art {
+  padding: 0;
+}
+.sky-hover__poster .art__title,
+.sky-hover__poster .art__kicker {
+  display: none;
+}
+.sky-hover__title {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sky-panel {
+  position: absolute;
+  top: 70px;
+  right: var(--gutter);
+  bottom: 18px;
+  width: min(360px, calc(100vw - 32px));
+  overflow: auto;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  padding: 18px;
+  background: color-mix(in srgb, var(--panel-solid) 88%, transparent);
+  border: 1px solid var(--panel-border-strong);
+  border-radius: var(--radius);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  box-shadow: var(--shadow), var(--glow-soft);
+  animation: sky-panel-in 0.35s var(--ease) both;
+  z-index: 10;
+}
+@keyframes sky-panel-in {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+}
+.sky-panel__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+}
+.sky-panel__poster {
+  position: relative;
+  width: 120px;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border-radius: var(--radius);
+  border: 1px solid var(--panel-border-strong);
+  cursor: pointer;
+}
+.sky-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  color: var(--text-dim);
+}
+
+/* ───────────── WARP TUNNEL ───────────── */
+.tunnel-stage {
+  position: relative;
+  height: calc(100vh - var(--topbar-h));
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  cursor: ns-resize;
+}
+@media (max-width: 860px) {
+  .tunnel-stage {
+    height: calc(100vh - var(--topbar-h) - 70px);
+  }
+}
+.tunnel-view {
+  position: absolute;
+  inset: 0;
+  perspective: 820px;
+  perspective-origin: 50% 42%;
+}
+.tunnel-world {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.tunnel-plane {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--accent) 55%, transparent) 2px, transparent 2px),
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 35%, transparent) 1px, transparent 1px);
+  background-size: 110px 110px;
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, rgba(0, 0, 0, 0.6) 30%, transparent 85%);
+  mask-image: linear-gradient(to bottom, black 0%, rgba(0, 0, 0, 0.6) 30%, transparent 85%);
+  opacity: 0.55;
+}
+.tunnel-wall {
+  -webkit-mask-image: linear-gradient(to right, black 0%, rgba(0, 0, 0, 0.6) 30%, transparent 85%);
+  mask-image: linear-gradient(to right, black 0%, rgba(0, 0, 0, 0.6) 30%, transparent 85%);
+  opacity: 0.32;
+}
+.tunnel-ceil {
+  opacity: 0.22;
+}
+.tunnel-gate {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  border: 2px solid color-mix(in srgb, var(--accent-2) 70%, transparent);
+  box-shadow: 0 0 40px color-mix(in srgb, var(--accent-2) 45%, transparent), inset 0 0 60px color-mix(in srgb, var(--accent-2) 25%, transparent);
+}
+.tunnel-gate span {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 64px;
+  letter-spacing: 0.12em;
+  color: color-mix(in srgb, var(--accent-2) 80%, white);
+  text-shadow: 0 0 30px var(--accent-2);
+}
+.tunnel-item {
+  position: absolute;
+  width: var(--card-w);
+  left: calc(var(--card-w) / -2);
+  top: calc(var(--card-w) * -0.75);
+  cursor: pointer;
+  transition: filter 0.3s;
+}
+.tunnel-card {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border-radius: var(--radius);
+  border: 1px solid var(--panel-border-strong);
+  background: var(--bg-2);
+  clip-path: var(--card-clip);
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+  transition: box-shadow 0.3s, border-color 0.3s, transform 0.4s var(--ease);
+}
+.tunnel-card > img,
+.tunnel-card > .art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+.tunnel-item.active .tunnel-card {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 60px color-mix(in srgb, var(--accent) 55%, transparent);
+  transform: scale(1.08);
+}
+.tunnel-caption {
+  margin-top: 10px;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: var(--title-transform);
+  color: var(--text);
+  text-shadow: 0 0 12px var(--bg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tunnel-caption .mono {
+  color: var(--accent);
+  margin-right: 6px;
+}
+.tunnel-streaks {
+  position: absolute;
+  inset: -20%;
+  pointer-events: none;
+  background: repeating-conic-gradient(from 0deg at 50% 42%, color-mix(in srgb, var(--accent) 22%, transparent) 0deg 0.35deg, transparent 0.35deg 7deg);
+  -webkit-mask-image: radial-gradient(circle at 50% 42%, transparent 18%, black 60%);
+  mask-image: radial-gradient(circle at 50% 42%, transparent 18%, black 60%);
+  opacity: 0.08;
+  transition: opacity 0.4s, transform 0.6s var(--ease);
+}
+.tunnel-stage.warping .tunnel-streaks {
+  opacity: 0.55;
+  transform: scale(1.12);
+}
+.tunnel-tracks {
+  position: absolute;
+  top: 16px;
+  left: var(--gutter);
+  right: var(--gutter);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  z-index: 5;
+}
+.tunnel-tracks button {
+  padding: 7px 12px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--bg) 50%, transparent);
+}
+.tunnel-tracks button:hover {
+  color: var(--text);
+}
+.tunnel-tracks button.on {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  box-shadow: var(--glow-soft);
+}
+.tunnel-gauge {
+  position: absolute;
+  right: var(--gutter);
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+  z-index: 5;
+}
+.tunnel-gauge__track {
+  position: relative;
+  width: 3px;
+  height: 34vh;
+  background: color-mix(in srgb, var(--text) 14%, transparent);
+  border-radius: 3px;
+}
+.tunnel-gauge__track i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+  border-radius: 3px;
+  transition: height 0.4s var(--ease);
+}
+.tunnel-nav {
+  position: absolute;
+  right: var(--gutter);
+  bottom: 18px;
+  display: grid;
+  gap: 6px;
+  z-index: 5;
+}
+.tunnel-hud {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  width: min(920px, calc(100vw - 2 * var(--gutter) - 60px));
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 22px;
+  padding: 16px 20px;
+  z-index: 6;
+  background: color-mix(in srgb, var(--panel-solid) 82%, transparent);
+  border: 1px solid var(--panel-border-strong);
+  border-radius: var(--radius);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  box-shadow: var(--shadow), var(--glow-soft);
+  cursor: default;
+}
+.tunnel-hud .hud-title {
+  font-size: clamp(1.3rem, 2vw, 1.9rem);
+}
+.tunnel-hud .hud-overview {
+  -webkit-line-clamp: 2;
+}
+@media (max-width: 800px) {
+  .tunnel-hud {
+    grid-template-columns: 1fr;
+    max-height: 46vh;
+    overflow: auto;
+    width: calc(100vw - 24px);
+    bottom: 10px;
+  }
+  .tunnel-hud .hud-overview,
+  .tunnel-hud .chips {
+    display: none;
+  }
+  .tunnel-gauge,
+  .tunnel-nav {
+    display: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .ring-dial {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 0 calc(-1 * var(--gutter));
+    padding: 0 var(--gutter) 6px;
+  }
+  .ring-dial::-webkit-scrollbar {
+    display: none;
+  }
+  .ring-dial button {
+    flex: none;
+    transform: none !important;
+  }
+  .sky-top {
+    flex-direction: column;
+  }
+}
+@media (max-width: 860px) {
+  .tunnel-tracks {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tunnel-tracks button {
+    flex: none;
+  }
+}

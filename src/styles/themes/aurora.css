@@ -1,0 +1,193 @@
+/* ==========================================================================
+   AURORA — calm, premium, spatial-computing glass. Soft gradients, large
+   radii, airy type, floating light.
+   ========================================================================== */
+
+[data-theme='aurora'] {
+  --bg: #090a10;
+  --bg-2: #12131c;
+  --bg-3: #1b1d2a;
+  --panel: rgba(255, 255, 255, 0.055);
+  --panel-solid: #15161f;
+  --panel-border: rgba(255, 255, 255, 0.09);
+  --panel-border-strong: rgba(255, 255, 255, 0.22);
+  --text: #f4f6fb;
+  --text-dim: #aab0c3;
+  --text-faint: #737a91;
+  --accent: #8fd8ff;
+  --accent-2: #b69cff;
+  --accent-3: #ffb3d9;
+  --accent-ink: #061018;
+  --ok: #8ff0c4;
+  --warn: #ffd79a;
+  --danger: #ff8a9b;
+  --glow: 0 0 0 1px rgba(255, 255, 255, 0.18), 0 10px 40px rgba(143, 216, 255, 0.18);
+  --glow-soft: 0 8px 30px rgba(143, 216, 255, 0.12);
+  --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  --radius: 18px;
+  --radius-sm: 10px;
+  --radius-pill: 999px;
+  --font-display: 'Space Grotesk Variable', 'Inter Variable', sans-serif;
+  --font-body: 'Inter Variable', system-ui, sans-serif;
+  --title-transform: none;
+  --title-spacing: -0.01em;
+  --title-weight: 600;
+  --title-prefix: '';
+  --hero-weight: 600;
+  --blur: 28px;
+}
+
+[data-theme='aurora'] .section-title::before {
+  display: none;
+}
+[data-theme='aurora'] .btn {
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  letter-spacing: 0;
+  border-color: var(--panel-border-strong);
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(20px);
+}
+[data-theme='aurora'] .btn--primary {
+  background: #f4f6fb;
+  border-color: #f4f6fb;
+  color: #0b0c12;
+}
+[data-theme='aurora'] .btn--primary:hover {
+  background: #fff;
+  box-shadow: 0 8px 30px rgba(255, 255, 255, 0.25);
+}
+[data-theme='aurora'] .btn--ghost {
+  background: transparent;
+  backdrop-filter: none;
+}
+[data-theme='aurora'] .nav a {
+  letter-spacing: 0;
+  font-weight: 500;
+  border-radius: 999px;
+}
+[data-theme='aurora'] .nav a.active {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.09);
+}
+[data-theme='aurora'] .nav a.active::after {
+  display: none;
+}
+[data-theme='aurora'] .topbar {
+  border-bottom-color: transparent;
+  background: linear-gradient(to bottom, rgba(9, 10, 16, 0.75), rgba(9, 10, 16, 0.2));
+}
+[data-theme='aurora'] .hero__title,
+[data-theme='aurora'] .page-title {
+  letter-spacing: -0.03em;
+}
+[data-theme='aurora'] .hero__eyebrow {
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+[data-theme='aurora'] .hero__eyebrow::before {
+  display: none;
+}
+[data-theme='aurora'] .card__poster,
+[data-theme='aurora'] .wcard__media {
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+[data-theme='aurora'] .card:hover .card__poster {
+  transform: translateY(-6px) scale(1.03);
+}
+[data-theme='aurora'] .bar__fill {
+  background: linear-gradient(90deg, var(--accent-2), var(--accent), var(--accent-3));
+  box-shadow: none;
+}
+[data-theme='aurora'] .card__corner {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #0b0c12;
+}
+[data-theme='aurora'] .rating__seg {
+  border-radius: 999px;
+  width: 12px;
+  height: 12px;
+}
+[data-theme='aurora'] .rating__seg.on {
+  box-shadow: none;
+}
+[data-theme='aurora'] .logo__text b {
+  background: linear-gradient(90deg, var(--accent-2), var(--accent), var(--accent-3));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+[data-theme='aurora'] .label,
+[data-theme='aurora'] .kpi__label,
+[data-theme='aurora'] .kv dt,
+[data-theme='aurora'] .palette__group {
+  font-family: var(--font-body);
+  letter-spacing: 0.04em;
+  text-transform: none;
+  font-size: 0.75rem;
+}
+[data-theme='aurora'] .tag {
+  font-family: var(--font-body);
+  text-transform: none;
+  letter-spacing: 0;
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+[data-theme='aurora'] .match {
+  font-family: var(--font-body);
+}
+
+/* ── background FX ── */
+.fx-aurora .fx-blob {
+  position: absolute;
+  width: 62vmax;
+  height: 62vmax;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.38;
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+.fx-aurora .fx-blob.b1 {
+  background: radial-gradient(circle, #6b8cff 0%, transparent 65%);
+  top: -30vmax;
+  left: -18vmax;
+  animation: aur-1 26s ease-in-out infinite alternate;
+}
+.fx-aurora .fx-blob.b2 {
+  background: radial-gradient(circle, #c38bff 0%, transparent 65%);
+  top: -22vmax;
+  right: -24vmax;
+  animation: aur-2 32s ease-in-out infinite alternate;
+}
+.fx-aurora .fx-blob.b3 {
+  background: radial-gradient(circle, #4fe0d0 0%, transparent 65%);
+  bottom: -38vmax;
+  left: 20vmax;
+  opacity: 0.22;
+  animation: aur-3 38s ease-in-out infinite alternate;
+}
+@keyframes aur-1 {
+  to {
+    transform: translate(18vmax, 10vmax) scale(1.15);
+  }
+}
+@keyframes aur-2 {
+  to {
+    transform: translate(-14vmax, 14vmax) scale(0.9);
+  }
+}
+@keyframes aur-3 {
+  to {
+    transform: translate(-20vmax, -8vmax) scale(1.2);
+  }
+}
+.fx-aurora .fx-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
