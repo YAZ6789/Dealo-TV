@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react';
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { TopBar } from './components/TopBar';
 import { BackgroundFX } from './components/BackgroundFX';
+import { AmbientLayer } from './components/AmbientLayer';
 import { CommandPalette } from './components/CommandPalette';
 import { Toasts } from './components/Toasts';
 import { usePalette } from './components/palette';
@@ -12,7 +13,10 @@ import { initLibrary, useLibrary } from './store/library';
 import { useSettings } from './store/settings';
 import { scheduleRecommendations } from './recommend/pipeline';
 import { enrichLibrary } from './store/enrich';
+import { startSheetAutoSync } from './store/sheetSync';
 import { HomeRouter } from './designs/HomeRouter';
+import { notifyPref, useAiringNotifications } from './components/NewEpisodesBanner';
+import { useUpcoming } from './hooks/useUpcoming';
 
 const Discover = lazy(() => import('./pages/Discover'));
 const Library = lazy(() => import('./pages/Library'));
@@ -22,10 +26,20 @@ const Taste = lazy(() => import('./pages/Taste'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Import = lazy(() => import('./pages/Import'));
 const Welcome = lazy(() => import('./pages/Welcome'));
+const Wrapped = lazy(() => import('./pages/Wrapped'));
+const Upcoming = lazy(() => import('./pages/Upcoming'));
+const Assistant = lazy(() => import('./pages/Assistant'));
 
 function ScrollReset() {
   const { pathname } = useLocation();
   useEffect(() => window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }), [pathname]);
+  return null;
+}
+
+/** With airing alerts switched on, check for new episodes from any page (hourly, cached). */
+function AiringWatcher() {
+  useUpcoming();
+  useAiringNotifications();
   return null;
 }
 
@@ -51,6 +65,8 @@ function Shell() {
   return (
     <div className="app">
       <BackgroundFX />
+      <AmbientLayer />
+      {notifyPref() && <AiringWatcher />}
       <div className="vt-scanbar" aria-hidden />
       {pathname !== '/welcome' && <TopBar />}
       <main className="main">
@@ -66,6 +82,10 @@ function Shell() {
             <Route path="/settings" element={<Settings />} />
             <Route path="/settings/import" element={<Import />} />
             <Route path="/welcome" element={<Welcome />} />
+            <Route path="/wrapped" element={<Wrapped />} />
+            <Route path="/wrapped/:year" element={<Wrapped />} />
+            <Route path="/upcoming" element={<Upcoming />} />
+            <Route path="/assistant" element={<Assistant />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
@@ -76,14 +96,32 @@ function Shell() {
   );
 }
 
+/** Check an unverified key once (e.g. the site key from the deploy secret); offline leaves it unverified. */
+async function verifyTmdbKey() {
+  const { tmdbKey, tmdbValid, region, setTmdbKey } = useSettings.getState();
+  if (!tmdbKey || tmdbValid !== undefined) return;
+  const { createTmdb } = await import('./providers/tmdb');
+  const result = await createTmdb({ key: tmdbKey, region }).check();
+  if (result !== 'unreachable' && useSettings.getState().tmdbKey === tmdbKey) setTmdbKey(tmdbKey, result === 'ok');
+}
+
 export default function App() {
   useEffect(() => {
-    void initLibrary().then(() => setTimeout(() => void enrichLibrary(), 4000));
+    void verifyTmdbKey();
+    void initLibrary().then(() => {
+      setTimeout(() => void enrichLibrary(), 4000);
+      startSheetAutoSync();
+    });
     // Re-rank whenever the library changes (debounced; network parts are cached).
     return useLibrary.subscribe((s, prev) => {
       if (s.hydrated && (s.entries !== prev.entries || s.blocked !== prev.blocked || s.feedback !== prev.feedback || s.taste !== prev.taste)) scheduleRecommendations();
     });
   }, []);
+  // Text size (Settings → Appearance): scales every rem-based size.
+  const textScale = useSettings((s) => s.textScale);
+  useEffect(() => {
+    document.documentElement.style.fontSize = `${Math.round((textScale || 1) * 100)}%`;
+  }, [textScale]);
   useEffect(
     () =>
       useSettings.subscribe((s, prev) => {

@@ -4,6 +4,8 @@ import { ArrowLeft, CalendarClock, CheckCheck, ExternalLink, Heart, PlayCircle, 
 import type { ShowDetail, ShowSummary } from '../types';
 import { useLibrary } from '../store/library';
 import { useShowDetail } from '../hooks/useShowDetail';
+import { useAmbientShow } from '../lib/ambient';
+import { useSettings } from '../store/settings';
 import { useRecommendations } from '../hooks/useRecommendations';
 import { useShowActions } from '../hooks/useShowActions';
 import { GENRE_LABELS } from '../lib/genres';
@@ -63,6 +65,8 @@ function ShowView({ show, detail, loading, error }: { show: ShowSummary; detail?
   const recs = useRecommendations();
   const [trailer, setTrailer] = useState(false);
   const p = entry ? progressOf(entry) : undefined;
+  useAmbientShow(show);
+  const spoilerFree = useSettings((s) => s.spoilerFree);
 
   const scored = useMemo(() => (recs.output && !entry ? recs.output.score(show) : undefined), [recs.output, show, entry]);
   const related = useMemo(() => {
@@ -202,7 +206,7 @@ function ShowView({ show, detail, loading, error }: { show: ShowSummary; detail?
                 <CalendarClock size={18} />
                 <span>
                   Next episode <b>{fmtEp({ season: next.season, episode: next.number })}</b>
-                  {next.name ? ` “${next.name}”` : ''} airs {nextIn != null && nextIn >= 0 ? (nextIn === 0 ? 'today' : `in ${nextIn} day${nextIn === 1 ? '' : 's'}`) : ''} · {fmtDate(next.airDate)}
+                  {next.name && !spoilerFree ? ` “${next.name}”` : ''} airs {nextIn != null && nextIn >= 0 ? (nextIn === 0 ? 'today' : `in ${nextIn} day${nextIn === 1 ? '' : 's'}`) : ''} · {fmtDate(next.airDate)}
                 </span>
               </div>
             )}

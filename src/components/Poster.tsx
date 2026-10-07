@@ -2,12 +2,8 @@ import { useRef, useState, type CSSProperties } from 'react';
 import type { ShowSummary } from '../types';
 import { GENRE_LABELS } from '../lib/genres';
 import { useArtwork } from '../providers/artwork';
+import { hash } from '../lib/ambient';
 
-function hash(s: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
-  return h >>> 0;
-}
 
 const PATTERNS = [
   (h: number) => `repeating-radial-gradient(circle at ${20 + (h % 60)}% ${10 + (h % 50)}%, hsl(${h % 360} 90% 70% / .5) 0 2px, transparent 2px 22px)`,

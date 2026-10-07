@@ -1,0 +1,1268 @@
+/* ==========================================================================
+   SWIPE DECK — a physical stack of show cards. Drag / fling / arrow keys.
+   Every colour comes from the active skin's tokens.
+   ========================================================================== */
+
+.swipe {
+  --tone-ok: var(--ok);
+  --tone-danger: var(--danger);
+  --tone-accent: var(--accent);
+  --tone-dim: var(--text-dim);
+  --peek: 30px;
+  position: relative;
+  height: calc(100vh - var(--topbar-h));
+  height: calc(100dvh - var(--topbar-h));
+  margin-bottom: -80px; /* cancel .main's bottom padding: this design fills the screen */
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px;
+  padding: 14px var(--gutter) 14px;
+  overflow: hidden;
+}
+@media (max-width: 860px) {
+  .swipe {
+    height: calc(100vh - var(--topbar-h) - 70px);
+    height: calc(100dvh - var(--topbar-h) - 70px - env(safe-area-inset-bottom));
+    margin-bottom: -96px;
+    padding: 10px 16px 8px;
+    gap: 8px;
+    --peek: 22px;
+  }
+}
+
+.tone-ok {
+  --tone: var(--tone-ok);
+}
+.tone-danger {
+  --tone: var(--tone-danger);
+}
+.tone-accent {
+  --tone: var(--tone-accent);
+}
+.tone-dim {
+  --tone: var(--tone-dim);
+}
+
+/* ───────────── header ───────────── */
+.swipe-head {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+}
+.swipe-head__title h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--title-weight, 800);
+  font-size: var(--fs-lg);
+  text-transform: var(--title-transform);
+  letter-spacing: var(--title-spacing);
+  line-height: 1.1;
+}
+.swipe-head__title p {
+  margin: 2px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+.swipe-modes {
+  flex-wrap: nowrap;
+}
+.swipe-modes__short {
+  display: none;
+}
+.swipe-counter {
+  justify-self: end;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.swipe-counter b {
+  color: var(--text);
+  font-weight: 700;
+}
+@media (max-width: 1100px) {
+  .swipe-head {
+    grid-template-columns: 1fr auto;
+  }
+  .swipe-head .swipe-modes {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: center;
+  }
+}
+@media (max-width: 860px) {
+  .swipe-head {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    justify-items: center;
+  }
+  .swipe-head__title {
+    display: none;
+  }
+  .swipe-head .swipe-modes {
+    grid-row: auto;
+    width: 100%;
+  }
+  /* 5 decks don't fit a phone: the control scrolls sideways (active tab kept in view) */
+  .swipe-head .swipe-modes {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    touch-action: pan-x;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 22px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 22px), transparent);
+  }
+  .swipe-head .swipe-modes.is-end {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .swipe-head .swipe-modes::-webkit-scrollbar {
+    display: none;
+  }
+  .swipe-modes button {
+    flex: 1 0 auto;
+    height: 40px;
+    padding: 0 14px;
+    scroll-snap-align: start;
+  }
+  .swipe-modes button .n {
+    margin-left: 5px;
+  }
+  .swipe-modes__long {
+    display: none;
+  }
+  .swipe-modes__short {
+    display: inline;
+  }
+  .swipe-counter {
+    justify-self: center;
+  }
+}
+
+/* ───────────── body: legend · stage · session ───────────── */
+.swipe-body {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(16px, 2vw, 32px);
+}
+.swipe-legend,
+.swipe-session {
+  display: none;
+}
+@media (min-width: 1100px) {
+  .swipe-body {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 330px);
+  }
+  .swipe-session {
+    display: flex;
+  }
+}
+@media (min-width: 1320px) {
+  .swipe-body {
+    grid-template-columns: minmax(230px, 270px) minmax(0, 1fr) minmax(290px, 340px);
+  }
+  .swipe-legend {
+    display: block;
+  }
+}
+
+/* legend */
+.swipe-legend {
+  align-self: center;
+  background: color-mix(in srgb, var(--panel-solid) 92%, transparent);
+}
+.swipe-legend__blurb {
+  margin: 6px 0 14px;
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+.swipe-legend ul {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.swipe-legend li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--fs-sm);
+}
+.swipe-legend kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 34px;
+  height: 28px;
+  padding: 0 6px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--tone, var(--text));
+  border: 1px solid color-mix(in srgb, var(--tone, var(--text-dim)) 60%, transparent);
+  border-bottom-width: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-2);
+}
+
+/* ───────────── stage ───────────── */
+.swipe-stage {
+  grid-template-columns: minmax(0, 1fr);
+  --sr: 0;
+  --sl: 0;
+  --su: 0;
+  --sd: 0;
+  --lift: 0;
+  position: relative;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  justify-items: center;
+  gap: 14px;
+}
+/* edge glows hint at where the card is going */
+.swipe-stage::before,
+.swipe-stage::after {
+  content: '';
+  position: absolute;
+  top: 10%;
+  bottom: 20%;
+  width: 34%;
+  pointer-events: none;
+  transition: opacity 0.35s var(--ease);
+}
+.swipe-stage::before {
+  left: 0;
+  background: radial-gradient(60% 50% at 0% 50%, color-mix(in srgb, var(--danger) 30%, transparent), transparent 70%);
+  opacity: var(--sl);
+}
+.swipe-stage::after {
+  right: 0;
+  background: radial-gradient(60% 50% at 100% 50%, color-mix(in srgb, var(--ok) 30%, transparent), transparent 70%);
+  opacity: var(--sr);
+}
+.swipe-stage[data-drag]::before,
+.swipe-stage[data-drag]::after {
+  transition: none;
+}
+
+.swipe-stack {
+  position: relative;
+  width: min(460px, 100%);
+  height: 100%;
+  min-height: 0;
+  max-height: 720px;
+  align-self: center;
+}
+/* floor glow under the stack */
+.swipe-stack::before {
+  content: '';
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -6px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 28%, transparent), transparent);
+  filter: blur(6px);
+  pointer-events: none;
+}
+
+/* ───────────── cards ───────────── */
+.swipe-card {
+  --d: max(0, calc(var(--i, 0) - var(--lift)));
+  position: absolute;
+  inset: 0 0 var(--peek) 0;
+  transform: translateY(calc(var(--d) * (var(--peek) / 2.1))) scale(calc(1 - var(--d) * 0.055));
+  transform-origin: 50% 100%;
+  transition:
+    transform 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.15),
+    opacity 0.35s var(--ease),
+    filter 0.35s var(--ease);
+}
+.swipe-card:not(.is-top) {
+  filter: brightness(calc(1 - var(--d) * 0.08));
+}
+.swipe-card[data-depth='3'] {
+  opacity: 0;
+}
+.swipe-stage[data-drag] .swipe-card {
+  transition: none;
+}
+.swipe-card__body {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: minmax(90px, 1fr) auto;
+  overflow: hidden;
+  border-radius: calc(var(--radius) * 2.4 + 6px);
+  border: 1px solid var(--panel-border-strong);
+  background: var(--panel-solid);
+  box-shadow: var(--shadow), 0 18px 50px -20px color-mix(in srgb, var(--accent) 40%, transparent);
+  clip-path: var(--card-clip, none);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  transition:
+    transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.3s var(--ease),
+    border-color 0.3s var(--ease);
+}
+.swipe-card.is-top .swipe-card__body {
+  cursor: grab;
+  touch-action: none;
+}
+.swipe-card.is-top .swipe-card__body:active {
+  cursor: grabbing;
+}
+.swipe-card.is-top .swipe-card__body:focus-visible {
+  border-color: var(--accent);
+  box-shadow: var(--shadow), 0 0 0 3px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.swipe-stage[data-drag] .swipe-card.is-top .swipe-card__body {
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+.swipe-card__body[data-instant] {
+  transition: none !important;
+}
+.swipe-card__body[data-return] {
+  transition:
+    transform 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.1),
+    opacity 0.25s var(--ease);
+}
+/* poster */
+.swipe-card__media {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg-3);
+}
+.swipe-card__media > img,
+.swipe-card__media > .art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+.swipe-card__media .art__title,
+.swipe-card__media .art__kicker {
+  display: none;
+}
+.swipe-card__media::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 36%;
+  background: linear-gradient(to top, var(--panel-solid), transparent);
+  pointer-events: none;
+}
+.swipe-card__match {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  padding: 6px 12px 5px;
+  border-radius: var(--radius);
+  border: 1px solid var(--panel-border-strong);
+  background: color-mix(in srgb, var(--panel-solid) 92%, transparent);
+  box-shadow: var(--glow-soft);
+  line-height: 1.05;
+}
+.swipe-card__match b {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  color: var(--accent);
+}
+.swipe-card__match span {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* info plate */
+.swipe-card__info {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  padding: 4px 20px 20px;
+  background: var(--panel-solid);
+}
+.swipe-card__eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.swipe-card__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--hero-weight, 800);
+  font-size: clamp(1.35rem, 2.3vw, 1.85rem);
+  line-height: 1.05;
+  text-transform: var(--title-transform);
+  letter-spacing: 0.01em;
+  overflow-wrap: anywhere;
+}
+.swipe-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+.swipe-card__meta span + span::before {
+  content: '·';
+  margin-right: 12px;
+  color: var(--text-faint);
+}
+.swipe-card__genres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.swipe-card__reasons {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.swipe-card__reasons li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: var(--fs-sm);
+  color: var(--text);
+}
+.swipe-card__reasons li svg {
+  flex: none;
+  margin-top: 3px;
+  color: var(--accent);
+}
+.swipe-card__reasons li span {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.swipe-card__overview {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--text-dim);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* stamps — solid plates so they stay readable over any poster */
+.swipe-stamp {
+  position: absolute;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.05rem, 2vw, 1.45rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--tone);
+  background: color-mix(in srgb, var(--panel-solid) 94%, transparent);
+  border: 3px solid var(--tone);
+  border-radius: var(--radius);
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--panel-solid) 60%, transparent),
+    0 0 26px color-mix(in srgb, var(--tone) 45%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.3s var(--ease),
+    transform 0.3s var(--ease);
+}
+.swipe-stamp--right {
+  top: 92px;
+  left: 18px;
+  transform: rotate(-12deg) scale(calc(0.8 + var(--sr) * 0.2));
+}
+.swipe-stamp--left {
+  top: 92px;
+  right: 18px;
+  transform: rotate(12deg) scale(calc(0.8 + var(--sl) * 0.2));
+}
+.swipe-stamp--up {
+  left: 50%;
+  top: 30%;
+  transform: translateX(-50%) rotate(-4deg) scale(calc(0.8 + var(--su) * 0.2));
+}
+.swipe-stamp--down {
+  left: 50%;
+  top: 30%;
+  transform: translateX(-50%) rotate(3deg) scale(calc(0.8 + var(--sd) * 0.2));
+}
+.swipe-card.is-top .swipe-stamp--right {
+  opacity: var(--sr);
+}
+.swipe-card.is-top .swipe-stamp--left {
+  opacity: var(--sl);
+}
+.swipe-card.is-top .swipe-stamp--up {
+  opacity: var(--su);
+}
+.swipe-card.is-top .swipe-stamp--down {
+  opacity: var(--sd);
+}
+.swipe-stage[data-drag] .swipe-stamp {
+  transition: none;
+}
+.swipe-card.is-top .swipe-card__body {
+  border-color: color-mix(
+    in srgb,
+    var(--panel-border-strong) calc(100% - max(var(--sr), var(--sl), var(--su), var(--sd)) * 100%),
+    var(--tone-now, var(--accent))
+  );
+}
+.swipe-stage[data-dir='right'] .is-top .swipe-card__body {
+  --tone-now: var(--ok);
+}
+.swipe-stage[data-dir='left'] .is-top .swipe-card__body {
+  --tone-now: var(--danger);
+}
+.swipe-stage[data-dir='down'] .is-top .swipe-card__body {
+  --tone-now: var(--text-dim);
+}
+
+/* flying (committed) card */
+.swipe-card--fly {
+  z-index: 30;
+  pointer-events: none;
+  transform: none;
+}
+.swipe-card--fly .swipe-card__body {
+  transition: none;
+}
+.swipe-card--fly .swipe-card__body[data-go] {
+  transition:
+    transform 0.46s cubic-bezier(0.25, 0.6, 0.45, 1),
+    opacity 0.22s ease 0.24s;
+}
+.swipe-card--fly[data-dir='right'] .swipe-stamp--right,
+.swipe-card--fly[data-dir='left'] .swipe-stamp--left,
+.swipe-card--fly[data-dir='up'] .swipe-stamp--up,
+.swipe-card--fly[data-dir='down'] .swipe-stamp--down {
+  opacity: 1;
+  --sr: 1;
+  --sl: 1;
+  --su: 1;
+  --sd: 1;
+  transition: none;
+}
+.swipe-card--fly[data-dir='right'] .swipe-card__body {
+  border-color: var(--ok);
+}
+.swipe-card--fly[data-dir='left'] .swipe-card__body {
+  border-color: var(--danger);
+}
+.swipe-card--fly[data-dir='up'] .swipe-card__body {
+  border-color: var(--accent);
+}
+
+/* ───────────── controls ───────────── */
+.swipe-controls {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: clamp(8px, 1.6vw, 18px);
+  padding: 4px 0 2px;
+}
+.swipe-btn {
+  min-width: 44px;
+  display: grid;
+  grid-template-rows: 62px auto;
+  align-items: center;
+  justify-items: center;
+  gap: 4px;
+  color: var(--tone, var(--text-dim));
+  -webkit-tap-highlight-color: transparent;
+}
+.swipe-btn__disc {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--tone, var(--text-dim)) 70%, transparent);
+  background: color-mix(in srgb, var(--panel-solid) 92%, transparent);
+  box-shadow: 0 6px 18px -8px color-mix(in srgb, var(--tone, var(--accent)) 60%, transparent);
+  transition:
+    transform 0.18s var(--ease),
+    background 0.18s var(--ease),
+    box-shadow 0.18s var(--ease),
+    color 0.18s;
+}
+.swipe-btn--big .swipe-btn__disc {
+  width: 62px;
+  height: 62px;
+  border-width: 2.5px;
+}
+.swipe-btn--small .swipe-btn__disc {
+  width: 40px;
+  height: 40px;
+  border-width: 1px;
+  border-color: var(--panel-border-strong);
+}
+.swipe-btn__badge {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--panel-solid);
+  background: var(--tone, var(--accent));
+}
+.swipe-btn__label {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.swipe-btn:hover:not(:disabled) .swipe-btn__disc {
+  transform: translateY(-2px) scale(1.06);
+  box-shadow: 0 0 0 1px var(--tone, var(--accent)), 0 0 22px color-mix(in srgb, var(--tone, var(--accent)) 45%, transparent);
+}
+.swipe-btn:active:not(:disabled) .swipe-btn__disc {
+  transform: scale(0.92);
+  background: color-mix(in srgb, var(--tone, var(--accent)) 22%, var(--panel-solid));
+}
+.swipe-btn:focus-visible {
+  outline: none;
+}
+.swipe-btn:focus-visible .swipe-btn__disc {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+.swipe-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.swipe-btn.tone-ok:hover:not(:disabled) .swipe-btn__label,
+.swipe-btn.tone-danger:hover:not(:disabled) .swipe-btn__label,
+.swipe-btn.tone-accent:hover:not(:disabled) .swipe-btn__label {
+  color: var(--tone);
+}
+@media (max-width: 860px) {
+  .swipe-controls {
+    gap: 8px;
+  }
+  .swipe-btn {
+    grid-template-rows: 56px auto;
+  }
+  .swipe-btn__disc {
+    width: 46px;
+    height: 46px;
+  }
+  .swipe-btn--big .swipe-btn__disc {
+    width: 56px;
+    height: 56px;
+  }
+  .swipe-btn--small .swipe-btn__disc {
+    width: 40px;
+    height: 40px;
+  }
+  .swipe-btn--small .swipe-btn__label {
+    font-weight: 500;
+  }
+  .swipe-card__info {
+    padding: 2px 16px 14px;
+    gap: 6px;
+  }
+  .swipe-card__overview {
+    -webkit-line-clamp: 2;
+  }
+  .swipe-stamp {
+    font-size: 1rem;
+    padding: 6px 12px;
+  }
+}
+@media (max-height: 760px) {
+  .swipe-card__overview {
+    -webkit-line-clamp: 2;
+  }
+}
+@media (max-height: 680px) {
+  .swipe-card__reasons li:nth-child(2) {
+    display: none;
+  }
+}
+
+/* ───────────── quick rating after "Seen it" ───────────── */
+.swipe-rate {
+  position: absolute;
+  z-index: 40;
+  left: 50%;
+  bottom: calc(100px + 8px);
+  width: min(440px, calc(100% - 8px));
+  transform: translateX(-50%);
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 14px 16px 16px;
+  overflow: hidden;
+  border-radius: var(--radius);
+  border: 1px solid var(--accent);
+  background: var(--panel-solid);
+  box-shadow: var(--shadow), var(--glow);
+  animation: swipe-rate-in 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+@keyframes swipe-rate-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(16px) scale(0.96);
+  }
+}
+.swipe-rate__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+.swipe-rate__head > svg {
+  flex: none;
+  color: var(--accent);
+}
+.swipe-rate__head > span {
+  flex: 1;
+}
+.swipe-rate__head b {
+  color: var(--text);
+}
+.swipe-rate__close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin: -8px -8px -8px 0;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+}
+.swipe-rate__close:hover,
+.swipe-rate__close:focus-visible {
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.swipe-rate__chips {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 4px;
+  width: 100%;
+}
+.swipe-rate__chips button {
+  height: 40px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--panel-border-strong);
+  background: var(--bg-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--text-dim);
+  transition:
+    background 0.12s,
+    color 0.12s,
+    transform 0.12s;
+}
+.swipe-rate__chips button:hover {
+  color: var(--text);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.swipe-rate__chips button.on {
+  background: color-mix(in srgb, var(--accent) 28%, var(--panel-solid));
+  border-color: var(--accent);
+  color: var(--text);
+}
+.swipe-rate__chips button.is-value {
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: var(--glow-soft);
+}
+.swipe-rate__hint {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+.swipe-rate__timer {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: var(--accent);
+  transform-origin: left;
+  animation: swipe-timer 4.5s linear both;
+}
+@keyframes swipe-timer {
+  to {
+    transform: scaleX(0);
+  }
+}
+@media (max-width: 860px) {
+  .swipe-rate {
+    bottom: calc(92px + 4px);
+  }
+  .swipe-rate__chips {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .swipe-rate__chips button {
+    height: 42px;
+  }
+}
+
+/* ───────────── session panel ───────────── */
+.swipe-session {
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+  align-self: stretch;
+  padding: 16px;
+  gap: 12px;
+  background: color-mix(in srgb, var(--panel-solid) 92%, transparent);
+}
+.swipe-session__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.swipe-session__head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  text-transform: var(--title-transform);
+  letter-spacing: var(--title-spacing);
+}
+.swipe-session__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+.swipe-session__stats b {
+  font-family: var(--font-mono);
+  color: var(--tone, var(--text));
+  font-size: var(--fs-md);
+}
+.swipe-session__empty {
+  margin: 0;
+}
+.swipe-session__list {
+  list-style: none;
+  margin: 0 -6px;
+  padding: 0;
+  overflow-y: auto;
+  min-height: 0;
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  scrollbar-width: thin;
+}
+.swipe-session__list li {
+  animation: swipe-row-in 0.35s var(--ease) both;
+}
+@keyframes swipe-row-in {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+}
+.swipe-session__list button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  text-align: left;
+  transition: background 0.15s;
+}
+.swipe-session__list button:hover,
+.swipe-session__list button:focus-visible {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.swipe-session__thumb {
+  position: relative;
+  flex: none;
+  width: 40px;
+  height: 58px;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--panel-border);
+  background: var(--bg-3);
+}
+.swipe-session__thumb img,
+.swipe-session__thumb .art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  padding: 0;
+}
+.swipe-session__thumb .art__title,
+.swipe-session__thumb .art__kicker {
+  display: none;
+}
+.swipe-session__main {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.swipe-session__title {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.swipe-session__out {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--tone, var(--text-dim));
+}
+.swipe-session__out.tone-dim {
+  color: var(--text-dim);
+}
+
+/* ───────────── empty / loading ───────────── */
+.swipe-empty {
+  position: absolute;
+  inset: 0 0 var(--peek) 0;
+  z-index: 1;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+  overflow: hidden;
+  border-radius: calc(var(--radius) * 2.4 + 6px);
+  border: 1px dashed var(--panel-border-strong);
+  background: color-mix(in srgb, var(--panel-solid) 94%, transparent);
+}
+.swipe-empty h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--hero-weight, 800);
+  font-size: var(--fs-xl);
+  text-transform: var(--title-transform);
+  letter-spacing: var(--title-spacing);
+}
+.swipe-empty p {
+  margin: 0;
+  max-width: 34ch;
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+.swipe-empty__icon {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  color: var(--accent);
+  border: 2px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--panel-solid));
+  box-shadow: var(--glow);
+}
+.swipe-empty.is-party .swipe-empty__icon {
+  animation: swipe-pop 0.7s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+@keyframes swipe-pop {
+  from {
+    transform: scale(0.3) rotate(-30deg);
+    opacity: 0;
+  }
+}
+.swipe-empty__stats {
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--panel-border);
+  background: var(--bg-2);
+}
+.swipe-empty__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+.swipe-empty__icon {
+  position: relative;
+}
+.swipe-confetti {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+/* a burst fanning upwards from the icon — never crosses the text below */
+.swipe-confetti i {
+  --a: calc(-80deg + var(--k) * 9.4deg);
+  position: absolute;
+  left: -4px;
+  top: -6px;
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--accent);
+  opacity: 0;
+  animation: swipe-confetti 1.5s cubic-bezier(0.15, 0.7, 0.35, 1) calc(0.15s + var(--k) * 18ms) both;
+}
+.swipe-confetti i:nth-child(2n) {
+  --r: 16px;
+}
+.swipe-confetti i:nth-child(5n + 1) {
+  --r: 30px;
+}
+.swipe-confetti i:nth-child(3n + 1) {
+  background: var(--accent-2);
+}
+.swipe-confetti i:nth-child(3n + 2) {
+  background: var(--accent-3);
+  border-radius: 50%;
+  width: 9px;
+  height: 9px;
+}
+.swipe-confetti i:nth-child(4n) {
+  background: var(--ok);
+}
+@keyframes swipe-confetti {
+  0% {
+    opacity: 1;
+    transform: rotate(var(--a)) translateY(-30px) rotate(0);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--a)) translateY(calc(-62px - var(--r, 0px))) rotate(400deg);
+  }
+}
+
+/* ───────────── reduced motion: no fling, just fade ───────────── */
+@media (prefers-reduced-motion: reduce) {
+  .swipe-card--fly .swipe-card__body[data-go] {
+    transition: opacity 0.2s ease !important;
+  }
+  .swipe-card__body[data-return] {
+    transition: opacity 0.2s ease !important;
+  }
+  .swipe-confetti {
+    display: none;
+  }
+}
+@media (hover: none) {
+  .swipe-rate__hint {
+    display: none;
+  }
+}
+
+/* small phones: tighten the action row so all six buttons fit, keep the meta line on one row */
+@media (max-width: 380px) {
+  .swipe-card__meta .is-net {
+    display: none;
+  }
+  .swipe-controls {
+    gap: 4px;
+  }
+  .swipe-btn__disc {
+    width: 44px;
+    height: 44px;
+  }
+  .swipe-btn--big .swipe-btn__disc {
+    width: 52px;
+    height: 52px;
+  }
+  .swipe-btn {
+    grid-template-rows: 52px auto;
+  }
+}
+
+/* ───────────── landscape phone: card beside a 3×2 button pad ───────────── */
+@media (orientation: landscape) and (max-height: 520px) {
+  .swipe {
+    --peek: 10px;
+    gap: 6px;
+    padding: 6px 16px;
+  }
+  .swipe-head {
+    grid-template-columns: minmax(0, 1fr) auto;
+    justify-items: stretch;
+    align-items: center;
+  }
+  .swipe-head .swipe-modes {
+    grid-column: auto;
+    grid-row: auto;
+    width: auto;
+    justify-self: start;
+  }
+  .swipe-modes button {
+    height: 40px;
+  }
+  .swipe-counter {
+    justify-self: end;
+  }
+  .swipe-stage {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr);
+    align-items: center;
+    column-gap: 16px;
+  }
+  .swipe-stack {
+    width: min(600px, 100%);
+    max-height: none;
+    justify-self: end;
+  }
+  .swipe-card__body {
+    grid-template-columns: minmax(110px, 32%) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .swipe-card__media::after {
+    inset: 0 0 0 auto;
+    width: 30%;
+    height: auto;
+    background: linear-gradient(to left, var(--panel-solid), transparent);
+  }
+  .swipe-card__match {
+    top: 8px;
+    right: auto;
+    left: 8px;
+    padding: 4px 8px;
+  }
+  .swipe-card__match b {
+    font-size: var(--fs-md);
+  }
+  .swipe-card__info {
+    align-content: center;
+    gap: 5px;
+    padding: 10px 14px;
+    overflow: hidden;
+  }
+  .swipe-card__title {
+    font-size: 1.2rem;
+  }
+  .swipe-card__reasons li:nth-child(2),
+  .swipe-card__overview {
+    display: none;
+  }
+  .swipe-stamp {
+    font-size: 0.95rem;
+  }
+  .swipe-stamp--right,
+  .swipe-stamp--left {
+    top: 14px;
+  }
+  .swipe-stamp--up,
+  .swipe-stamp--down {
+    top: 40%;
+  }
+  .swipe-controls {
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    align-content: center;
+    gap: 6px 10px;
+    padding: 0;
+  }
+  .swipe-btn {
+    grid-template-rows: 52px auto;
+  }
+  .swipe-btn__disc {
+    width: 46px;
+    height: 46px;
+  }
+  .swipe-btn--big .swipe-btn__disc {
+    width: 52px;
+    height: 52px;
+  }
+  .swipe-btn[data-dir='left'] {
+    order: 1;
+  }
+  .swipe-btn[data-dir='up'] {
+    order: 2;
+  }
+  .swipe-btn[data-dir='right'] {
+    order: 3;
+  }
+  .swipe-btn[data-dir='undo'] {
+    order: 4;
+  }
+  .swipe-btn[data-dir='down'] {
+    order: 5;
+  }
+  .swipe-btn[data-dir='open'] {
+    order: 6;
+  }
+  .swipe-rate {
+    left: 0;
+    bottom: 4px;
+    width: min(460px, 62%);
+    transform: none;
+    padding: 10px 12px 12px;
+    gap: 8px;
+  }
+  @keyframes swipe-rate-in {
+    from {
+      opacity: 0;
+    }
+  }
+  .swipe-rate__chips {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .swipe-rate__chips button {
+    height: 40px;
+  }
+}
+
+/* app setting "Reduce effects": keep the card motion, drop the decoration */
+.swipe--lowfx .swipe-confetti,
+.swipe--lowfx .swipe-stage::before,
+.swipe--lowfx .swipe-stage::after {
+  display: none;
+}

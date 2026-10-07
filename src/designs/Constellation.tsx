@@ -1,24 +1,29 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Crosshair, Minus, Plus, X } from 'lucide-react';
+import { Crosshair, HelpCircle, Minus, Plus, X } from 'lucide-react';
 import { useLibrary } from '../store/library';
 import { useRecommendations } from '../hooks/useRecommendations';
 import { GENRE_LABELS } from '../lib/genres';
 import { STATUS_LABEL } from '../lib/labels';
 import { remember, showPath } from '../lib/showCache';
 import { Poster } from '../components/Poster';
-import { ShowHud } from './ShowHud';
+import { HudSheet, ShowHud, useCalmFx, useCompact } from './ShowHud';
 import { layoutSky, R, type StarNode } from './constellationLayout';
 
 /**
  * CONSTELLATION — your taste as a star map. You're the core; your library
  * orbits close (loved = closer), recommendations drift in the discovery field
  * (better match = closer) with beams back to the show that inspired them.
+ * Touch: drag to pan, pinch or double-tap to zoom, tap a star for its card.
  */
 
 type View = { x: number; y: number; k: number };
-const HOME: View = { x: 0, y: 0, k: 1.12 };
+const HOME: View = { x: 0, y: 0, k: 1 };
 const PAD = 160;
+const K_MIN = 0.6;
+const K_MAX = 6;
+const clampK = (k: number) => Math.max(K_MIN, Math.min(K_MAX, k));
+type Gesture = { view: View; x: number; y: number; moved: boolean; dist?: number; mid?: { x: number; y: number } };
 
 export default function Constellation() {
   const entries = useLibrary((s) => s.entries);
@@ -28,11 +33,25 @@ export default function Constellation() {
   const [hover, setHover] = useState<StarNode | null>(null);
   const [selected, setSelected] = useState<StarNode | null>(null);
   const [view, setView] = useState<View>(HOME);
+  /** Programmatic moves (buttons, fly-to, keeping the picked star in sight) glide; gestures track the finger. */
+  const [glide, setGlide] = useState(false);
+  const [sheet, setSheet] = useState(false);
+  const [legend, setLegend] = useState(false);
+  const compact = useCompact();
+  const calm = useCalmFx();
+  // SVG box in screen px; world units per screen px at zoom 1 — lets text stay a constant, readable size at any zoom.
+  const [box, setBox] = useState({ w: 800, h: 800 });
+  const unitsPerPx = (R * 2 + PAD * 2) / Math.min(box.w, box.h);
   const svg = useRef<SVGSVGElement>(null);
   const viewRef = useRef(view);
   viewRef.current = view;
   const pointers = useRef(new Map<number, { x: number; y: number }>());
-  const gesture = useRef<{ view: View; dist?: number; x: number; y: number; moved: boolean } | null>(null);
+  const gesture = useRef<Gesture | null>(null);
+  const lastTap = useRef<{ t: number; x: number; y: number } | null>(null);
+  const moveView = useCallback((v: View | ((v: View) => View), smooth = true) => {
+    setGlide(smooth);
+    setView(v);
+  }, []);
 
   const sky = useMemo(() => {
     const lib = Object.values(entries);
@@ -43,6 +62,34 @@ export default function Constellation() {
   const visible = sky.nodes.filter((n) => (n.kind === 'library' ? show.library : show.recs));
   const byId = useMemo(() => new Map(sky.nodes.map((n) => [n.id, n])), [sky]);
   const focus = hover ?? selected;
+
+  useEffect(() => {
+    const el = svg.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => {
+      const r = el.getBoundingClientRect();
+      if (r.width && r.height) setBox({ w: r.width, h: r.height });
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // Always label the stars that matter: best matches, loved shows, what you're watching.
+  const important = useMemo(() => {
+    const ids = new Set<string>();
+    const recsByScore = sky.nodes.filter((n) => n.kind === 'rec').sort((a, b) => (b.rec?.score ?? 0) - (a.rec?.score ?? 0));
+    recsByScore.slice(0, 8).forEach((n) => ids.add(n.id));
+    for (const n of sky.nodes) {
+      const e = n.entry;
+      if (e && (e.status === 'watching' || e.favorite || (e.rating ?? 0) >= 9)) ids.add(n.id);
+    }
+    return ids;
+  }, [sky]);
+  const u = unitsPerPx / view.k; // world units per screen px at the current zoom
+  // Text sizes in screen px (a touch larger on phones).
+  const LABEL_PX = compact ? 14 : 12.5;
+  const SECTOR_PX = compact ? 15 : 14;
+
   const related = useMemo(() => {
     if (!focus) return new Set<string>();
     const s = new Set<string>([focus.id]);
@@ -50,24 +97,74 @@ export default function Constellation() {
     return s;
   }, [focus, sky.links]);
 
-  /* ── pan / zoom ── */
-  const toWorld = (cx: number, cy: number, v = view) => {
-    const rect = svg.current!.getBoundingClientRect();
+  // Greedy label placement: most important first; try below / above / right / left; skip if all collide.
+  const labels = useMemo(() => {
+    const fs = LABEL_PX * u;
+    const want = visible.filter((n) => view.k > 1.8 || important.has(n.id) || selected?.id === n.id || (focus && related.has(n.id)));
+    const prio = (n: StarNode) =>
+      (selected?.id === n.id ? 1000 : 0) + (focus?.id === n.id ? 900 : 0) + (important.has(n.id) ? 100 : 0) + (n.rec?.match ?? (n.entry?.rating ?? 6) * 10);
+    want.sort((a, b) => prio(b) - prio(a));
+    const boxes: { x0: number; y0: number; x1: number; y1: number }[] = [];
+    // stars themselves are obstacles too
+    for (const n of visible) boxes.push({ x0: n.x - n.r, y0: n.y - n.r, x1: n.x + n.r, y1: n.y + n.r });
+    const out = new Map<string, { x: number; y: number; anchor: 'middle' | 'start' | 'end'; text: string }>();
+    for (const n of want) {
+      const text = n.show.title.length > 24 ? `${n.show.title.slice(0, 23)}…` : n.show.title;
+      const w = text.length * fs * 0.56;
+      const h = fs * 1.15;
+      const gap = 5 * u;
+      const cands = [
+        { x: n.x, y: n.y + n.r + gap + fs, anchor: 'middle' as const, x0: n.x - w / 2, y0: n.y + n.r + gap },
+        { x: n.x, y: n.y - n.r - gap, anchor: 'middle' as const, x0: n.x - w / 2, y0: n.y - n.r - gap - h },
+        { x: n.x + n.r + gap, y: n.y + fs * 0.35, anchor: 'start' as const, x0: n.x + n.r + gap, y0: n.y - h / 2 },
+        { x: n.x - n.r - gap, y: n.y + fs * 0.35, anchor: 'end' as const, x0: n.x - n.r - gap - w, y0: n.y - h / 2 },
+      ];
+      for (const c of cands) {
+        const b = { x0: c.x0, y0: c.y0, x1: c.x0 + w, y1: c.y0 + h };
+        const hit = boxes.some((o) => !(b.x1 < o.x0 || b.x0 > o.x1 || b.y1 < o.y0 || b.y0 > o.y1) && !(o.x0 === n.x - n.r && o.y0 === n.y - n.r));
+        if (!hit) {
+          boxes.push(b);
+          out.set(n.id, { x: c.x - n.x, y: c.y - n.y, anchor: c.anchor, text });
+          break;
+        }
+      }
+    }
+    return out;
+  }, [visible, view.k, u, important, selected, focus, related, LABEL_PX]);
+
+  // Sector names sit just outside the disc; on a narrow screen pull them in so
+  // "ANIMATION" or "THRILLER" never run off the edge (at the home zoom).
+  const sectorLabels = useMemo(() => {
     const size = R * 2 + PAD * 2;
-    const scale = size / Math.min(rect.width, rect.height);
-    const sx = (cx - rect.left - rect.width / 2) * scale;
-    const sy = (cy - rect.top - rect.height / 2) * scale;
-    return { x: sx / v.k - v.x, y: sy / v.k - v.y, scale };
-  };
-  const zoomAt = (cx: number, cy: number, factor: number) => {
-    setView((v) => {
-      const k = Math.max(0.6, Math.min(6, v.k * factor));
-      const w = toWorld(cx, cy, v);
-      const rect = svg.current!.getBoundingClientRect();
-      const sx = (cx - rect.left - rect.width / 2) * w.scale;
-      const sy = (cy - rect.top - rect.height / 2) * w.scale;
-      return { k, x: sx / k - w.x, y: sy / k - w.y };
+    const halfW = (box.w * unitsPerPx) / 2; // visible half-width in world units at zoom 1
+    const halfH = (box.h * unitsPerPx) / 2;
+    const fs = SECTOR_PX * u;
+    const margin = 10 * unitsPerPx;
+    return sky.sectors.map((s) => {
+      const text = s.key === 'other' ? 'OTHER' : GENRE_LABELS[s.key].toUpperCase();
+      const hw = (text.length * fs * 0.84) / 2;
+      let x = Math.cos(s.mid) * (R + 40);
+      let y = Math.sin(s.mid) * (R + 40);
+      const maxX = Math.max(hw, Math.min(size / 2, halfW) - margin - hw);
+      const maxY = Math.max(fs, Math.min(size / 2, halfH) - margin - fs / 2);
+      x = Math.max(-maxX, Math.min(maxX, x));
+      y = Math.max(-maxY, Math.min(maxY, y));
+      return { key: s.key, start: s.start, text, x, y };
     });
+  }, [sky.sectors, box, unitsPerPx, u, SECTOR_PX]);
+
+  /* ── pan / zoom ── */
+  /** Screen point (relative to the SVG centre, px) → world point, for a given view. */
+  const rel = (cx: number, cy: number) => {
+    const rect = svg.current!.getBoundingClientRect();
+    return { x: cx - rect.left - rect.width / 2, y: cy - rect.top - rect.height / 2 };
+  };
+  /** The view that keeps world point `w` under the screen point `s` (centre-relative px) at zoom k. */
+  const anchored = (w: { x: number; y: number }, s: { x: number; y: number }, k: number): View => ({ k, x: (s.x * unitsPerPx) / k - w.x, y: (s.y * unitsPerPx) / k - w.y });
+  const worldAt = (s: { x: number; y: number }, v: View) => ({ x: (s.x * unitsPerPx) / v.k - v.x, y: (s.y * unitsPerPx) / v.k - v.y });
+  const zoomAt = (cx: number, cy: number, factor: number, smooth = false) => {
+    const s = rel(cx, cy);
+    moveView((v) => anchored(worldAt(s, v), s, clampK(v.k * factor)), smooth);
   };
 
   useEffect(() => {
@@ -81,63 +178,108 @@ export default function Constellation() {
     return () => el.removeEventListener('wheel', wheel);
   });
 
+  /** (Re)start the gesture from the fingers currently down. */
+  const beginGesture = (moved: boolean) => {
+    const pts = [...pointers.current.values()];
+    if (!pts.length) {
+      gesture.current = null;
+      return;
+    }
+    const v = viewRef.current;
+    if (pts.length >= 2) {
+      const [a, b] = pts;
+      gesture.current = { view: v, x: a.x, y: a.y, moved, dist: Math.hypot(a.x - b.x, a.y - b.y) || 1, mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } };
+    } else gesture.current = { view: v, x: pts[0].x, y: pts[0].y, moved };
+  };
   const onDown = (e: React.PointerEvent) => {
     (e.currentTarget as Element).setPointerCapture(e.pointerId);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    const pts = [...pointers.current.values()];
-    gesture.current = {
-      view,
-      x: e.clientX,
-      y: e.clientY,
-      moved: false,
-      dist: pts.length === 2 ? Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) : undefined,
-    };
+    if (e.pointerType !== 'mouse') setHover(null);
+    beginGesture(pointers.current.size > 1);
   };
   const onMove = (e: React.PointerEvent) => {
     if (!pointers.current.has(e.pointerId) || !gesture.current) return;
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     const g = gesture.current;
     const pts = [...pointers.current.values()];
-    if (pts.length === 2 && g.dist) {
-      const d = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-      setView({ ...g.view, k: Math.max(0.6, Math.min(6, g.view.k * (d / g.dist))) });
+    if (pts.length >= 2 && g.dist && g.mid) {
+      // pinch: zoom about the fingers' midpoint, and pan with it
+      const [a, b] = pts;
+      const k = clampK(g.view.k * (Math.hypot(a.x - b.x, a.y - b.y) / g.dist));
+      const m0 = rel(g.mid.x, g.mid.y);
+      const m1 = rel((a.x + b.x) / 2, (a.y + b.y) / 2);
+      moveView(anchored(worldAt(m0, g.view), m1, k), false);
       g.moved = true;
       return;
     }
     const dx = e.clientX - g.x;
     const dy = e.clientY - g.y;
-    if (Math.abs(dx) + Math.abs(dy) > 4) g.moved = true;
+    if (Math.abs(dx) + Math.abs(dy) > (e.pointerType === 'mouse' ? 4 : 10)) g.moved = true;
     if (!g.moved) return;
-    const { scale } = toWorld(e.clientX, e.clientY);
-    setView({ ...g.view, x: g.view.x + (dx * scale) / g.view.k, y: g.view.y + (dy * scale) / g.view.k });
+    moveView({ ...g.view, x: g.view.x + (dx * unitsPerPx) / g.view.k, y: g.view.y + (dy * unitsPerPx) / g.view.k }, false);
   };
   const onUp = (e: React.PointerEvent) => {
+    if (!pointers.current.has(e.pointerId)) return;
     pointers.current.delete(e.pointerId);
     const g = gesture.current;
-    if (!pointers.current.size) gesture.current = null;
-    else {
-      // one finger lifted mid-pinch: continue as a pan from the current view
-      const [rest] = [...pointers.current.values()];
-      gesture.current = { view: viewRef.current, x: rest.x, y: rest.y, moved: true };
+    if (pointers.current.size) {
+      // one finger lifted mid-pinch: carry on as a pan from the current view
+      beginGesture(true);
       return;
     }
-    if (g && !g.moved) {
-      // pointer capture retargets pointerup to the <svg>, so hit-test by position
-      const target = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-star]');
-      if (target) {
-        const n = byId.get(target.getAttribute('data-star')!);
-        if (n) setSelected(n);
-      } else setSelected(null);
+    gesture.current = null;
+    if (!g || g.moved || e.type === 'pointercancel') return;
+    // A tap. Pointer capture retargets pointerup to the <svg>, so hit-test by position.
+    const target = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-star]');
+    const now = performance.now();
+    const prev = lastTap.current;
+    const double = !!prev && now - prev.t < 320 && Math.hypot(prev.x - e.clientX, prev.y - e.clientY) < 30;
+    lastTap.current = double ? null : { t: now, x: e.clientX, y: e.clientY };
+    if (target) {
+      const n = byId.get(target.getAttribute('data-star')!);
+      if (n) select(n);
+    } else if (double && e.pointerType !== 'mouse') zoomAt(e.clientX, e.clientY, 2, true);
+    else select(null);
+  };
+
+  /** Pick a star. On phones the card covers the bottom of the map, so keep the star in sight above it. */
+  const select = (n: StarNode | null) => {
+    setSelected(n);
+    setSheet(false);
+    if (!n || !compact || !svg.current) return;
+    const v = viewRef.current;
+    const rect = svg.current.getBoundingClientRect();
+    const sy = ((n.y + v.y) * v.k) / unitsPerPx; // centre-relative screen y
+    const sx = ((n.x + v.x) * v.k) / unitsPerPx;
+    const landscape = rect.width > rect.height * 1.3;
+    const safeBottom = landscape ? rect.height / 2 - 40 : rect.height / 2 - 230; // card height + margin
+    const safeRight = landscape ? -40 : rect.width / 2 - 30;
+    if (sy > safeBottom || sx > safeRight || sy < -rect.height / 2 + 120) {
+      const to = { x: landscape ? -rect.width * 0.22 : 0, y: landscape ? 0 : -rect.height * 0.12 };
+      moveView(anchored({ x: n.x, y: n.y }, to, v.k), true);
     }
   };
 
-  const flyTo = (n: StarNode) => setView({ x: -n.x, y: -n.y, k: 2.6 });
+  const flyTo = (n: StarNode) => {
+    setSheet(false);
+    moveView({ x: -n.x, y: -n.y, k: 2.6 }, true);
+  };
+
+  useEffect(() => {
+    if (!selected) return;
+    const k = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !document.querySelector('.hud-sheet-wrap, .menu, .overlay')) setSelected(null);
+    };
+    addEventListener('keydown', k);
+    return () => removeEventListener('keydown', k);
+  }, [selected]);
+  const closeSheet = useCallback(() => setSheet(false), []);
 
   const traits = recs.output?.traits.filter((t) => t.key.startsWith('k:') || t.key.startsWith('g:')).slice(0, 3) ?? [];
   const size = R * 2 + PAD * 2;
 
   return (
-    <div className="sky-stage">
+    <div className={`sky-stage ${compact ? 'sky-stage--compact' : ''} ${calm ? 'fx-calm' : ''} ${selected ? 'has-sel' : ''}`}>
       <svg
         ref={svg}
         className="sky"
@@ -164,26 +306,20 @@ export default function Constellation() {
             </feMerge>
           </filter>
         </defs>
-        <g transform={`scale(${view.k}) translate(${view.x} ${view.y})`} className="sky-world">
+        <g style={{ transform: `scale(${view.k}) translate(${view.x}px, ${view.y}px)` }} className={`sky-world ${glide ? 'glide' : ''}`}>
           {/* orbits */}
           {[0.25, 0.5, 0.75, 1].map((f) => (
             <circle key={f} r={R * f} className={`sky-orbit ${f === sky.split ? 'split' : ''}`} />
           ))}
-          <text className="sky-ring-label" y={-R * sky.split - 10} textAnchor="middle">
+          <text className="sky-ring-label" y={-R * sky.split - 8 * u} textAnchor="middle" style={{ fontSize: 11 * u }}>
             YOUR LIBRARY ▲ ▼ DISCOVERY FIELD
           </text>
           {/* sectors */}
-          {sky.sectors.map((s) => (
+          {sectorLabels.map((s) => (
             <g key={s.key}>
               <line x1={0} y1={0} x2={Math.cos(s.start) * R * 1.04} y2={Math.sin(s.start) * R * 1.04} className="sky-sector" />
-              <text
-                x={Math.cos(s.mid) * (R + 70)}
-                y={Math.sin(s.mid) * (R + 70)}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                className="sky-sector-label"
-              >
-                {s.key === 'other' ? 'OTHER' : GENRE_LABELS[s.key].toUpperCase()}
+              <text x={s.x} y={s.y} textAnchor="middle" dominantBaseline="middle" className="sky-sector-label" style={{ fontSize: SECTOR_PX * u, strokeWidth: 4 * u }}>
+                {s.text}
               </text>
             </g>
           ))}
@@ -201,7 +337,7 @@ export default function Constellation() {
           <circle r={120} fill="url(#sky-core)" className="sky-core-glow" />
           <circle r={38} className="sky-core" />
           <circle r={62} className="sky-core-ring" />
-          <text className="sky-core-label" textAnchor="middle" y={6}>
+          <text className="sky-core-label" textAnchor="middle" y={5 * u} style={{ fontSize: Math.min(22, 14 * u) }}>
             YOU
           </text>
           {/* stars */}
@@ -210,15 +346,21 @@ export default function Constellation() {
             const dim = focus && !related.has(n.id);
             return (
               <g key={n.id} data-star={n.id} transform={`translate(${n.x} ${n.y})`} className={`star star--${n.kind} ${st ? `star--${st}` : ''} ${dim ? 'dim' : ''} ${selected?.id === n.id ? 'sel' : ''}`}
-                onPointerEnter={() => setHover(n)}
+                onPointerEnter={(e) => e.pointerType === 'mouse' && !gesture.current && setHover(n)}
                 onPointerLeave={() => setHover((h) => (h?.id === n.id ? null : h))}
               >
                 <circle r={n.r + 14} className="star-hit" />
                 {st === 'watching' && <circle r={n.r + 6} className="star-pulse" />}
-                <circle r={n.r} className="star-dot" filter={n.kind === 'rec' && n.rec && n.rec.match > 85 ? 'url(#sky-glow)' : undefined} />
-                {(view.k > 1.5 || n.r > 18 || selected?.id === n.id) && (
-                  <text y={n.r + 22} textAnchor="middle" className="star-label">
-                    {n.show.title.length > 22 ? `${n.show.title.slice(0, 21)}…` : n.show.title}
+                <circle r={n.r} className="star-dot" filter={!calm && n.kind === 'rec' && n.rec && n.rec.match > 85 ? 'url(#sky-glow)' : undefined} />
+                {labels.has(n.id) && (
+                  <text
+                    x={labels.get(n.id)!.x}
+                    y={labels.get(n.id)!.y}
+                    textAnchor={labels.get(n.id)!.anchor}
+                    className={`star-label ${important.has(n.id) ? 'key' : ''}`}
+                    style={{ fontSize: LABEL_PX * u, strokeWidth: 4 * u }}
+                  >
+                    {labels.get(n.id)!.text}
                   </text>
                 )}
               </g>
@@ -235,26 +377,32 @@ export default function Constellation() {
         </div>
         <div className="sky-filters">
           {(['library', 'recs', 'links'] as const).map((k) => (
-            <button key={k} className={`chip chip--sm ${show[k] ? 'chip--on' : ''}`} onClick={() => setShow((s) => ({ ...s, [k]: !s[k] }))}>
-              {k === 'library' ? '● Library' : k === 'recs' ? '○ Recommended' : '— Influence beams'}
+            <button key={k} className={`chip chip--sm ${show[k] ? 'chip--on' : ''}`} aria-pressed={show[k]} onClick={() => setShow((s) => ({ ...s, [k]: !s[k] }))}>
+              {k === 'library' ? '● Library' : k === 'recs' ? (compact ? '○ Recs' : '○ Recommended') : compact ? '— Beams' : '— Influence beams'}
             </button>
           ))}
         </div>
       </div>
 
       <div className="sky-zoom">
-        <button className="btn btn--icon btn--sm" onClick={() => setView((v) => ({ ...v, k: Math.min(6, v.k * 1.4) }))} aria-label="Zoom in">
+        <button className="btn btn--icon btn--sm" onClick={() => moveView((v) => ({ ...v, k: clampK(v.k * 1.4) }))} aria-label="Zoom in">
           <Plus size={15} />
         </button>
-        <button className="btn btn--icon btn--sm" onClick={() => setView((v) => ({ ...v, k: Math.max(0.6, v.k / 1.4) }))} aria-label="Zoom out">
+        <button className="btn btn--icon btn--sm" onClick={() => moveView((v) => ({ ...v, k: clampK(v.k / 1.4) }))} aria-label="Zoom out">
           <Minus size={15} />
         </button>
-        <button className="btn btn--icon btn--sm" onClick={() => setView(HOME)} aria-label="Recentre">
+        <button className="btn btn--icon btn--sm" onClick={() => moveView(HOME)} aria-label="Recentre">
           <Crosshair size={15} />
         </button>
+        {compact && (
+          <button className={`btn btn--icon btn--sm ${legend ? 'btn--on' : ''}`} onClick={() => setLegend((l) => !l)} aria-label="What the stars mean" aria-expanded={legend}>
+            <HelpCircle size={15} />
+          </button>
+        )}
       </div>
 
-      <div className="sky-legend">
+      <div className={`sky-legend ${legend ? 'open' : ''}`} onClick={() => compact && setLegend(false)}>
+        {compact && <span className="hint">Drag to pan · pinch or double-tap to zoom · tap a star</span>}
         <span>
           <i className="lg lg--lib" /> In your library — closer = loved more
         </span>
@@ -271,9 +419,36 @@ export default function Constellation() {
 
       {hover && hover.id !== selected?.id && <HoverCard node={hover} svg={svg.current} view={view} />}
 
-      {selected && (
+      {selected && compact && (
+        <aside className="sky-peek" aria-label="Selected show" key={selected.id}>
+          <button
+            type="button"
+            className="sky-peek__poster"
+            onClick={() => {
+              remember(selected.show);
+              nav(showPath(selected.show.id));
+            }}
+            aria-label={`Open ${selected.show.title}`}
+          >
+            <Poster show={selected.show} />
+          </button>
+          <ShowHud item={{ show: selected.show, rec: selected.rec, entry: selected.entry }} side="compact" onMore={() => setSheet(true)} />
+          <button className="btn btn--icon btn--sm sky-peek__close" onClick={() => setSelected(null)} aria-label="Close">
+            <X size={16} />
+          </button>
+        </aside>
+      )}
+      {selected && compact && sheet && (
+        <HudSheet item={{ show: selected.show, rec: selected.rec, entry: selected.entry }} onClose={closeSheet}>
+          <button className="btn btn--sm hud-sheet__fly" onClick={() => flyTo(selected)}>
+            <Crosshair size={14} /> Fly to on the map
+          </button>
+        </HudSheet>
+      )}
+
+      {selected && !compact && (
         <aside className="sky-panel">
-          <button className="icon-btn sky-panel__close" onClick={() => setSelected(null)} aria-label="Close">
+          <button className="btn btn--icon btn--sm sky-panel__close" onClick={() => setSelected(null)} aria-label="Close">
             <X size={16} />
           </button>
           <div className="sky-panel__poster" onClick={() => {

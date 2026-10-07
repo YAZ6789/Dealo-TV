@@ -1,0 +1,765 @@
+/* ==========================================================================
+   SURVEILLANCE — the world seen through a city-wide camera network.
+   Grainy monochrome CCTV feeds, white technical type, yellow tracking
+   brackets (relevant), red (threat), white (admin), and hard camera cuts.
+   Inspiration only: no names, logos or assets from any show.
+   ========================================================================== */
+
+[data-theme='surveillance'] {
+  --bg: #070707;
+  --bg-2: #0f0f10;
+  --bg-3: #19191a;
+  --panel: rgba(16, 16, 17, 0.9);
+  --panel-solid: #121212;
+  --panel-border: rgba(255, 255, 255, 0.16);
+  --panel-border-strong: rgba(255, 255, 255, 0.42);
+  --text: #eeeeee;
+  --text-dim: #b8b8b8;
+  --text-faint: #9a9a9a;
+  --accent: #f2d600;
+  --accent-2: #ec3a3f;
+  --accent-3: #ffffff;
+  --accent-ink: #0b0b00;
+  --ok: #f2d600;
+  --warn: #ff9d2e;
+  --danger: #ff4a4f;
+  --glow: 0 0 0 1px rgba(242, 214, 0, 0.75);
+  --glow-soft: 0 0 0 1px rgba(242, 214, 0, 0.3);
+  --shadow: 0 14px 40px rgba(0, 0, 0, 0.6);
+  --radius: 0px;
+  --radius-sm: 0px;
+  --radius-pill: 0px;
+  --font-display: 'JetBrains Mono Variable', ui-monospace, monospace;
+  --font-body: 'Inter Variable', system-ui, sans-serif;
+  --title-transform: uppercase;
+  --title-spacing: 0.06em;
+  --title-weight: 700;
+  --title-prefix: '▮ ';
+  --hero-weight: 800;
+  --blur: 4px;
+  --fs-hero: clamp(2rem, 5vw, 4rem);
+  /* tracking-bracket colour; overridden per state */
+  --trk: var(--accent);
+  --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  color-scheme: dark;
+}
+
+/* ── chrome ── */
+[data-theme='surveillance'] .topbar {
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
+  border-bottom-color: var(--panel-border-strong);
+}
+[data-theme='surveillance'] .logo__text b {
+  color: var(--accent);
+  animation: srv-blink 1.6s steps(1) infinite;
+}
+[data-theme='surveillance'] .nav a {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+[data-theme='surveillance'] .nav a.active::after {
+  height: 2px;
+  box-shadow: none;
+}
+[data-theme='surveillance'] .btn {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+[data-theme='surveillance'] .btn--primary:hover {
+  background: #fff;
+  border-color: #fff;
+  color: #000;
+}
+[data-theme='surveillance'] .btn--danger:hover {
+  box-shadow: 0 0 0 1px var(--danger);
+}
+[data-theme='surveillance'] .chip--on,
+[data-theme='surveillance'] .ep--on .ep__check {
+  box-shadow: none;
+}
+[data-theme='surveillance'] .bar__fill,
+[data-theme='surveillance'] .ring-card__bar span,
+[data-theme='surveillance'] .tunnel-gauge__track i {
+  background: var(--accent);
+  box-shadow: none;
+}
+[data-theme='surveillance'] .bar {
+  border-radius: 0;
+}
+[data-theme='surveillance'] .rating__seg.on {
+  background: var(--accent);
+  box-shadow: none;
+}
+[data-theme='surveillance'] .toggle.on::after,
+[data-theme='surveillance'] .hero__dots button.on,
+[data-theme='surveillance'] .ring-dial button.on::after {
+  box-shadow: none;
+}
+[data-theme='surveillance'] .ring-dial button.on {
+  text-shadow: none;
+}
+[data-theme='surveillance'] .hero__eyebrow::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  background: var(--accent-2);
+  box-shadow: none;
+  border-radius: 50%;
+  animation: srv-blink 1.2s steps(1) infinite;
+}
+[data-theme='surveillance'] .hero__title,
+[data-theme='surveillance'] .page-title {
+  letter-spacing: 0.02em;
+}
+/* micro-label under page titles (not read by screen readers) */
+[data-theme='surveillance'] .page-title::after {
+  content: 'ANALYSING…' / '';
+  display: block;
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+}
+[data-theme='surveillance'] .hud-title {
+  text-shadow: none;
+}
+[data-theme='surveillance'] .match {
+  letter-spacing: 0.02em;
+}
+[data-theme='surveillance'] .card__corner {
+  font-family: var(--font-mono);
+}
+[data-theme='surveillance'] .tag--accent {
+  background: color-mix(in srgb, var(--panel-solid) 92%, transparent);
+}
+[data-theme='surveillance'] .toast {
+  border-left-color: var(--accent);
+}
+[data-theme='surveillance'] .palette__item.active {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+@keyframes srv-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ── "analysis" panels: thin rule + corner ticks drawn as background layers ── */
+[data-theme='surveillance'] .panel,
+[data-theme='surveillance'] .modal,
+[data-theme='surveillance'] .palette,
+[data-theme='surveillance'] .reality,
+[data-theme='surveillance'] .ring-panel,
+[data-theme='surveillance'] .sky-panel,
+[data-theme='surveillance'] .tunnel-hud,
+[data-theme='surveillance'] .sky-legend {
+  --tk: color-mix(in srgb, var(--text) 55%, transparent);
+  background-image:
+    linear-gradient(var(--tk), var(--tk)),
+    linear-gradient(var(--tk), var(--tk)),
+    linear-gradient(var(--tk), var(--tk)),
+    linear-gradient(var(--tk), var(--tk)),
+    linear-gradient(var(--tk), var(--tk)),
+    linear-gradient(var(--tk), var(--tk)),
+    linear-gradient(var(--tk), var(--tk)),
+    linear-gradient(var(--tk), var(--tk)),
+    repeating-linear-gradient(to bottom, transparent 0 23px, rgba(255, 255, 255, 0.025) 23px 24px);
+  background-size:
+    10px 1px, 1px 10px, 10px 1px, 1px 10px, 10px 1px, 1px 10px, 10px 1px, 1px 10px,
+    100% 100%;
+  background-position:
+    4px 4px, 4px 4px, calc(100% - 4px) 4px, calc(100% - 4px) 4px,
+    4px calc(100% - 4px), 4px calc(100% - 4px), calc(100% - 4px) calc(100% - 4px), calc(100% - 4px) calc(100% - 4px),
+    0 0;
+  background-repeat: no-repeat;
+}
+[data-theme='surveillance'] .modal,
+[data-theme='surveillance'] .palette,
+[data-theme='surveillance'] .ring-panel,
+[data-theme='surveillance'] .sky-panel,
+[data-theme='surveillance'] .tunnel-hud {
+  --tk: var(--accent);
+  box-shadow: var(--shadow);
+}
+[data-theme='surveillance'] .ring-panel::before {
+  box-shadow: none;
+  height: 3px;
+}
+
+/* ── camera feeds: every poster is a CCTV feed ── */
+[data-theme='surveillance'] .row__track,
+[data-theme='surveillance'] .grid,
+[data-theme='surveillance'] .ring-carousel,
+[data-theme='surveillance'] .tunnel-world {
+  counter-reset: cam 3;
+}
+[data-theme='surveillance'] .card,
+[data-theme='surveillance'] .wcard,
+[data-theme='surveillance'] .ring-item,
+[data-theme='surveillance'] .tunnel-item {
+  counter-increment: cam;
+}
+
+[data-theme='surveillance'] .card__poster > img,
+[data-theme='surveillance'] .card__poster > .art,
+[data-theme='surveillance'] .wcard__media > img,
+[data-theme='surveillance'] .wcard__media > .art,
+[data-theme='surveillance'] .detail-hero__poster img,
+[data-theme='surveillance'] .detail-hero__poster .art,
+[data-theme='surveillance'] .ring-card > img,
+[data-theme='surveillance'] .ring-card > .art,
+[data-theme='surveillance'] .ring-reflect,
+[data-theme='surveillance'] .tunnel-card > img,
+[data-theme='surveillance'] .tunnel-card > .art,
+[data-theme='surveillance'] .palette__thumb,
+[data-theme='surveillance'] .list-row__poster,
+[data-theme='surveillance'] .sky-hover__poster,
+[data-theme='surveillance'] .sky-panel__poster,
+[data-theme='surveillance'] .reality__poster,
+[data-theme='surveillance'] .hero__bg,
+[data-theme='surveillance'] .detail-hero__bg {
+  filter: grayscale(0.88) contrast(1.22) brightness(0.92);
+  transition: filter 0.35s, transform 0.6s var(--ease);
+}
+[data-theme='surveillance'] .card:hover .card__poster > img,
+[data-theme='surveillance'] .card:hover .card__poster > .art,
+[data-theme='surveillance'] .card:focus-within .card__poster > img,
+[data-theme='surveillance'] .card:focus-within .card__poster > .art,
+[data-theme='surveillance'] .wcard:hover .wcard__media > img,
+[data-theme='surveillance'] .wcard:hover .wcard__media > .art,
+[data-theme='surveillance'] .ring-item.active .ring-card > img,
+[data-theme='surveillance'] .ring-item.active .ring-card > .art,
+[data-theme='surveillance'] .tunnel-item.active .tunnel-card > img,
+[data-theme='surveillance'] .tunnel-item.active .tunnel-card > .art {
+  filter: grayscale(0.25) contrast(1.12);
+}
+
+/* feed header strip: camera number, blinking REC dot and a ticking clock */
+[data-theme='surveillance'] .card__poster,
+[data-theme='surveillance'] .wcard__media,
+[data-theme='surveillance'] .ring-card,
+[data-theme='surveillance'] .tunnel-card,
+[data-theme='surveillance'] .detail-hero__poster {
+  container-type: inline-size;
+}
+[data-theme='surveillance'] .card__poster::before,
+[data-theme='surveillance'] .wcard__media::before,
+[data-theme='surveillance'] .ring-card::before,
+[data-theme='surveillance'] .tunnel-card::before,
+[data-theme='surveillance'] .detail-hero__poster::before {
+  content: 'CAM-' counter(cam, decimal-leading-zero) / '';
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 22px;
+  padding: 0 8px 0 21px;
+  display: flex;
+  align-items: center;
+  white-space: pre;
+  overflow: hidden;
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  color: #f2f2f2;
+  background:
+    radial-gradient(circle, var(--accent-2) 0 3.5px, transparent 4px) 6px 50% / 10px 10px no-repeat,
+    rgba(0, 0, 0, 0.74);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  animation: srv-rec 1.2s steps(1) infinite;
+}
+@keyframes srv-rec {
+  50% {
+    background-size: 0 0, auto;
+  }
+}
+[data-theme='surveillance'] .detail-hero__poster::before {
+  content: 'CAM-07' / '';
+}
+@container (min-width: 175px) {
+  [data-theme='surveillance'] .card__poster::before,
+  [data-theme='surveillance'] .wcard__media::before,
+  [data-theme='surveillance'] .ring-card::before,
+  [data-theme='surveillance'] .tunnel-card::before {
+    content: 'CAM-' counter(cam, decimal-leading-zero) '   21:04:17' / '';
+    animation: srv-rec 1.2s steps(1) infinite, srv-clock 4s steps(1) infinite;
+  }
+  [data-theme='surveillance'] .detail-hero__poster::before {
+    content: 'CAM-07   21:04:17' / '';
+    animation: srv-rec 1.2s steps(1) infinite, srv-clock-hero 4s steps(1) infinite;
+  }
+}
+/* the clock ticks (content is animated discretely; static where unsupported) */
+@keyframes srv-clock {
+  0% {
+    content: 'CAM-' counter(cam, decimal-leading-zero) '   21:04:17' / '';
+  }
+  25% {
+    content: 'CAM-' counter(cam, decimal-leading-zero) '   21:04:18' / '';
+  }
+  50% {
+    content: 'CAM-' counter(cam, decimal-leading-zero) '   21:04:19' / '';
+  }
+  75% {
+    content: 'CAM-' counter(cam, decimal-leading-zero) '   21:04:20' / '';
+  }
+}
+@keyframes srv-clock-hero {
+  0% {
+    content: 'CAM-07   21:04:17' / '';
+  }
+  25% {
+    content: 'CAM-07   21:04:18' / '';
+  }
+  50% {
+    content: 'CAM-07   21:04:19' / '';
+  }
+  75% {
+    content: 'CAM-07   21:04:20' / '';
+  }
+}
+/* keep badges / match chips clear of the header strip */
+[data-theme='surveillance'] .card__corner,
+[data-theme='surveillance'] .card__badge,
+[data-theme='surveillance'] .ring-card__match,
+[data-theme='surveillance'] .wcard__play {
+  top: 30px;
+}
+[data-theme='surveillance'] .card__badge {
+  background: color-mix(in srgb, #000 82%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+/* feed texture + corner ticks; becomes the tracking bracket when targeted */
+[data-theme='surveillance'] .card__poster::after,
+[data-theme='surveillance'] .wcard__media::after,
+[data-theme='surveillance'] .ring-card::after,
+[data-theme='surveillance'] .ring-item.active .ring-card::after,
+[data-theme='surveillance'] .tunnel-card::after,
+[data-theme='surveillance'] .detail-hero__poster::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  --tc: rgba(255, 255, 255, 0.55);
+  --l: 10px;
+  --o: 6px;
+  --w: 1px;
+  background:
+    linear-gradient(var(--tc), var(--tc)) var(--o) var(--o) / var(--l) var(--w),
+    linear-gradient(var(--tc), var(--tc)) var(--o) var(--o) / var(--w) var(--l),
+    linear-gradient(var(--tc), var(--tc)) calc(100% - var(--o)) var(--o) / var(--l) var(--w),
+    linear-gradient(var(--tc), var(--tc)) calc(100% - var(--o)) var(--o) / var(--w) var(--l),
+    linear-gradient(var(--tc), var(--tc)) var(--o) calc(100% - var(--o)) / var(--l) var(--w),
+    linear-gradient(var(--tc), var(--tc)) var(--o) calc(100% - var(--o)) / var(--w) var(--l),
+    linear-gradient(var(--tc), var(--tc)) calc(100% - var(--o)) calc(100% - var(--o)) / var(--l) var(--w),
+    linear-gradient(var(--tc), var(--tc)) calc(100% - var(--o)) calc(100% - var(--o)) / var(--w) var(--l),
+    repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 0 1px, transparent 1px 3px),
+    var(--noise) 0 0 / 140px 140px,
+    radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.5) 100%);
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, repeat, repeat, no-repeat;
+  mix-blend-mode: normal;
+  opacity: 0.9;
+  outline: 1px dashed transparent;
+  outline-offset: -12px;
+  animation: none;
+}
+/* the tracking bracket */
+[data-theme='surveillance'] .card:hover .card__poster::after,
+[data-theme='surveillance'] .card:focus-within .card__poster::after,
+[data-theme='surveillance'] .wcard:hover .wcard__media::after,
+[data-theme='surveillance'] .wcard__media:focus-visible::after,
+[data-theme='surveillance'] .ring-item.active .ring-card::after,
+[data-theme='surveillance'] .tunnel-item.active .tunnel-card::after,
+[data-theme='surveillance'] .tunnel-item:hover .tunnel-card::after,
+[data-theme='surveillance'] .detail-hero__poster::after {
+  --tc: var(--trk);
+  --l: 18px;
+  --w: 3px;
+  --o: 8px;
+  outline-color: color-mix(in srgb, var(--trk) 75%, transparent);
+  opacity: 1;
+  animation: srv-lock 0.32s steps(4, end) both;
+}
+@keyframes srv-lock {
+  from {
+    transform: scale(1.18);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+/* white = already known to you (watched); red = threat (dropped / about to mark "not interested") */
+[data-theme='surveillance'] .card:has(.card__badge[title='Watched']),
+[data-theme='surveillance'] .card:has(.card__badge[title='On hold']) {
+  --trk: #ffffff;
+}
+[data-theme='surveillance'] .card:has(.card__badge[title='Dropped']),
+[data-theme='surveillance'] .card:has(button[aria-label='Not interested']:hover),
+[data-theme='surveillance'] .card:has(button[aria-label='Not interested']:focus-visible) {
+  --trk: var(--accent-2);
+}
+[data-theme='surveillance'] .card:hover .card__poster,
+[data-theme='surveillance'] .card:focus-within .card__poster,
+[data-theme='surveillance'] .wcard:hover .wcard__media {
+  border-color: var(--trk);
+  box-shadow: var(--shadow);
+}
+[data-theme='surveillance'] .card:hover .card__poster::before,
+[data-theme='surveillance'] .card:focus-within .card__poster::before,
+[data-theme='surveillance'] .ring-item.active .ring-card::before,
+[data-theme='surveillance'] .tunnel-item.active .tunnel-card::before {
+  content: 'ANALYSING…' / '';
+  color: #000;
+  background:
+    radial-gradient(circle, #000 0 3.5px, transparent 4px) 6px 50% / 10px 10px no-repeat,
+    var(--trk);
+  border-bottom-color: transparent;
+  animation: srv-rec 0.6s steps(1) infinite;
+}
+[data-theme='surveillance'] .ring-item.active .ring-card,
+[data-theme='surveillance'] .tunnel-item.active .tunnel-card {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), var(--shadow);
+}
+[data-theme='surveillance'] .ring-beam {
+  background: radial-gradient(60% 50% at 50% 100%, rgba(255, 255, 255, 0.12), transparent 70%);
+}
+[data-theme='surveillance'] .ring-floor__ring {
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: none;
+}
+[data-theme='surveillance'] .tunnel-gate {
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: none;
+}
+[data-theme='surveillance'] .tunnel-gate span {
+  color: #fff;
+  text-shadow: none;
+  font-family: var(--font-mono);
+}
+[data-theme='surveillance'] .tunnel-card {
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
+}
+[data-theme='surveillance'] .sky-link.on {
+  filter: none;
+}
+
+/* hero imagery: a big monitor feed */
+[data-theme='surveillance'] .hero__bg::after,
+[data-theme='surveillance'] .detail-hero__bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.32) 0 1px, transparent 1px 3px),
+    var(--noise) 0 0 / 160px 160px;
+  opacity: 0.7;
+}
+[data-theme='surveillance'] .hero__bg img,
+[data-theme='surveillance'] .hero__bg .art {
+  animation-duration: 40s;
+}
+
+/* reduced motion: no blinking / ticking */
+@media (prefers-reduced-motion: reduce) {
+  [data-theme='surveillance'] *,
+  [data-theme='surveillance'] *::before,
+  [data-theme='surveillance'] *::after {
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ── background FX: a wall of feeds, a slow scan line and film grain ── */
+.fx-surveillance {
+  background: #050505;
+}
+.fx-surveillance .fx-feeds {
+  position: absolute;
+  inset: 3vh 2vw;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 1.4vw;
+  opacity: 0.55;
+}
+.fx-surveillance .fx-feeds i {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.16)) 8px 8px / 14px 1px no-repeat,
+    linear-gradient(rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.16)) 8px 8px / 1px 14px no-repeat,
+    radial-gradient(circle, rgba(226, 38, 43, 0.5) 0 2px, transparent 2.5px) calc(100% - 10px) 10px / 8px 8px no-repeat,
+    repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at 50% 40%, rgba(255, 255, 255, 0.05), transparent 70%),
+    rgba(255, 255, 255, 0.012);
+  animation: srv-feed 9s steps(1) infinite;
+}
+.fx-surveillance .fx-feeds i:nth-child(2) { animation-delay: -2s; }
+.fx-surveillance .fx-feeds i:nth-child(3) { animation-delay: -5s; }
+.fx-surveillance .fx-feeds i:nth-child(4) { animation-delay: -7s; }
+.fx-surveillance .fx-feeds i:nth-child(5) { animation-delay: -1s; opacity: 0.5; }
+.fx-surveillance .fx-feeds i:nth-child(6) { animation-delay: -4s; }
+.fx-surveillance .fx-feeds i:nth-child(7) { animation-delay: -6s; }
+.fx-surveillance .fx-feeds i:nth-child(8) { animation-delay: -3s; }
+.fx-surveillance .fx-feeds i:nth-child(9) { animation-delay: -8s; }
+@keyframes srv-feed {
+  0% {
+    filter: none;
+  }
+  47% {
+    filter: brightness(1.8);
+  }
+  49% {
+    filter: none;
+  }
+}
+.fx-surveillance .fx-feeds i::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--noise) 0 0 / 140px 140px;
+  opacity: 0.06;
+}
+.fx-surveillance .fx-sweep {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 18vh;
+  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.022) 85%, rgba(255, 255, 255, 0.07) 100%);
+  animation: srv-sweep 11s linear infinite;
+  will-change: transform;
+}
+@keyframes srv-sweep {
+  from {
+    transform: translateY(-20vh);
+  }
+  to {
+    transform: translateY(110vh);
+  }
+}
+.fx-surveillance .fx-grain {
+  position: absolute;
+  inset: -40px;
+  background: var(--noise) 0 0 / 180px 180px;
+  opacity: 0.07;
+  animation: srv-grain 0.6s steps(3) infinite;
+}
+@keyframes srv-grain {
+  33% {
+    transform: translate(-14px, 9px);
+  }
+  66% {
+    transform: translate(11px, -12px);
+  }
+}
+.fx-surveillance .fx-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.7) 100%);
+}
+
+/* ==========================================================================
+   Transition TO surveillance — the hard "camera cut":
+   old feed freezes and tears (steps) → 1–2 frames of white static →
+   hard cut to the new view, a short digital zoom from 1.06 and a yellow
+   tracking bracket snapping onto the centre.  ≈ 600 ms.
+   ========================================================================== */
+html[data-transition='surveillance']::view-transition {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") 0 0 / 160px 160px,
+    #3a3a3a;
+}
+html[data-transition='surveillance']::view-transition-old(root) {
+  animation: vt-cam-tear 0.2s steps(1, end) both;
+}
+html[data-transition='surveillance']::view-transition-new(root) {
+  animation: vt-cam-in 0.6s linear both;
+}
+@keyframes vt-cam-tear {
+  0% {
+    transform: none;
+    filter: grayscale(0.6) contrast(1.2);
+  }
+  16% {
+    transform: translateX(-12px);
+    filter: grayscale(1) contrast(1.8);
+    -webkit-mask-image: repeating-linear-gradient(to bottom, #000 0 38px, transparent 38px 52px, #000 52px 90px, transparent 90px 96px);
+    mask-image: repeating-linear-gradient(to bottom, #000 0 38px, transparent 38px 52px, #000 52px 90px, transparent 90px 96px);
+  }
+  33% {
+    transform: translateX(16px) scaleY(1.03);
+    clip-path: inset(0 0 24% 0);
+    filter: grayscale(1) contrast(2.4) brightness(1.2);
+    -webkit-mask-image: repeating-linear-gradient(to bottom, #000 0 22px, transparent 22px 30px, #000 30px 70px, transparent 70px 84px);
+    mask-image: repeating-linear-gradient(to bottom, #000 0 22px, transparent 22px 30px, #000 30px 70px, transparent 70px 84px);
+  }
+  50% {
+    transform: translateX(-6px) scaleX(1.04);
+    clip-path: inset(16% 0 0 0);
+    filter: grayscale(1) contrast(3) brightness(1.5);
+    -webkit-mask-image: repeating-linear-gradient(to bottom, #000 0 64px, transparent 64px 72px);
+    mask-image: repeating-linear-gradient(to bottom, #000 0 64px, transparent 64px 72px);
+  }
+  67% {
+    transform: none;
+    clip-path: none;
+    filter: grayscale(1) brightness(5) contrast(0.35);
+    -webkit-mask-image: none;
+    mask-image: none;
+    opacity: 1;
+  }
+  84% {
+    filter: grayscale(1) brightness(2.6) contrast(0.6);
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes vt-cam-in {
+  0%,
+  30% {
+    opacity: 0;
+    transform: scale(1.06);
+  }
+  31% {
+    opacity: 1;
+    transform: scale(1.06);
+    filter: grayscale(1) contrast(1.35) brightness(1.45);
+    animation-timing-function: steps(4, end);
+  }
+  70% {
+    transform: scale(1);
+    filter: grayscale(0.35) contrast(1.1);
+    animation-timing-function: ease-out;
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* the tracking bracket rides on the shared .vt-scanbar element */
+html[data-transition='surveillance'][data-vt-phase='new'] .vt-scanbar {
+  display: block;
+  inset: 0;
+  margin: auto;
+  width: min(42vmin, 340px);
+  height: min(42vmin, 340px);
+  --c: var(--accent);
+  --l: 34px;
+  background:
+    linear-gradient(var(--c), var(--c)) top left / var(--l) 4px,
+    linear-gradient(var(--c), var(--c)) top left / 4px var(--l),
+    linear-gradient(var(--c), var(--c)) top right / var(--l) 4px,
+    linear-gradient(var(--c), var(--c)) top right / 4px var(--l),
+    linear-gradient(var(--c), var(--c)) bottom left / var(--l) 4px,
+    linear-gradient(var(--c), var(--c)) bottom left / 4px var(--l),
+    linear-gradient(var(--c), var(--c)) bottom right / var(--l) 4px,
+    linear-gradient(var(--c), var(--c)) bottom right / 4px var(--l);
+  background-repeat: no-repeat;
+  box-shadow: none;
+  outline: 1px dashed color-mix(in srgb, var(--accent) 80%, transparent);
+  outline-offset: -16px;
+}
+html[data-transition='surveillance'][data-vt-phase='new'] .vt-scanbar::after {
+  content: 'ANALYSING…';
+  position: absolute;
+  left: 16px;
+  bottom: calc(100% + 6px);
+  padding: 3px 8px;
+  font: 600 0.8rem/1 'JetBrains Mono Variable', ui-monospace, monospace;
+  letter-spacing: 0.08em;
+  color: #000;
+  background: var(--accent);
+}
+html[data-transition='surveillance']::view-transition-group(vt-scanbar) {
+  animation: none;
+}
+html[data-transition='surveillance']::view-transition-new(vt-scanbar) {
+  animation: vt-cam-lock 0.62s linear both;
+}
+html[data-transition='surveillance']::view-transition-old(vt-scanbar) {
+  animation: none;
+  opacity: 0;
+}
+@keyframes vt-cam-lock {
+  0%,
+  30% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+  31% {
+    opacity: 1;
+    transform: scale(2.6);
+    animation-timing-function: steps(5, end);
+  }
+  58% {
+    opacity: 1;
+    transform: scale(1);
+    animation-timing-function: steps(1, end);
+  }
+  70% {
+    opacity: 0;
+  }
+  78% {
+    opacity: 1;
+  }
+  92% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-transition='surveillance']::view-transition-old(root),
+  html[data-transition='surveillance']::view-transition-new(root),
+  html[data-transition='surveillance']::view-transition-new(vt-scanbar) {
+    animation: none !important;
+  }
+  html[data-transition='surveillance'] .vt-scanbar {
+    display: none !important;
+  }
+}
+
+/* constellation: your library = admin white, recommendations = relevant yellow */
+[data-theme='surveillance'] .star--library .star-dot,
+[data-theme='surveillance'] .lg--lib,
+[data-theme='surveillance'] .lg--watch {
+  fill: #e6e6e6;
+  stroke: #ffffff;
+  background: #e6e6e6;
+}
+[data-theme='surveillance'] .lg--watch {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35);
+}
+[data-theme='surveillance'] .star--plan .star-dot {
+  stroke: #ffffff;
+}
+[data-theme='surveillance'] .lg--plan {
+  border-color: #ffffff;
+}
+[data-theme='surveillance'] .star-pulse {
+  stroke: var(--accent);
+}

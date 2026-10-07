@@ -19,10 +19,23 @@ import './styles/themes/hud.css';
 import './styles/themes/neon.css';
 import './styles/themes/aurora.css';
 import './styles/themes/terminal.css';
+import './styles/themes/surveillance.css';
+import './styles/themes/daylight.css';
+import './styles/themes/contrast.css';
+import './styles/designs/swipe.css';
+import './styles/designs/channel.css';
+import './styles/designs/timeline.css';
+import './styles/designs/mission.css';
+import './styles/wrapped.css';
+import './styles/upcoming.css';
+import './styles/assistant.css';
+import './styles/features.css';
 import { applyInitialTheme } from './theme/switch';
 import App from './App';
+import { setupPwa } from './pwa';
 
 applyInitialTheme();
+setupPwa();
 
 // Debug/automation hook: `__dealoDemo()` in the console loads the sample library.
 (window as unknown as { __dealoDemo: () => Promise<void> }).__dealoDemo = async () => {

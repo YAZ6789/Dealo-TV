@@ -1,0 +1,421 @@
+/* ==========================================================================
+   DAYLIGHT — a polished light skin for bright rooms. Off-white canvas,
+   white panels, ink text, indigo + pink accents, soft shadows instead of
+   glows. Overrides below fix the few places that assume a dark backdrop.
+   ========================================================================== */
+
+[data-theme='daylight'] {
+  --bg: #f6f7fb;
+  --bg-2: #eff1f7;
+  --bg-3: #e1e4ee;
+  --panel: rgba(255, 255, 255, 0.86);
+  --panel-solid: #ffffff;
+  --panel-border: rgba(18, 19, 26, 0.1);
+  --panel-border-strong: rgba(18, 19, 26, 0.24);
+  --text: #12131a;
+  --text-dim: #454b62;
+  --text-faint: #555b70;
+  --accent: #3651e8;
+  --accent-2: #c42a60;
+  --accent-3: #c2410c;
+  --accent-ink: #ffffff;
+  --ok: #0f7653;
+  --warn: #a34a07;
+  --danger: #c41f3a;
+  --glow: 0 0 0 1px rgba(54, 81, 232, 0.35), 0 6px 18px rgba(54, 81, 232, 0.16);
+  --glow-soft: 0 4px 14px rgba(18, 19, 26, 0.08);
+  --shadow: 0 12px 32px rgba(18, 19, 26, 0.12), 0 2px 6px rgba(18, 19, 26, 0.06);
+  --radius: 14px;
+  --radius-sm: 8px;
+  --radius-pill: 999px;
+  --font-display: 'Space Grotesk Variable', 'Inter Variable', sans-serif;
+  --font-body: 'Inter Variable', system-ui, sans-serif;
+  --title-transform: none;
+  --title-spacing: -0.005em;
+  --title-weight: 700;
+  --title-prefix: '';
+  --hero-weight: 700;
+  --blur: 18px;
+  color-scheme: light;
+}
+
+/* ── chrome ── */
+[data-theme='daylight'] .topbar {
+  background: color-mix(in srgb, #ffffff 80%, transparent);
+  border-bottom-color: var(--panel-border);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8), 0 6px 20px rgba(18, 19, 26, 0.04);
+}
+[data-theme='daylight'] .section-title::before {
+  display: none;
+}
+[data-theme='daylight'] .nav a {
+  letter-spacing: 0;
+  font-weight: 600;
+  border-radius: 999px;
+}
+[data-theme='daylight'] .nav a.active {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+[data-theme='daylight'] .nav a.active::after {
+  display: none;
+}
+[data-theme='daylight'] .logo__text b {
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+[data-theme='daylight'] .btn {
+  font-family: var(--font-body);
+  font-weight: 600;
+  letter-spacing: 0;
+  border-radius: 999px;
+  border-color: var(--panel-border-strong);
+  background: #fff;
+}
+[data-theme='daylight'] .btn:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 14px rgba(54, 81, 232, 0.16);
+}
+[data-theme='daylight'] .btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(54, 81, 232, 0.28);
+}
+[data-theme='daylight'] .btn--primary:hover {
+  background: #2a41c8;
+  border-color: #2a41c8;
+  box-shadow: 0 8px 22px rgba(54, 81, 232, 0.34);
+}
+[data-theme='daylight'] .btn--ghost {
+  background: transparent;
+  border-color: transparent;
+}
+[data-theme='daylight'] .btn--danger:hover {
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--danger) 22%, transparent);
+}
+[data-theme='daylight'] .search-trigger {
+  background: #fff;
+  border-radius: 999px;
+}
+[data-theme='daylight'] .input,
+[data-theme='daylight'] .select,
+[data-theme='daylight'] .textarea {
+  background-color: #fff;
+}
+[data-theme='daylight'] .input:focus,
+[data-theme='daylight'] .select:focus,
+[data-theme='daylight'] .textarea:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+[data-theme='daylight'] .panel {
+  box-shadow: 0 1px 2px rgba(18, 19, 26, 0.04), 0 8px 24px rgba(18, 19, 26, 0.05);
+}
+[data-theme='daylight'] .label,
+[data-theme='daylight'] .kpi__label,
+[data-theme='daylight'] .kv dt,
+[data-theme='daylight'] .palette__group,
+[data-theme='daylight'] .chart-title span {
+  font-family: var(--font-body);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+[data-theme='daylight'] .tag {
+  font-family: var(--font-body);
+  text-transform: none;
+  letter-spacing: 0;
+  border-radius: 999px;
+  padding: 2px 9px;
+  background: #fff;
+}
+[data-theme='daylight'] .chip {
+  background: #fff;
+}
+[data-theme='daylight'] .chip--on {
+  color: #fff;
+  background: var(--accent);
+  box-shadow: 0 3px 10px rgba(54, 81, 232, 0.25);
+}
+[data-theme='daylight'] .seg {
+  background: var(--bg-2);
+}
+[data-theme='daylight'] .seg button.on {
+  box-shadow: 0 2px 8px rgba(54, 81, 232, 0.25);
+}
+[data-theme='daylight'] .bar {
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+}
+[data-theme='daylight'] .bar__fill {
+  background: linear-gradient(90deg, var(--accent), #6a5cf0);
+  box-shadow: none;
+}
+[data-theme='daylight'] .rating__seg.on {
+  background: var(--accent);
+  box-shadow: none;
+}
+[data-theme='daylight'] .rating__seg {
+  border-radius: 4px;
+}
+[data-theme='daylight'] .toggle {
+  background: var(--bg-3);
+  border-color: transparent;
+}
+[data-theme='daylight'] .toggle::after {
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(18, 19, 26, 0.25);
+}
+[data-theme='daylight'] .toggle.on {
+  background: var(--accent);
+}
+[data-theme='daylight'] .toggle.on::after {
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(18, 19, 26, 0.25);
+}
+[data-theme='daylight'] input[type='range'].slider::-webkit-slider-thumb {
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(18, 19, 26, 0.25);
+}
+[data-theme='daylight'] .match {
+  font-family: var(--font-body);
+}
+[data-theme='daylight'] .ep--on .ep__check,
+[data-theme='daylight'] .hero__dots button.on,
+[data-theme='daylight'] .ring-dial button.on::after,
+[data-theme='daylight'] .tunnel-gauge__track i,
+[data-theme='daylight'] .ring-card__bar span {
+  box-shadow: none;
+}
+[data-theme='daylight'] .ring-dial button.on,
+[data-theme='daylight'] .hud-title {
+  text-shadow: none;
+}
+[data-theme='daylight'] .toast {
+  box-shadow: 0 12px 32px rgba(18, 19, 26, 0.16);
+}
+[data-theme='daylight'] .overlay {
+  background: color-mix(in srgb, #1b1e2c 28%, transparent);
+}
+[data-theme='daylight'] ::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text) 22%, transparent);
+}
+
+/* ── hero: the image fades into the light canvas; text gets a light halo, not a dark one ── */
+[data-theme='daylight'] .hero__meta,
+[data-theme='daylight'] .hero__overview,
+[data-theme='daylight'] .hero__eyebrow {
+  text-shadow: 0 0 12px rgba(246, 247, 251, 0.9), 0 0 2px rgba(246, 247, 251, 0.9);
+}
+[data-theme='daylight'] .hero__eyebrow::before {
+  box-shadow: none;
+}
+[data-theme='daylight'] .hero__shade {
+  background:
+    linear-gradient(to top, var(--bg) 0%, color-mix(in srgb, var(--bg) 80%, transparent) 32%, transparent 70%),
+    linear-gradient(to right, color-mix(in srgb, var(--bg) 97%, transparent) 0%, color-mix(in srgb, var(--bg) 82%, transparent) 42%, transparent 82%);
+}
+[data-theme='daylight'] .hero__title,
+[data-theme='daylight'] .page-title {
+  letter-spacing: -0.02em;
+}
+
+/* ── posters: soft shadows instead of glows ── */
+[data-theme='daylight'] .card__poster,
+[data-theme='daylight'] .wcard__media,
+[data-theme='daylight'] .detail-hero__poster {
+  border-color: rgba(18, 19, 26, 0.06);
+  box-shadow: 0 6px 18px rgba(18, 19, 26, 0.12);
+}
+[data-theme='daylight'] .card:hover .card__poster,
+[data-theme='daylight'] .card:focus-within .card__poster {
+  border-color: rgba(54, 81, 232, 0.45);
+  box-shadow: 0 14px 30px rgba(18, 19, 26, 0.2);
+}
+[data-theme='daylight'] .wcard:hover .wcard__media {
+  box-shadow: 0 14px 30px rgba(18, 19, 26, 0.2);
+}
+[data-theme='daylight'] .card__overlay {
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.97) 0%, rgba(255, 255, 255, 0.8) 45%, transparent 78%);
+}
+[data-theme='daylight'] .card__actions .btn {
+  background: #fff;
+}
+[data-theme='daylight'] .card__badge {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: transparent;
+  box-shadow: 0 2px 6px rgba(18, 19, 26, 0.15);
+}
+[data-theme='daylight'] .card__corner {
+  border-radius: 999px;
+  box-shadow: 0 2px 6px rgba(18, 19, 26, 0.2);
+}
+/* landscape cards: white info plate instead of a fade into dark */
+[data-theme='daylight'] .wcard__shade {
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.82) 34%, transparent 66%);
+}
+
+/* ── designs ── */
+[data-theme='daylight'] .ring-panel,
+[data-theme='daylight'] .sky-panel,
+[data-theme='daylight'] .tunnel-hud,
+[data-theme='daylight'] .sky-legend,
+[data-theme='daylight'] .sky-hover {
+  box-shadow: 0 12px 34px rgba(18, 19, 26, 0.1);
+}
+[data-theme='daylight'] .ring-panel::before {
+  box-shadow: none;
+  border-radius: 0 0 3px 3px;
+}
+[data-theme='daylight'] .ring-item.active .ring-card {
+  box-shadow: 0 0 0 2px var(--accent), 0 18px 40px rgba(54, 81, 232, 0.28);
+}
+[data-theme='daylight'] .ring-item.active .ring-card::after {
+  mix-blend-mode: soft-light;
+}
+[data-theme='daylight'] .ring-card {
+  box-shadow: 0 8px 20px rgba(18, 19, 26, 0.14);
+}
+[data-theme='daylight'] .ring-beam {
+  background: radial-gradient(60% 50% at 50% 100%, rgba(54, 81, 232, 0.16), transparent 70%);
+}
+[data-theme='daylight'] .ring-floor__disc {
+  background:
+    radial-gradient(circle, rgba(54, 81, 232, 0.14) 0%, transparent 42%),
+    repeating-radial-gradient(circle, rgba(54, 81, 232, 0.16) 0 1px, transparent 1px 34px);
+}
+[data-theme='daylight'] .ring-floor__ring {
+  border-color: rgba(196, 42, 96, 0.45);
+  box-shadow: 0 0 30px rgba(196, 42, 96, 0.15), inset 0 0 30px rgba(54, 81, 232, 0.1);
+}
+[data-theme='daylight'] .tunnel-plane {
+  opacity: 0.35;
+}
+[data-theme='daylight'] .tunnel-wall {
+  opacity: 0.22;
+}
+[data-theme='daylight'] .tunnel-ceil {
+  opacity: 0.14;
+}
+[data-theme='daylight'] .tunnel-card {
+  box-shadow: 0 10px 30px rgba(18, 19, 26, 0.18);
+}
+[data-theme='daylight'] .tunnel-item.active .tunnel-card {
+  box-shadow: 0 0 0 2px var(--accent), 0 20px 50px rgba(54, 81, 232, 0.3);
+}
+[data-theme='daylight'] .tunnel-gate {
+  border-color: rgba(196, 42, 96, 0.4);
+  box-shadow: 0 0 30px rgba(196, 42, 96, 0.12), inset 0 0 40px rgba(196, 42, 96, 0.08);
+}
+[data-theme='daylight'] .tunnel-gate span {
+  color: var(--accent-2);
+  text-shadow: none;
+}
+[data-theme='daylight'] .tunnel-caption {
+  text-shadow: none;
+  box-shadow: 0 4px 12px rgba(18, 19, 26, 0.1);
+}
+[data-theme='daylight'] .tunnel-streaks {
+  opacity: 0.05;
+}
+[data-theme='daylight'] .sky-orbit {
+  stroke: rgba(54, 81, 232, 0.28);
+}
+[data-theme='daylight'] .star--library .star-dot {
+  stroke: #fff;
+}
+[data-theme='daylight'] .sky-link.on {
+  filter: none;
+}
+[data-theme='daylight'] .hm-0 {
+  fill: var(--bg-3);
+  background: var(--bg-3);
+}
+[data-theme='daylight'] .reality__card.on::after {
+  color: #fff;
+}
+
+/* ── background FX: soft morning sky ── */
+.fx-daylight .fx-sky {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #eef1fb 0%, #f6f7fb 45%, #f8f6f6 100%);
+}
+.fx-daylight .fx-sun {
+  position: absolute;
+  width: 70vmax;
+  height: 70vmax;
+  top: -38vmax;
+  right: -22vmax;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 214, 170, 0.5) 0%, rgba(255, 190, 210, 0.22) 38%, transparent 66%);
+  animation: day-sun 40s ease-in-out infinite alternate;
+}
+.fx-daylight .fx-haze {
+  position: absolute;
+  width: 80vmax;
+  height: 60vmax;
+  bottom: -34vmax;
+  left: -24vmax;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(54, 81, 232, 0.1), transparent);
+  animation: day-haze 50s ease-in-out infinite alternate;
+}
+@keyframes day-sun {
+  to {
+    transform: translate(-6vmax, 4vmax) scale(1.06);
+  }
+}
+@keyframes day-haze {
+  to {
+    transform: translate(10vmax, -4vmax);
+  }
+}
+
+/* ==========================================================================
+   Transition TO daylight — "sunrise wipe": the light rises from the bottom
+   with a soft gradient edge while the old (dark) view brightens & warms.
+   ========================================================================== */
+html[data-transition='daylight']::view-transition {
+  background: #f6f7fb;
+}
+html[data-transition='daylight']::view-transition-old(root) {
+  animation: vt-dawn 0.95s ease-in both;
+}
+html[data-transition='daylight']::view-transition-new(root) {
+  -webkit-mask-image: linear-gradient(to top, #000 calc(var(--vt-p) - 28%), transparent var(--vt-p));
+  mask-image: linear-gradient(to top, #000 calc(var(--vt-p) - 28%), transparent var(--vt-p));
+  animation: vt-sunrise 0.95s cubic-bezier(0.3, 0.6, 0.2, 1) both;
+}
+@keyframes vt-sunrise {
+  from {
+    --vt-p: 0%;
+    filter: brightness(1.35) saturate(1.25) sepia(0.25);
+  }
+  60% {
+    filter: brightness(1.12) saturate(1.1) sepia(0.08);
+  }
+  to {
+    --vt-p: 130%;
+    filter: none;
+  }
+}
+@keyframes vt-dawn {
+  to {
+    filter: brightness(1.7) saturate(0.7) sepia(0.35);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-transition='daylight']::view-transition-old(root),
+  html[data-transition='daylight']::view-transition-new(root) {
+    animation: none !important;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
+
+/* landscape cards already print the title on the white plate — hide the art's own title */
+[data-theme='daylight'] .wcard__media .art__title,
+[data-theme='daylight'] .wcard__media .art__kicker {
+  visibility: hidden;
+}

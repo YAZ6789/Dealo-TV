@@ -7,13 +7,13 @@
   --bg: #07060b;
   --bg-2: #110e18;
   --bg-3: #1b1526;
-  --panel: rgba(18, 12, 26, 0.72);
+  --panel: rgba(18, 12, 26, 0.88);
   --panel-solid: #120d1a;
   --panel-border: rgba(255, 42, 109, 0.28);
   --panel-border-strong: rgba(255, 42, 109, 0.7);
   --text: #fdf2ff;
   --text-dim: #c3a9cc;
-  --text-faint: #8a7395;
+  --text-faint: #a993b3;
   --accent: #ff2a6d;
   --accent-2: #05d9e8;
   --accent-3: #f9f002;
@@ -88,7 +88,7 @@
 [data-theme='neon'] .page-title {
   position: relative;
   color: #fff;
-  text-shadow: 2px 0 0 rgba(255, 42, 109, 0.9), -2px 0 0 rgba(5, 217, 232, 0.9), 0 0 30px rgba(255, 42, 109, 0.5);
+  text-shadow: 1px 0 0 rgba(255, 42, 109, 0.75), -1px 0 0 rgba(5, 217, 232, 0.75), 0 0 26px rgba(255, 42, 109, 0.4);
   animation: neon-flicker 7s infinite;
 }
 @keyframes neon-flicker {
@@ -96,7 +96,7 @@
     opacity: 1;
   }
   20%, 63% {
-    opacity: 0.55;
+    opacity: 0.88;
   }
 }
 [data-theme='neon'] .logo__text {
@@ -173,7 +173,7 @@
   background-repeat: repeat;
   -webkit-mask-image: repeating-linear-gradient(90deg, black 0 1px, transparent 1px 73px);
   mask-image: repeating-linear-gradient(90deg, black 0 1px, transparent 1px 73px);
-  opacity: 0.45;
+  opacity: 0.22;
   animation: neon-rain 1.4s linear infinite;
 }
 @keyframes neon-rain {
@@ -184,7 +184,7 @@
 .fx-neon .fx-noise {
   position: absolute;
   inset: 0;
-  opacity: 0.06;
+  opacity: 0.035;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   animation: neon-noise 0.5s steps(3) infinite;
 }

@@ -34,7 +34,7 @@
   --font-body: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, monospace;
   --title-transform: uppercase;
-  --title-spacing: 0.14em;
+  --title-spacing: 0.1em;
   --title-weight: 700;
   --title-prefix: '// ';
   --hero-weight: 900;
@@ -44,9 +44,9 @@
   --topbar-h: 64px;
   --gutter: clamp(16px, 4vw, 56px);
   --card-w: clamp(132px, 15vw, 196px);
-  --fs-xs: 0.75rem;
-  --fs-sm: 0.845rem;
-  --fs-md: 0.94rem;
+  --fs-xs: 0.8rem;
+  --fs-sm: 0.9rem;
+  --fs-md: 0.97rem;
   --fs-lg: 1.12rem;
   --fs-xl: 1.5rem;
   --fs-2xl: 2.1rem;
@@ -68,6 +68,9 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
+  /* Safety net: decorative layers that poke past the edge never cause sideways scroll on phones.
+     (clip, unlike hidden, doesn't create a scroll container, so sticky headers keep working.) */
+  overflow-x: clip;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-body);
@@ -168,6 +171,7 @@ button {
   z-index: -1;
   pointer-events: none;
   overflow: hidden;
+  contain: strict;
 }
 
 .topbar {
@@ -272,7 +276,7 @@ button {
 
 kbd {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   padding: 2px 6px;
   border: 1px solid var(--panel-border);
   border-radius: 4px;
@@ -369,6 +373,8 @@ kbd {
 @media (max-width: 860px) {
   :root {
     --topbar-h: 56px;
+    /* Bottom tab bar height (without the safe-area inset) — full-screen designs subtract it. */
+    --tabbar-h: 62px;
   }
   .nav,
   .search-trigger .label,
@@ -402,7 +408,7 @@ kbd {
     justify-items: center;
     gap: 2px;
     padding: 6px 0;
-    font-size: 0.66rem;
+    font-size: 0.74rem;
     letter-spacing: 0.06em;
     text-transform: var(--title-transform);
     color: var(--text-faint);
@@ -411,7 +417,11 @@ kbd {
     color: var(--accent);
   }
   .main {
-    padding-bottom: 96px;
+    padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 28px);
+  }
+  .tabbar a {
+    min-height: 48px;
+    align-content: center;
   }
 }
 
@@ -551,7 +561,7 @@ button.chip:hover {
   align-items: center;
   gap: 5px;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-dim);
@@ -613,8 +623,8 @@ button.chip:hover {
 }
 .label {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.12em;
+  font-size: 0.78rem;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--text-faint);
 }
@@ -651,7 +661,7 @@ button.chip:hover {
 }
 .seg button .n {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   opacity: 0.7;
   margin-left: 6px;
 }
@@ -769,7 +779,7 @@ input[type='range'].slider::-moz-range-thumb {
   z-index: -1;
   background:
     linear-gradient(to top, var(--bg) 0%, color-mix(in srgb, var(--bg) 70%, transparent) 30%, transparent 65%),
-    linear-gradient(to right, color-mix(in srgb, var(--bg) 92%, transparent) 0%, color-mix(in srgb, var(--bg) 40%, transparent) 50%, transparent 80%);
+    linear-gradient(to right, color-mix(in srgb, var(--bg) 95%, transparent) 0%, color-mix(in srgb, var(--bg) 70%, transparent) 40%, transparent 80%);
 }
 .hero__content {
   max-width: 680px;
@@ -782,7 +792,7 @@ input[type='range'].slider::-moz-range-thumb {
   gap: 10px;
   font-family: var(--font-mono);
   font-size: var(--fs-xs);
-  letter-spacing: 0.22em;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
   color: var(--accent);
 }
@@ -810,6 +820,11 @@ input[type='range'].slider::-moz-range-thumb {
   gap: 8px 14px;
   font-size: var(--fs-sm);
   color: var(--text-dim);
+}
+.hero__meta,
+.hero__overview,
+.hero__eyebrow {
+  text-shadow: 0 1px 14px rgba(0, 0, 0, 0.85), 0 0 2px rgba(0, 0, 0, 0.6);
 }
 .hero__overview {
   margin: 0;
@@ -864,8 +879,21 @@ input[type='range'].slider::-moz-range-thumb {
 }
 .row__head .section-title {
   margin: 0;
+  min-width: 0;
+}
+/* One line, always: long titles ellipsize instead of wrapping under the "See all" link. */
+.row__title {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.row__head .section-title .count {
+  flex: none;
 }
 .row__head .more {
+  flex: none;
+  white-space: nowrap;
   margin-left: auto;
   font-family: var(--font-mono);
   font-size: var(--fs-xs);
@@ -1003,7 +1031,7 @@ input[type='range'].slider::-moz-range-thumb {
   background: color-mix(in srgb, var(--bg) 70%, transparent);
 }
 .card__reason {
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   line-height: 1.35;
   color: var(--text-dim);
   display: -webkit-box;
@@ -1028,7 +1056,7 @@ input[type='range'].slider::-moz-range-thumb {
   height: 22px;
   padding: 0 6px;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--accent-ink);
   background: var(--accent);
@@ -1062,7 +1090,7 @@ input[type='range'].slider::-moz-range-thumb {
   display: flex;
   gap: 8px;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   color: var(--text-faint);
   white-space: nowrap;
   overflow: hidden;
@@ -1126,7 +1154,7 @@ input[type='range'].slider::-moz-range-thumb {
   justify-content: space-between;
   gap: 8px;
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   color: var(--text-dim);
 }
 .wcard__play {
@@ -1177,8 +1205,8 @@ input[type='range'].slider::-moz-range-thumb {
 }
 .art__kicker {
   font-family: var(--font-mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.2em;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   opacity: 0.8;
   margin-bottom: 6px;
@@ -1326,8 +1354,8 @@ input[type='range'].slider::-moz-range-thumb {
 .palette__group {
   padding: 10px 10px 6px;
   font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.16em;
+  font-size: 0.74rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-faint);
 }
@@ -1441,8 +1469,13 @@ input[type='range'].slider::-moz-range-thumb {
   width: min(380px, calc(100vw - 32px));
 }
 @media (max-width: 860px) {
+  /* Phones: toasts drop from the top so they never cover a design's bottom controls or the tab bar. */
   .toasts {
-    bottom: 84px;
+    top: calc(var(--topbar-h) + 10px + env(safe-area-inset-top, 0px));
+    bottom: auto;
+    right: 16px;
+    left: 16px;
+    width: auto;
   }
 }
 .toast {
@@ -1565,6 +1598,15 @@ input[type='range'].slider::-moz-range-thumb {
   .detail-hero__poster {
     width: 140px;
   }
+  /* Back sits where thumbs expect it: top-left, under the top bar (not below the poster). */
+  .detail-hero .back-btn {
+    position: absolute;
+    top: calc(var(--topbar-h) + 10px);
+    left: var(--gutter);
+    z-index: 2;
+    margin: 0;
+    background: color-mix(in srgb, var(--panel-solid) 80%, transparent);
+  }
 }
 .detail-body {
   display: grid;
@@ -1585,8 +1627,8 @@ input[type='range'].slider::-moz-range-thumb {
 }
 .kv dt {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.12em;
+  font-size: 0.78rem;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--text-faint);
   padding-top: 2px;
@@ -1756,12 +1798,12 @@ input[type='range'].slider::-moz-range-thumb {
 }
 .ep__date {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.74rem;
   color: var(--text-faint);
 }
 .ep__upto {
   font-family: var(--font-mono);
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-faint);
@@ -1791,8 +1833,8 @@ input[type='range'].slider::-moz-range-thumb {
 }
 .kpi__label {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.14em;
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-faint);
 }
@@ -1851,7 +1893,7 @@ input[type='range'].slider::-moz-range-thumb {
 .chart-title span {
   margin-left: auto;
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.74rem;
   letter-spacing: 0.08em;
   color: var(--text-faint);
   font-weight: 400;
@@ -1872,7 +1914,7 @@ input[type='range'].slider::-moz-range-thumb {
   pointer-events: none;
   padding: 6px 9px;
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   background: var(--panel-solid);
   border: 1px solid var(--panel-border-strong);
   border-radius: var(--radius-sm);
@@ -2003,7 +2045,7 @@ input[type='range'].slider::-moz-range-thumb {
   padding: 0 var(--gutter);
   font-family: var(--font-mono);
   font-size: var(--fs-xs);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--text-faint);
 }
@@ -2034,8 +2076,8 @@ input[type='range'].slider::-moz-range-thumb {
   top: 0;
   text-align: left;
   font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.12em;
+  font-size: 0.74rem;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--text-faint);
   background: var(--panel-solid);
@@ -2130,4 +2172,145 @@ input[type='range'].slider::-moz-range-thumb {
   background: var(--accent-2);
   color: #fff;
   letter-spacing: 0.06em;
+}
+
+/* Landscape cards print the title in .wcard__info — hide the procedural art's own copy so they don't double up. */
+.wcard__media .art__title,
+.wcard__media .art__kicker {
+  display: none;
+}
+
+/* ───────────── Phones ───────────── */
+@media (max-width: 600px) {
+  .section-title {
+    font-size: calc(var(--fs-lg) * 0.9);
+    gap: 8px;
+    /* wide display fonts (HUD, Neon) get tighter tracking so shelf titles fit a phone */
+    letter-spacing: min(var(--title-spacing, 0em), 0.03em);
+  }
+  .row__head .more {
+    letter-spacing: 0.04em;
+  }
+  .row__head {
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .row__head .more {
+    /* comfortable thumb target without changing the visual */
+    padding: 12px 0 12px 12px;
+    margin: -12px 0;
+  }
+}
+/* Touch screens: no hover-reveal arrows on shelves — you swipe. */
+@media (hover: none) {
+  .row__arrow {
+    display: none !important;
+  }
+}
+
+/* ───────────── Touch screens: thumb-sized targets ───────────── */
+@media (pointer: coarse) {
+  .btn--sm {
+    height: 38px;
+  }
+  .chip {
+    height: 36px;
+  }
+  .chip--sm {
+    height: 30px;
+  }
+  .seg button {
+    min-height: 38px;
+  }
+  /* rating bar stretches to the row so each segment is a real target */
+  .rating:not(.rating--sm) {
+    display: flex;
+    width: 100%;
+    max-width: 440px;
+  }
+  .rating:not(.rating--sm) .rating__segs {
+    flex: 1;
+    gap: 4px;
+  }
+  .rating:not(.rating--sm) .rating__seg {
+    flex: 1;
+    width: auto;
+    min-width: 20px;
+    height: 36px;
+  }
+  .rating__seg:hover {
+    transform: none;
+  }
+  .ep {
+    min-height: 52px;
+  }
+  .ep__check {
+    position: relative;
+    width: 30px;
+    height: 30px;
+  }
+  .ep__check::before {
+    content: '';
+    position: absolute;
+    inset: -9px;
+  }
+  /* hover-only on desktop — always visible on touch */
+  .ep__upto {
+    opacity: 1;
+    padding: 10px 8px;
+  }
+  .toggle::before {
+    content: '';
+    position: absolute;
+    inset: -10px -6px;
+  }
+  .hero .hero__dots {
+    gap: 2px;
+    margin-left: -4px;
+  }
+  .hero .hero__dots button {
+    width: 30px;
+    height: 28px;
+    padding: 12px 4px;
+    background-clip: content-box;
+    box-shadow: none !important;
+  }
+  .hero .hero__dots button.on {
+    width: 52px;
+  }
+  .row__track {
+    scroll-padding-inline: var(--gutter);
+  }
+}
+/* Keyboard hints mean nothing on a phone. */
+@media (hover: none) and (pointer: coarse) {
+  .keyboard-only,
+  .palette__foot {
+    display: none !important;
+  }
+}
+
+/* Small phones: logo yields space to the action buttons; panels never grow past the screen. */
+@media (max-width: 400px) {
+  .topbar .logo {
+    font-size: 0.92rem;
+    letter-spacing: 0.04em;
+    gap: 7px;
+  }
+  .topbar__actions {
+    gap: 2px;
+  }
+}
+.stack > * {
+  min-width: 0;
+}
+.key-row .input {
+  min-width: 0;
+}
+.settings .cluster .tag {
+  max-width: 100%;
+  height: auto;
+  min-height: 24px;
+  white-space: normal;
 }

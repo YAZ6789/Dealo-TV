@@ -20,7 +20,7 @@
 .hud-eyebrow {
   font-family: var(--font-mono);
   font-size: var(--fs-xs);
-  letter-spacing: 0.18em;
+  letter-spacing: 0.11em;
   text-transform: uppercase;
   color: var(--accent);
 }
@@ -81,6 +81,129 @@
   font-weight: 700;
 }
 
+/* compact strip (phones): status · title · progress · primary action */
+.hud-compact {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  animation: hud-in 0.3s var(--ease) both;
+}
+.hud-compact__text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  width: 100%;
+  padding: 0;
+  text-align: left;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+div.hud-compact__text {
+  cursor: default;
+}
+.hud-compact__eyebrow {
+  font-size: 0.75rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hud-compact__title {
+  display: block;
+  font-size: clamp(1.15rem, 5.2vw, 1.5rem);
+  line-height: 1.12;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: none;
+}
+.hud-compact .hud-meta {
+  font-size: 0.75rem;
+  min-height: 1.2em;
+}
+.hud-compact__progress {
+  display: grid;
+  grid-template-columns: minmax(60px, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 1.2em;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+.hud-compact__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.hud-compact__actions .btn {
+  height: 40px;
+  min-width: 40px;
+  flex: none;
+}
+.hud-compact__actions .btn--icon {
+  width: 40px;
+  margin-left: auto;
+}
+
+/* full readout sheet (phones): between the top bar and the bottom tab bar */
+.hud-sheet-wrap {
+  --tab-space: calc(70px + env(safe-area-inset-bottom, 0px));
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: var(--topbar-h);
+  bottom: var(--tab-space);
+  z-index: 58;
+  display: grid;
+  /* hangs from the top bar so the status menu inside has room to open downwards */
+  align-items: start;
+  padding: 8px;
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  animation: fade-in 0.2s var(--ease) both;
+}
+.hud-sheet {
+  position: relative;
+  display: grid;
+  gap: 14px;
+  max-height: 100%;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 18px 16px 16px;
+  background: var(--panel-solid);
+  border: 1px solid var(--panel-border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow), var(--glow-soft);
+  animation: hud-sheet-in 0.28s var(--ease) both;
+}
+@keyframes hud-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+}
+.hud-sheet__close {
+  position: sticky;
+  top: 0;
+  justify-self: end;
+  margin-bottom: -54px;
+  z-index: 2;
+}
+.hud-sheet .hud-title {
+  padding-right: 48px;
+  font-size: clamp(1.4rem, 6vw, 2rem);
+}
+.hud-sheet .hud-overview {
+  -webkit-line-clamp: 8;
+}
+.hud-sheet .cluster .btn {
+  height: 40px;
+}
+.hud-sheet .cluster .btn--icon {
+  width: 40px;
+}
+
 /* ───────────── HOLO RING ───────────── */
 .ring-stage {
   position: relative;
@@ -107,10 +230,11 @@
   position: relative;
   padding: 8px 14px 10px;
   font-family: var(--font-mono);
-  font-size: var(--fs-xs);
-  letter-spacing: 0.14em;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-faint);
+  color: var(--text-dim);
   transition: color 0.2s, transform 0.4s var(--ease);
 }
 .ring-dial button .n {
@@ -148,7 +272,7 @@
   align-self: center;
   padding: 20px;
   min-height: 200px;
-  background: color-mix(in srgb, var(--panel-solid) 72%, transparent);
+  background: color-mix(in srgb, var(--panel-solid) 92%, transparent);
   border: 1px solid var(--panel-border);
   border-radius: var(--radius);
   backdrop-filter: blur(var(--blur));
@@ -267,7 +391,7 @@
   right: 8px;
   padding: 2px 7px;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--accent-ink);
   background: var(--accent);
@@ -293,8 +417,8 @@
   overflow: hidden;
   border-radius: var(--radius);
   transform: translateY(calc(100% + 10px)) scaleY(-1);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 58%, rgba(0, 0, 0, 0.32) 100%);
-  mask-image: linear-gradient(to bottom, transparent 58%, rgba(0, 0, 0, 0.32) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 62%, rgba(0, 0, 0, 0.18) 100%);
+  mask-image: linear-gradient(to bottom, transparent 62%, rgba(0, 0, 0, 0.18) 100%);
   pointer-events: none;
 }
 .ring-beam {
@@ -365,8 +489,8 @@
   justify-content: center;
   gap: 14px;
   padding-top: 10px;
-  font-size: var(--fs-xs);
-  letter-spacing: 0.14em;
+  font-size: var(--fs-sm);
+  letter-spacing: 0.08em;
   color: var(--text-dim);
   z-index: 5;
 }
@@ -390,6 +514,140 @@
   .ring-hint {
     display: none;
   }
+}
+
+/* Poster art titles: size to the card, never clip mid-word ("SEVERANC"). */
+.ring-card,
+.tunnel-card {
+  container-type: inline-size;
+}
+.ring-card > .art,
+.tunnel-card > .art {
+  padding: 9%;
+}
+.ring-card .art__title,
+.tunnel-card .art__title {
+  font-size: clamp(0.6rem, 10.5cqi, 1.25rem);
+  hyphens: auto;
+}
+.ring-card .art__kicker,
+.tunnel-card .art__kicker {
+  font-size: clamp(0.5rem, 6.4cqi, 0.68rem);
+  overflow-wrap: anywhere;
+}
+
+/* Holo Ring — phones (JS adds .ring-stage--compact at the tab-bar breakpoint) */
+.ring-stage--compact {
+  --tab-space: calc(70px + env(safe-area-inset-bottom, 0px));
+  min-height: 0;
+  height: calc(100vh - var(--topbar-h) - 70px);
+  height: calc(100dvh - var(--topbar-h) - var(--tab-space));
+  margin-bottom: -96px; /* the page's own tab-bar padding: this stage already stops above the bar */
+  padding: 4px var(--gutter) 8px;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-areas: 'dial' 'body' 'ticker' 'strip';
+}
+.ring-stage--compact .ring-dial {
+  grid-area: dial;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 22px), transparent);
+  mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 22px), transparent);
+}
+.ring-stage--compact .ring-dial button {
+  min-height: 44px;
+  padding: 10px 12px 12px;
+}
+.ring-stage--compact .ring-dial button.on::after {
+  left: 12px;
+  right: 12px;
+  bottom: 4px;
+}
+.ring-stage--compact .ring-body {
+  grid-area: body;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  align-items: stretch;
+}
+.ring-stage--compact .ring-carousel {
+  top: 41%;
+}
+.ring-stage--compact .ring-viewport {
+  height: auto;
+  min-height: 150px;
+  touch-action: none; /* the stage fits the screen: horizontal swipes spin, nothing to scroll */
+}
+.ring-stage--compact .ring-ticker {
+  grid-area: ticker;
+  position: relative;
+  margin-top: -48px;
+  padding: 0 0 6px;
+  gap: 10px;
+  font-size: 0.75rem;
+  pointer-events: none;
+}
+.ring-stage--compact .ring-ticker .btn {
+  width: 40px;
+  height: 40px;
+  pointer-events: auto;
+  background: color-mix(in srgb, var(--panel-solid) 80%, transparent);
+}
+.ring-stage--compact .ring-ticker .mono {
+  min-width: 13ch;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ring-strip {
+  grid-area: strip;
+  position: relative;
+  z-index: 5;
+  margin-top: 8px;
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--panel-solid) 92%, transparent);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.ring-strip::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 16px;
+  width: 48px;
+  height: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+}
+/* landscape phones: ring left, strip right */
+@media (max-height: 520px) and (orientation: landscape) {
+  .ring-stage--compact {
+    grid-template-columns: minmax(0, 1fr) minmax(250px, 42%);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas: 'dial dial' 'body strip' 'body ticker';
+    column-gap: 12px;
+  }
+  .ring-stage--compact .ring-viewport {
+    min-height: 120px;
+  }
+  .ring-stage--compact .ring-ticker {
+    margin-top: 6px;
+    padding: 0;
+  }
+  .ring-strip {
+    margin-top: 0;
+    align-self: end;
+  }
+}
+
+/* calm: reduceFx, reduced motion or touch devices — no idle animation */
+.fx-calm .ring-item.active .ring-card::after,
+.fx-calm .ring-floor__ticks,
+.fx-calm .ring-floor__ring {
+  animation: none;
+}
+.fx-calm .ring-beam {
+  filter: none;
 }
 
 /* ───────────── CONSTELLATION ───────────── */
@@ -429,7 +687,7 @@
 .sky-ring-label {
   font-family: var(--font-mono);
   font-size: 18px;
-  letter-spacing: 0.3em;
+  letter-spacing: 0.18em;
   fill: var(--text-faint);
 }
 .sky-sector {
@@ -439,9 +697,10 @@
 }
 .sky-sector-label {
   font-family: var(--font-display);
-  font-size: 30px;
   font-weight: 700;
-  letter-spacing: 0.18em;
+  paint-order: stroke;
+  stroke: var(--bg);
+  letter-spacing: 0.11em;
   fill: var(--text-dim);
 }
 .sky-link {
@@ -484,7 +743,7 @@
   font-family: var(--font-display);
   font-weight: 800;
   font-size: 22px;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.12em;
   fill: var(--text);
 }
 .star {
@@ -546,13 +805,18 @@
 }
 .star-label {
   font-family: var(--font-body);
-  font-size: 20px;
   font-weight: 600;
-  fill: var(--text);
+  fill: var(--text-dim);
   paint-order: stroke;
   stroke: var(--bg);
-  stroke-width: 4px;
+  stroke-linejoin: round;
   pointer-events: none;
+}
+.star-label.key,
+.star.sel .star-label,
+.star:hover .star-label {
+  fill: var(--text);
+  font-weight: 700;
 }
 .sky-top {
   position: absolute;
@@ -593,11 +857,11 @@
   left: var(--gutter);
   bottom: 18px;
   display: grid;
-  gap: 4px;
+  gap: 5px;
   padding: 10px 12px;
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
   color: var(--text-dim);
-  background: color-mix(in srgb, var(--panel-solid) 70%, transparent);
+  background: color-mix(in srgb, var(--panel-solid) 90%, transparent);
   border: 1px solid var(--panel-border);
   border-radius: var(--radius);
   backdrop-filter: blur(8px);
@@ -687,7 +951,7 @@
   align-content: start;
   gap: 14px;
   padding: 18px;
-  background: color-mix(in srgb, var(--panel-solid) 88%, transparent);
+  background: color-mix(in srgb, var(--panel-solid) 96%, transparent);
   border: 1px solid var(--panel-border-strong);
   border-radius: var(--radius);
   backdrop-filter: blur(var(--blur));
@@ -727,6 +991,165 @@
   color: var(--text-dim);
 }
 
+/* map moves from buttons / fly-to glide; gestures follow the finger */
+.sky-world {
+  transform-origin: 0 0;
+}
+.sky-world.glide {
+  transition: transform 0.45s var(--ease);
+}
+.sky-panel__close {
+  width: 40px;
+  height: 40px;
+}
+
+/* Constellation — phones (JS adds .sky-stage--compact at the tab-bar breakpoint) */
+.sky-stage--compact {
+  --tab-space: calc(70px + env(safe-area-inset-bottom, 0px));
+  height: calc(100vh - var(--topbar-h) - 70px);
+  height: calc(100dvh - var(--topbar-h) - var(--tab-space));
+  margin-bottom: -96px; /* the page's own tab-bar padding: this stage already stops above the bar */
+}
+.sky-stage--compact .sky-top {
+  top: 8px;
+  flex-direction: column;
+  gap: 8px;
+}
+.sky-stage--compact .sky-traits {
+  font-size: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sky-stage--compact .sky-filters {
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+.sky-stage--compact .sky-filters .chip {
+  height: 40px;
+  padding: 0 14px;
+  font-size: 0.85rem;
+}
+.sky-stage--compact .sky-zoom {
+  top: 50%;
+  bottom: auto;
+  right: 10px;
+  transform: translateY(-50%);
+  gap: 4px;
+}
+.sky-stage--compact .sky-zoom .btn {
+  width: 40px;
+  height: 40px;
+  background: color-mix(in srgb, var(--panel-solid) 82%, transparent);
+}
+.sky-stage--compact .sky-legend {
+  display: none;
+  left: 10px;
+  right: 60px;
+  bottom: 10px;
+  z-index: 12;
+  gap: 7px;
+  font-size: 0.82rem;
+  background: var(--panel-solid);
+}
+.sky-stage--compact .sky-legend.open {
+  display: grid;
+}
+.sky-stage--compact .sky-legend .hint {
+  font-size: 0.78rem;
+}
+.sky-peek {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 12px 12px 12px 12px;
+  background: color-mix(in srgb, var(--panel-solid) 96%, transparent);
+  border: 1px solid var(--panel-border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow), var(--glow-soft);
+  animation: sky-peek-in 0.25s var(--ease) both;
+}
+@keyframes sky-peek-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+.sky-peek .hud-compact__text {
+  padding-right: 40px;
+}
+.sky-peek__poster {
+  position: relative;
+  width: 64px;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--panel-border-strong);
+  background: var(--bg-2);
+}
+.sky-peek__poster img,
+.sky-peek__poster .art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  padding: 0;
+}
+.sky-peek__poster .art__title,
+.sky-peek__poster .art__kicker {
+  display: none;
+}
+.sky-peek__close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 40px !important;
+  height: 40px;
+}
+.hud-sheet__fly {
+  justify-self: start;
+  height: 40px;
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  .sky-stage--compact .sky-top {
+    flex-direction: row;
+    align-items: center;
+  }
+  .sky-stage--compact .sky-top > div:first-child {
+    display: none;
+  }
+  .sky-peek {
+    left: auto;
+    width: min(400px, 48%);
+    top: 56px;
+    bottom: 8px;
+    align-content: center;
+    overflow: auto;
+  }
+  .sky-stage--compact.has-sel .sky-zoom {
+    right: calc(min(400px, 48%) + 18px);
+  }
+}
+
+/* calm: reduceFx, reduced motion or touch devices — the core and "watching" stars hold still */
+.fx-calm .sky-core-ring,
+.fx-calm .sky-core-glow {
+  animation: none;
+}
+.fx-calm .star-pulse {
+  animation: none;
+  transform: scale(1.6);
+  opacity: 0.45;
+}
+
 /* ───────────── WARP TUNNEL ───────────── */
 .tunnel-stage {
   position: relative;
@@ -755,6 +1178,12 @@
   height: 0;
   transform-style: preserve-3d;
   will-change: transform;
+}
+.tunnel-corridor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-style: preserve-3d;
 }
 .tunnel-plane {
   position: absolute;
@@ -794,7 +1223,7 @@
   font-family: var(--font-display);
   font-weight: 800;
   font-size: 64px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.07em;
   color: color-mix(in srgb, var(--accent-2) 80%, white);
   text-shadow: 0 0 30px var(--accent-2);
 }
@@ -834,8 +1263,12 @@
 }
 .tunnel-caption {
   margin-top: 10px;
+  padding: 5px 8px;
+  background: color-mix(in srgb, var(--panel-solid) 88%, transparent);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-sm);
   font-family: var(--font-display);
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: var(--title-transform);
@@ -874,15 +1307,17 @@
   z-index: 5;
 }
 .tunnel-tracks button {
-  padding: 7px 12px;
+  padding: 8px 14px;
   font-family: var(--font-mono);
-  font-size: var(--fs-xs);
-  letter-spacing: 0.12em;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: var(--text-faint);
-  border: 1px solid transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--panel-border);
   border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--bg) 50%, transparent);
+  background: color-mix(in srgb, var(--panel-solid) 85%, transparent);
+  backdrop-filter: blur(6px);
 }
 .tunnel-tracks button:hover {
   color: var(--text);
@@ -940,7 +1375,7 @@
   gap: 22px;
   padding: 16px 20px;
   z-index: 6;
-  background: color-mix(in srgb, var(--panel-solid) 82%, transparent);
+  background: color-mix(in srgb, var(--panel-solid) 94%, transparent);
   border: 1px solid var(--panel-border-strong);
   border-radius: var(--radius);
   backdrop-filter: blur(var(--blur));
@@ -954,24 +1389,6 @@
 .tunnel-hud .hud-overview {
   -webkit-line-clamp: 2;
 }
-@media (max-width: 800px) {
-  .tunnel-hud {
-    grid-template-columns: 1fr;
-    max-height: 46vh;
-    overflow: auto;
-    width: calc(100vw - 24px);
-    bottom: 10px;
-  }
-  .tunnel-hud .hud-overview,
-  .tunnel-hud .chips {
-    display: none;
-  }
-  .tunnel-gauge,
-  .tunnel-nav {
-    display: none;
-  }
-}
-
 @media (max-width: 860px) {
   .ring-dial {
     flex-wrap: nowrap;
@@ -992,13 +1409,115 @@
     flex-direction: column;
   }
 }
-@media (max-width: 860px) {
-  .tunnel-tracks {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .tunnel-tracks button {
-    flex: none;
-  }
+/* Warp Tunnel — phones (JS adds .tunnel-stage--compact at the tab-bar breakpoint) */
+.tunnel-stage--compact {
+  --tab-space: calc(70px + env(safe-area-inset-bottom, 0px));
+  height: calc(100vh - var(--topbar-h) - 70px);
+  height: calc(100dvh - var(--topbar-h) - var(--tab-space));
+  margin-bottom: -96px; /* the page's own tab-bar padding: this stage already stops above the bar */
+  cursor: default;
+}
+.tunnel-stage--compact .tunnel-view {
+  perspective-origin: 50% 42%;
+}
+.tunnel-stage--compact .tunnel-world {
+  top: 42%;
+}
+.tunnel-stage--compact .tunnel-tracks {
+  top: 8px;
+  left: 0;
+  right: 0;
+  flex-wrap: nowrap;
+  gap: 8px;
+  padding: 0 var(--gutter) 4px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  touch-action: pan-x;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 22px), transparent);
+  mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 22px), transparent);
+}
+.tunnel-stage--compact .tunnel-tracks::-webkit-scrollbar {
+  display: none;
+}
+.tunnel-stage--compact .tunnel-tracks button {
+  flex: none;
+  min-height: 40px;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  border-radius: var(--radius-pill);
+}
+.tunnel-tracks .n {
+  margin-left: 6px;
+  opacity: 0.6;
+}
+.tunnel-stage--compact .tunnel-gauge {
+  display: none;
+}
+.tunnel-stage--compact .tunnel-nav {
+  top: 64px;
+  bottom: auto;
+  right: 10px;
+  justify-items: center;
+  gap: 4px;
+}
+.tunnel-stage--compact .tunnel-nav .btn {
+  width: 40px;
+  height: 40px;
+  background: color-mix(in srgb, var(--panel-solid) 80%, transparent);
+}
+.tunnel-nav__count {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-shadow: 0 0 8px var(--bg);
+}
+.tunnel-stage--compact .tunnel-hud {
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  width: auto;
+  transform: none;
+  display: block;
+  padding: 12px 14px;
+  touch-action: manipulation;
+}
+.tunnel-stage--compact .tunnel-caption {
+  font-size: 0.8rem;
+  padding: 4px 6px;
+}
+.tunnel-stage--compact .tunnel-gate span {
+  font-size: 44px;
+}
+/* landscape phones: tunnel left, HUD strip right */
+.tunnel-stage--land .tunnel-view,
+.tunnel-stage--land .tunnel-streaks {
+  right: 42%;
+}
+.tunnel-stage--land .tunnel-world {
+  top: 60%;
+}
+.tunnel-stage--land .tunnel-view {
+  perspective-origin: 50% 60%;
+}
+.tunnel-stage--land .tunnel-tracks {
+  right: 0;
+}
+.tunnel-stage--land .tunnel-nav {
+  top: auto;
+  bottom: 10px;
+  right: calc(42% + 8px);
+}
+.tunnel-stage--land .tunnel-hud {
+  left: auto;
+  width: calc(42% - 16px);
+  top: 60px;
+  bottom: 8px;
+  display: grid;
+  align-content: center;
+  overflow: auto;
+}
+
+/* calm: reduceFx, reduced motion or touch devices — no warp streak flare */
+.fx-calm .tunnel-streaks {
+  transition: none;
 }

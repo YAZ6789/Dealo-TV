@@ -1,15 +1,18 @@
 import { NavLink, Link } from 'react-router-dom';
-import { BarChart3, Compass, Home, Library, Search, Settings, Sparkles } from 'lucide-react';
+import { BarChart3, CalendarClock, Compass, Home, Library, Search, Settings, Sparkles } from 'lucide-react';
 import { Logo } from './Logo';
 import { ThemeSwitcher } from './ThemeSwitcher';
+import { VoiceButton } from '../voice/VoiceButton';
 import { usePalette } from './palette';
 
 const LINKS = [
+  // Your shows first; recommendations (Discover) are the extra.
   { to: '/', label: 'Home', icon: Home, end: true },
-  { to: '/discover', label: 'Discover', icon: Compass },
   { to: '/library', label: 'Library', icon: Library },
+  { to: '/upcoming', label: 'Airing', icon: CalendarClock },
   { to: '/stats', label: 'Stats', icon: BarChart3 },
-  { to: '/taste', label: 'Taste', icon: Sparkles },
+  { to: '/discover', label: 'Discover', icon: Compass },
+  { to: '/taste', label: 'Taste', icon: Sparkles, desktopOnly: true },
 ];
 
 const isMac = typeof navigator !== 'undefined' && /mac|iphone|ipad/i.test(navigator.platform);
@@ -36,6 +39,7 @@ export function TopBar() {
               <span className="label">Search shows…</span>
               <kbd>{isMac ? '⌘' : 'Ctrl'} K</kbd>
             </button>
+            <VoiceButton />
             <ThemeSwitcher />
             <NavLink to="/settings" className={({ isActive }) => `icon-btn ${isActive ? 'on' : ''}`} aria-label="Settings">
               <Settings size={19} />
@@ -44,7 +48,7 @@ export function TopBar() {
         </div>
       </header>
       <nav className="tabbar" aria-label="Main">
-        {LINKS.map((l) => (
+        {LINKS.filter((l) => !l.desktopOnly).map((l) => (
           <NavLink key={l.to} to={l.to} end={l.end}>
             <l.icon size={20} />
             {l.label}

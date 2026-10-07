@@ -8,6 +8,28 @@ import { Art } from './Poster';
 
 const SAMPLE = { id: 'preview', title: 'Severance', year: 2022, genres: ['scifi' as const] };
 
+export function TextSizePicker() {
+  const scale = useSettings((s) => s.textScale);
+  const set = useSettings((s) => s.setTextScale);
+  const opts: [number, string][] = [
+    [1, 'Normal'],
+    [1.12, 'Large'],
+    [1.25, 'Extra large'],
+  ];
+  return (
+    <div className="seg" role="radiogroup" aria-label="Text size">
+      {opts.map(([v, label], i) => (
+        <button key={v} role="radio" aria-checked={scale === v} className={scale === v ? 'on' : ''} onClick={() => set(v)} style={{ fontSize: `${0.82 + i * 0.1}rem` }}>
+          A<span className="sr-only"> {label}</span>
+          <span aria-hidden className="seg-label">
+            {label}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /** Tiny schematic drawing of each design, rendered in the current skin. */
 function DesignGlyph({ id }: { id: DesignId }) {
   const a = 'var(--accent)';
@@ -53,6 +75,48 @@ function DesignGlyph({ id }: { id: DesignId }) {
           ))}
           <circle cx="80" cy="40" r="7" fill={b} />
           <circle cx="80" cy="40" r="13" fill="none" stroke={b} strokeDasharray="2 3" />
+        </>
+      )}
+      {id === 'swipe' && (
+        <>
+          <rect x="58" y="12" width="40" height="58" rx="4" fill="none" stroke={dim} transform="rotate(-8 78 41)" />
+          <rect x="62" y="10" width="40" height="58" rx="4" fill="none" stroke={b} transform="rotate(6 82 39)" />
+          <rect x="60" y="10" width="40" height="58" rx="4" fill="none" stroke={a} strokeWidth="1.6" />
+          <path d="M28 40h16M36 34l-8 6 8 6" stroke={dim} fill="none" />
+          <path d="M116 40h16M124 34l8 6-8 6" stroke={a} fill="none" />
+        </>
+      )}
+      {id === 'channel' && (
+        <>
+          <rect x="34" y="8" width="92" height="62" rx="10" fill="none" stroke={a} strokeWidth="1.6" />
+          <rect x="44" y="16" width="62" height="46" rx="6" fill="none" stroke={dim} />
+          <circle cx="116" cy="28" r="4" fill="none" stroke={b} />
+          <circle cx="116" cy="44" r="4" fill="none" stroke={b} />
+          <text x="50" y="30" fontSize="9" fill={a} fontFamily="monospace">CH 07</text>
+          <path d="M60 70l-8 8M100 70l8 8" stroke={dim} />
+        </>
+      )}
+      {id === 'timeline' && (
+        <>
+          <line x1="8" y1="70" x2="152" y2="70" stroke={dim} />
+          {[20, 50, 80, 110, 140].map((x) => (
+            <line key={x} x1={x} y1="66" x2={x} y2="74" stroke={dim} />
+          ))}
+          <rect x="14" y="14" width="58" height="8" rx="4" fill={a} />
+          <rect x="44" y="28" width="84" height="8" rx="4" fill="none" stroke={b} />
+          <rect x="90" y="42" width="56" height="8" rx="4" fill={a} opacity="0.6" />
+          <rect x="24" y="54" width="40" height="8" rx="4" fill="none" stroke={a} />
+        </>
+      )}
+      {id === 'mission' && (
+        <>
+          <rect x="8" y="8" width="68" height="36" rx="2" fill="none" stroke={a} />
+          <rect x="82" y="8" width="70" height="20" rx="2" fill="none" stroke={dim} />
+          <rect x="82" y="32" width="70" height="40" rx="2" fill="none" stroke={b} />
+          <rect x="8" y="50" width="32" height="22" rx="2" fill="none" stroke={dim} />
+          <rect x="44" y="50" width="32" height="22" rx="2" fill="none" stroke={dim} />
+          <polyline points="14,36 26,24 38,30 50,16 62,22 70,14" fill="none" stroke={a} />
+          <circle cx="117" cy="52" r="12" fill="none" stroke={a} strokeDasharray="40 80" />
         </>
       )}
       {id === 'tunnel' && (
@@ -195,6 +259,14 @@ export function ThemeSwitcher() {
             </button>
           </div>
           <SkinPicker />
+          <div className="reality__head" style={{ marginTop: 18 }}>
+            <div>
+              <div className="label">Text size</div>
+            </div>
+            <div style={{ marginLeft: 'auto' }}>
+              <TextSizePicker />
+            </div>
+          </div>
           <div className="reality__foot">
             <kbd>Alt</kbd>+<kbd>D</kbd> next design · <kbd>Alt</kbd>+<kbd>T</kbd> next skin
           </div>

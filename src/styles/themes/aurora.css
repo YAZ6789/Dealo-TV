@@ -7,13 +7,13 @@
   --bg: #090a10;
   --bg-2: #12131c;
   --bg-3: #1b1d2a;
-  --panel: rgba(255, 255, 255, 0.055);
+  --panel: rgba(22, 24, 34, 0.72);
   --panel-solid: #15161f;
   --panel-border: rgba(255, 255, 255, 0.09);
   --panel-border-strong: rgba(255, 255, 255, 0.22);
   --text: #f4f6fb;
   --text-dim: #aab0c3;
-  --text-faint: #737a91;
+  --text-faint: #959cb1;
   --accent: #8fd8ff;
   --accent-2: #b69cff;
   --accent-3: #ffb3d9;
@@ -147,7 +147,7 @@
   height: 62vmax;
   border-radius: 50%;
   filter: blur(90px);
-  opacity: 0.38;
+  opacity: 0.3;
   mix-blend-mode: screen;
   will-change: transform;
 }

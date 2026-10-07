@@ -6,12 +6,19 @@
     <meta name="theme-color" content="#03060d" />
     <meta name="description" content="Dealo TV — your futuristic personal TV tracker with smart recommendations." />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Dealo TV" />
     <title>Dealo TV</title>
     <script>
       // Paint the saved theme before React boots (no flash of the default theme).
       try {
         var s = JSON.parse(localStorage.getItem('dealo:settings') || '{}');
         if (s.state && s.state.theme) document.documentElement.dataset.theme = s.state.theme;
+        if (s.state && s.state.textScale) document.documentElement.style.fontSize = Math.round(s.state.textScale * 100) + '%';
       } catch (e) {}
     </script>
   </head>
