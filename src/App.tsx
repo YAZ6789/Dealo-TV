@@ -84,6 +84,11 @@ export default function App() {
       if (s.hydrated && (s.entries !== prev.entries || s.blocked !== prev.blocked || s.feedback !== prev.feedback || s.taste !== prev.taste)) scheduleRecommendations();
     });
   }, []);
+  // Text size (Settings → Appearance): scales every rem-based size.
+  const textScale = useSettings((s) => s.textScale);
+  useEffect(() => {
+    document.documentElement.style.fontSize = `${Math.round((textScale || 1) * 100)}%`;
+  }, [textScale]);
   useEffect(
     () =>
       useSettings.subscribe((s, prev) => {

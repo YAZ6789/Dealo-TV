@@ -34,7 +34,7 @@
   --font-body: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, monospace;
   --title-transform: uppercase;
-  --title-spacing: 0.14em;
+  --title-spacing: 0.1em;
   --title-weight: 700;
   --title-prefix: '// ';
   --hero-weight: 900;
@@ -44,9 +44,9 @@
   --topbar-h: 64px;
   --gutter: clamp(16px, 4vw, 56px);
   --card-w: clamp(132px, 15vw, 196px);
-  --fs-xs: 0.75rem;
-  --fs-sm: 0.845rem;
-  --fs-md: 0.94rem;
+  --fs-xs: 0.8rem;
+  --fs-sm: 0.9rem;
+  --fs-md: 0.97rem;
   --fs-lg: 1.12rem;
   --fs-xl: 1.5rem;
   --fs-2xl: 2.1rem;
@@ -272,7 +272,7 @@ button {
 
 kbd {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   padding: 2px 6px;
   border: 1px solid var(--panel-border);
   border-radius: 4px;
@@ -402,7 +402,7 @@ kbd {
     justify-items: center;
     gap: 2px;
     padding: 6px 0;
-    font-size: 0.66rem;
+    font-size: 0.74rem;
     letter-spacing: 0.06em;
     text-transform: var(--title-transform);
     color: var(--text-faint);
@@ -551,7 +551,7 @@ button.chip:hover {
   align-items: center;
   gap: 5px;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-dim);
@@ -613,8 +613,8 @@ button.chip:hover {
 }
 .label {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.12em;
+  font-size: 0.78rem;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--text-faint);
 }
@@ -651,7 +651,7 @@ button.chip:hover {
 }
 .seg button .n {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   opacity: 0.7;
   margin-left: 6px;
 }
@@ -769,7 +769,7 @@ input[type='range'].slider::-moz-range-thumb {
   z-index: -1;
   background:
     linear-gradient(to top, var(--bg) 0%, color-mix(in srgb, var(--bg) 70%, transparent) 30%, transparent 65%),
-    linear-gradient(to right, color-mix(in srgb, var(--bg) 92%, transparent) 0%, color-mix(in srgb, var(--bg) 40%, transparent) 50%, transparent 80%);
+    linear-gradient(to right, color-mix(in srgb, var(--bg) 95%, transparent) 0%, color-mix(in srgb, var(--bg) 70%, transparent) 40%, transparent 80%);
 }
 .hero__content {
   max-width: 680px;
@@ -782,7 +782,7 @@ input[type='range'].slider::-moz-range-thumb {
   gap: 10px;
   font-family: var(--font-mono);
   font-size: var(--fs-xs);
-  letter-spacing: 0.22em;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
   color: var(--accent);
 }
@@ -810,6 +810,11 @@ input[type='range'].slider::-moz-range-thumb {
   gap: 8px 14px;
   font-size: var(--fs-sm);
   color: var(--text-dim);
+}
+.hero__meta,
+.hero__overview,
+.hero__eyebrow {
+  text-shadow: 0 1px 14px rgba(0, 0, 0, 0.85), 0 0 2px rgba(0, 0, 0, 0.6);
 }
 .hero__overview {
   margin: 0;
@@ -1003,7 +1008,7 @@ input[type='range'].slider::-moz-range-thumb {
   background: color-mix(in srgb, var(--bg) 70%, transparent);
 }
 .card__reason {
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   line-height: 1.35;
   color: var(--text-dim);
   display: -webkit-box;
@@ -1028,7 +1033,7 @@ input[type='range'].slider::-moz-range-thumb {
   height: 22px;
   padding: 0 6px;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--accent-ink);
   background: var(--accent);
@@ -1062,7 +1067,7 @@ input[type='range'].slider::-moz-range-thumb {
   display: flex;
   gap: 8px;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   color: var(--text-faint);
   white-space: nowrap;
   overflow: hidden;
@@ -1126,7 +1131,7 @@ input[type='range'].slider::-moz-range-thumb {
   justify-content: space-between;
   gap: 8px;
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   color: var(--text-dim);
 }
 .wcard__play {
@@ -1177,8 +1182,8 @@ input[type='range'].slider::-moz-range-thumb {
 }
 .art__kicker {
   font-family: var(--font-mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.2em;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   opacity: 0.8;
   margin-bottom: 6px;
@@ -1326,8 +1331,8 @@ input[type='range'].slider::-moz-range-thumb {
 .palette__group {
   padding: 10px 10px 6px;
   font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.16em;
+  font-size: 0.74rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-faint);
 }
@@ -1585,8 +1590,8 @@ input[type='range'].slider::-moz-range-thumb {
 }
 .kv dt {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.12em;
+  font-size: 0.78rem;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--text-faint);
   padding-top: 2px;
@@ -1756,12 +1761,12 @@ input[type='range'].slider::-moz-range-thumb {
 }
 .ep__date {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.74rem;
   color: var(--text-faint);
 }
 .ep__upto {
   font-family: var(--font-mono);
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-faint);
@@ -1791,8 +1796,8 @@ input[type='range'].slider::-moz-range-thumb {
 }
 .kpi__label {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.14em;
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-faint);
 }
@@ -1851,7 +1856,7 @@ input[type='range'].slider::-moz-range-thumb {
 .chart-title span {
   margin-left: auto;
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.74rem;
   letter-spacing: 0.08em;
   color: var(--text-faint);
   font-weight: 400;
@@ -1872,7 +1877,7 @@ input[type='range'].slider::-moz-range-thumb {
   pointer-events: none;
   padding: 6px 9px;
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   background: var(--panel-solid);
   border: 1px solid var(--panel-border-strong);
   border-radius: var(--radius-sm);
@@ -2003,7 +2008,7 @@ input[type='range'].slider::-moz-range-thumb {
   padding: 0 var(--gutter);
   font-family: var(--font-mono);
   font-size: var(--fs-xs);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--text-faint);
 }
@@ -2034,8 +2039,8 @@ input[type='range'].slider::-moz-range-thumb {
   top: 0;
   text-align: left;
   font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.12em;
+  font-size: 0.74rem;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--text-faint);
   background: var(--panel-solid);

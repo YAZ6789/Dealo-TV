@@ -12,6 +12,7 @@
       try {
         var s = JSON.parse(localStorage.getItem('dealo:settings') || '{}');
         if (s.state && s.state.theme) document.documentElement.dataset.theme = s.state.theme;
+        if (s.state && s.state.textScale) document.documentElement.style.fontSize = Math.round(s.state.textScale * 100) + '%';
       } catch (e) {}
     </script>
   </head>

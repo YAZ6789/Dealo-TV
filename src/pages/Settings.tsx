@@ -8,7 +8,7 @@ import { clearCache } from '../providers/cache';
 import { relinkToTmdb } from '../store/relink';
 import { buildDemoDoc } from '../lib/demo';
 import { relTime } from '../lib/labels';
-import { DesignPicker, SkinPicker } from '../components/ThemeSwitcher';
+import { DesignPicker, SkinPicker, TextSizePicker } from '../components/ThemeSwitcher';
 import { toast } from '../components/toast';
 import { Attribution } from './Home';
 
@@ -75,6 +75,12 @@ export default function Settings() {
         <h2 className="section-title">Skin</h2>
         <p className="section-sub">Colours and typography. Each skin has its own switch-over effect.</p>
         <SkinPicker />
+        <div className="toggle-row">
+          <span className="label" style={{ minWidth: 90 }}>
+            Text size
+          </span>
+          <TextSizePicker />
+        </div>
         <label className="toggle-row">
           <button className={`toggle ${s.reduceFx ? 'on' : ''}`} onClick={() => s.setReduceFx(!s.reduceFx)} aria-pressed={s.reduceFx} aria-label="Reduce background effects" />
           <span>Reduce background effects (saves battery)</span>

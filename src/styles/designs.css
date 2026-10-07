@@ -20,7 +20,7 @@
 .hud-eyebrow {
   font-family: var(--font-mono);
   font-size: var(--fs-xs);
-  letter-spacing: 0.18em;
+  letter-spacing: 0.11em;
   text-transform: uppercase;
   color: var(--accent);
 }
@@ -107,10 +107,11 @@
   position: relative;
   padding: 8px 14px 10px;
   font-family: var(--font-mono);
-  font-size: var(--fs-xs);
-  letter-spacing: 0.14em;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-faint);
+  color: var(--text-dim);
   transition: color 0.2s, transform 0.4s var(--ease);
 }
 .ring-dial button .n {
@@ -148,7 +149,7 @@
   align-self: center;
   padding: 20px;
   min-height: 200px;
-  background: color-mix(in srgb, var(--panel-solid) 72%, transparent);
+  background: color-mix(in srgb, var(--panel-solid) 92%, transparent);
   border: 1px solid var(--panel-border);
   border-radius: var(--radius);
   backdrop-filter: blur(var(--blur));
@@ -267,7 +268,7 @@
   right: 8px;
   padding: 2px 7px;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--accent-ink);
   background: var(--accent);
@@ -293,8 +294,8 @@
   overflow: hidden;
   border-radius: var(--radius);
   transform: translateY(calc(100% + 10px)) scaleY(-1);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 58%, rgba(0, 0, 0, 0.32) 100%);
-  mask-image: linear-gradient(to bottom, transparent 58%, rgba(0, 0, 0, 0.32) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 62%, rgba(0, 0, 0, 0.18) 100%);
+  mask-image: linear-gradient(to bottom, transparent 62%, rgba(0, 0, 0, 0.18) 100%);
   pointer-events: none;
 }
 .ring-beam {
@@ -365,8 +366,8 @@
   justify-content: center;
   gap: 14px;
   padding-top: 10px;
-  font-size: var(--fs-xs);
-  letter-spacing: 0.14em;
+  font-size: var(--fs-sm);
+  letter-spacing: 0.08em;
   color: var(--text-dim);
   z-index: 5;
 }
@@ -429,7 +430,7 @@
 .sky-ring-label {
   font-family: var(--font-mono);
   font-size: 18px;
-  letter-spacing: 0.3em;
+  letter-spacing: 0.18em;
   fill: var(--text-faint);
 }
 .sky-sector {
@@ -439,9 +440,10 @@
 }
 .sky-sector-label {
   font-family: var(--font-display);
-  font-size: 30px;
   font-weight: 700;
-  letter-spacing: 0.18em;
+  paint-order: stroke;
+  stroke: var(--bg);
+  letter-spacing: 0.11em;
   fill: var(--text-dim);
 }
 .sky-link {
@@ -484,7 +486,7 @@
   font-family: var(--font-display);
   font-weight: 800;
   font-size: 22px;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.12em;
   fill: var(--text);
 }
 .star {
@@ -546,13 +548,18 @@
 }
 .star-label {
   font-family: var(--font-body);
-  font-size: 20px;
   font-weight: 600;
-  fill: var(--text);
+  fill: var(--text-dim);
   paint-order: stroke;
   stroke: var(--bg);
-  stroke-width: 4px;
+  stroke-linejoin: round;
   pointer-events: none;
+}
+.star-label.key,
+.star.sel .star-label,
+.star:hover .star-label {
+  fill: var(--text);
+  font-weight: 700;
 }
 .sky-top {
   position: absolute;
@@ -593,11 +600,11 @@
   left: var(--gutter);
   bottom: 18px;
   display: grid;
-  gap: 4px;
+  gap: 5px;
   padding: 10px 12px;
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
   color: var(--text-dim);
-  background: color-mix(in srgb, var(--panel-solid) 70%, transparent);
+  background: color-mix(in srgb, var(--panel-solid) 90%, transparent);
   border: 1px solid var(--panel-border);
   border-radius: var(--radius);
   backdrop-filter: blur(8px);
@@ -687,7 +694,7 @@
   align-content: start;
   gap: 14px;
   padding: 18px;
-  background: color-mix(in srgb, var(--panel-solid) 88%, transparent);
+  background: color-mix(in srgb, var(--panel-solid) 96%, transparent);
   border: 1px solid var(--panel-border-strong);
   border-radius: var(--radius);
   backdrop-filter: blur(var(--blur));
@@ -794,7 +801,7 @@
   font-family: var(--font-display);
   font-weight: 800;
   font-size: 64px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.07em;
   color: color-mix(in srgb, var(--accent-2) 80%, white);
   text-shadow: 0 0 30px var(--accent-2);
 }
@@ -834,8 +841,12 @@
 }
 .tunnel-caption {
   margin-top: 10px;
+  padding: 5px 8px;
+  background: color-mix(in srgb, var(--panel-solid) 88%, transparent);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-sm);
   font-family: var(--font-display);
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: var(--title-transform);
@@ -874,15 +885,17 @@
   z-index: 5;
 }
 .tunnel-tracks button {
-  padding: 7px 12px;
+  padding: 8px 14px;
   font-family: var(--font-mono);
-  font-size: var(--fs-xs);
-  letter-spacing: 0.12em;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: var(--text-faint);
-  border: 1px solid transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--panel-border);
   border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--bg) 50%, transparent);
+  background: color-mix(in srgb, var(--panel-solid) 85%, transparent);
+  backdrop-filter: blur(6px);
 }
 .tunnel-tracks button:hover {
   color: var(--text);
@@ -940,7 +953,7 @@
   gap: 22px;
   padding: 16px 20px;
   z-index: 6;
-  background: color-mix(in srgb, var(--panel-solid) 82%, transparent);
+  background: color-mix(in srgb, var(--panel-solid) 94%, transparent);
   border: 1px solid var(--panel-border-strong);
   border-radius: var(--radius);
   backdrop-filter: blur(var(--blur));
@@ -957,6 +970,7 @@
 @media (max-width: 800px) {
   .tunnel-hud {
     grid-template-columns: 1fr;
+    gap: 12px;
     max-height: 46vh;
     overflow: auto;
     width: calc(100vw - 24px);

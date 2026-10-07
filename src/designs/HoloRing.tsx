@@ -158,7 +158,7 @@ export default function HoloRing() {
             <button
               key={c.id}
               className={c.id === cid ? 'on' : ''}
-              style={{ transform: `translateY(${off * off * 3.2}px) rotate(${off * 2.4}deg)` }}
+              style={{ transform: `translateY(${off * off * 2.4}px) rotate(${off * 1.2}deg)` }}
               onClick={() => setCid(c.id)}
             >
               {c.label}

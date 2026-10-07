@@ -17,7 +17,7 @@ import { layoutSky, R, type StarNode } from './constellationLayout';
  */
 
 type View = { x: number; y: number; k: number };
-const HOME: View = { x: 0, y: 0, k: 1.12 };
+const HOME: View = { x: 0, y: 0, k: 1 };
 const PAD = 160;
 
 export default function Constellation() {
@@ -28,6 +28,8 @@ export default function Constellation() {
   const [hover, setHover] = useState<StarNode | null>(null);
   const [selected, setSelected] = useState<StarNode | null>(null);
   const [view, setView] = useState<View>(HOME);
+  // World units per screen pixel at zoom 1 — lets text stay a constant, readable size at any zoom.
+  const [unitsPerPx, setUnitsPerPx] = useState(2);
   const svg = useRef<SVGSVGElement>(null);
   const viewRef = useRef(view);
   viewRef.current = view;
@@ -43,12 +45,72 @@ export default function Constellation() {
   const visible = sky.nodes.filter((n) => (n.kind === 'library' ? show.library : show.recs));
   const byId = useMemo(() => new Map(sky.nodes.map((n) => [n.id, n])), [sky]);
   const focus = hover ?? selected;
+
+  useEffect(() => {
+    const el = svg.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => {
+      const r = el.getBoundingClientRect();
+      if (r.width && r.height) setUnitsPerPx((R * 2 + PAD * 2) / Math.min(r.width, r.height));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // Always label the stars that matter: best matches, loved shows, what you're watching.
+  const important = useMemo(() => {
+    const ids = new Set<string>();
+    const recsByScore = sky.nodes.filter((n) => n.kind === 'rec').sort((a, b) => (b.rec?.score ?? 0) - (a.rec?.score ?? 0));
+    recsByScore.slice(0, 8).forEach((n) => ids.add(n.id));
+    for (const n of sky.nodes) {
+      const e = n.entry;
+      if (e && (e.status === 'watching' || e.favorite || (e.rating ?? 0) >= 9)) ids.add(n.id);
+    }
+    return ids;
+  }, [sky]);
+  const u = unitsPerPx / view.k; // world units per screen px at the current zoom
+
   const related = useMemo(() => {
     if (!focus) return new Set<string>();
     const s = new Set<string>([focus.id]);
     for (const l of sky.links) if (l.from === focus.id || l.to === focus.id) s.add(l.from === focus.id ? l.to : l.from);
     return s;
   }, [focus, sky.links]);
+
+  // Greedy label placement: most important first; try below / above / right / left; skip if all collide.
+  const labels = useMemo(() => {
+    const fs = 12.5 * u;
+    const want = visible.filter((n) => view.k > 1.8 || important.has(n.id) || selected?.id === n.id || (focus && related.has(n.id)));
+    const prio = (n: StarNode) =>
+      (selected?.id === n.id ? 1000 : 0) + (focus?.id === n.id ? 900 : 0) + (important.has(n.id) ? 100 : 0) + (n.rec?.match ?? (n.entry?.rating ?? 6) * 10);
+    want.sort((a, b) => prio(b) - prio(a));
+    const boxes: { x0: number; y0: number; x1: number; y1: number }[] = [];
+    // stars themselves are obstacles too
+    for (const n of visible) boxes.push({ x0: n.x - n.r, y0: n.y - n.r, x1: n.x + n.r, y1: n.y + n.r });
+    const out = new Map<string, { x: number; y: number; anchor: 'middle' | 'start' | 'end'; text: string }>();
+    for (const n of want) {
+      const text = n.show.title.length > 24 ? `${n.show.title.slice(0, 23)}…` : n.show.title;
+      const w = text.length * fs * 0.56;
+      const h = fs * 1.15;
+      const gap = 5 * u;
+      const cands = [
+        { x: n.x, y: n.y + n.r + gap + fs, anchor: 'middle' as const, x0: n.x - w / 2, y0: n.y + n.r + gap },
+        { x: n.x, y: n.y - n.r - gap, anchor: 'middle' as const, x0: n.x - w / 2, y0: n.y - n.r - gap - h },
+        { x: n.x + n.r + gap, y: n.y + fs * 0.35, anchor: 'start' as const, x0: n.x + n.r + gap, y0: n.y - h / 2 },
+        { x: n.x - n.r - gap, y: n.y + fs * 0.35, anchor: 'end' as const, x0: n.x - n.r - gap - w, y0: n.y - h / 2 },
+      ];
+      for (const c of cands) {
+        const b = { x0: c.x0, y0: c.y0, x1: c.x0 + w, y1: c.y0 + h };
+        const hit = boxes.some((o) => !(b.x1 < o.x0 || b.x0 > o.x1 || b.y1 < o.y0 || b.y0 > o.y1) && !(o.x0 === n.x - n.r && o.y0 === n.y - n.r));
+        if (!hit) {
+          boxes.push(b);
+          out.set(n.id, { x: c.x - n.x, y: c.y - n.y, anchor: c.anchor, text });
+          break;
+        }
+      }
+    }
+    return out;
+  }, [visible, view.k, u, important, selected, focus, related]);
 
   /* ── pan / zoom ── */
   const toWorld = (cx: number, cy: number, v = view) => {
@@ -169,7 +231,7 @@ export default function Constellation() {
           {[0.25, 0.5, 0.75, 1].map((f) => (
             <circle key={f} r={R * f} className={`sky-orbit ${f === sky.split ? 'split' : ''}`} />
           ))}
-          <text className="sky-ring-label" y={-R * sky.split - 10} textAnchor="middle">
+          <text className="sky-ring-label" y={-R * sky.split - 8 * u} textAnchor="middle" style={{ fontSize: 11 * u }}>
             YOUR LIBRARY ▲ ▼ DISCOVERY FIELD
           </text>
           {/* sectors */}
@@ -177,11 +239,12 @@ export default function Constellation() {
             <g key={s.key}>
               <line x1={0} y1={0} x2={Math.cos(s.start) * R * 1.04} y2={Math.sin(s.start) * R * 1.04} className="sky-sector" />
               <text
-                x={Math.cos(s.mid) * (R + 70)}
-                y={Math.sin(s.mid) * (R + 70)}
+                x={Math.cos(s.mid) * (R + 40)}
+                y={Math.sin(s.mid) * (R + 40)}
                 textAnchor="middle"
                 dominantBaseline="middle"
                 className="sky-sector-label"
+                style={{ fontSize: 14 * u, strokeWidth: 4 * u }}
               >
                 {s.key === 'other' ? 'OTHER' : GENRE_LABELS[s.key].toUpperCase()}
               </text>
@@ -201,7 +264,7 @@ export default function Constellation() {
           <circle r={120} fill="url(#sky-core)" className="sky-core-glow" />
           <circle r={38} className="sky-core" />
           <circle r={62} className="sky-core-ring" />
-          <text className="sky-core-label" textAnchor="middle" y={6}>
+          <text className="sky-core-label" textAnchor="middle" y={5 * u} style={{ fontSize: Math.min(22, 14 * u) }}>
             YOU
           </text>
           {/* stars */}
@@ -216,9 +279,15 @@ export default function Constellation() {
                 <circle r={n.r + 14} className="star-hit" />
                 {st === 'watching' && <circle r={n.r + 6} className="star-pulse" />}
                 <circle r={n.r} className="star-dot" filter={n.kind === 'rec' && n.rec && n.rec.match > 85 ? 'url(#sky-glow)' : undefined} />
-                {(view.k > 1.5 || n.r > 18 || selected?.id === n.id) && (
-                  <text y={n.r + 22} textAnchor="middle" className="star-label">
-                    {n.show.title.length > 22 ? `${n.show.title.slice(0, 21)}…` : n.show.title}
+                {labels.has(n.id) && (
+                  <text
+                    x={labels.get(n.id)!.x}
+                    y={labels.get(n.id)!.y}
+                    textAnchor={labels.get(n.id)!.anchor}
+                    className={`star-label ${important.has(n.id) ? 'key' : ''}`}
+                    style={{ fontSize: 12.5 * u, strokeWidth: 4 * u }}
+                  >
+                    {labels.get(n.id)!.text}
                   </text>
                 )}
               </g>

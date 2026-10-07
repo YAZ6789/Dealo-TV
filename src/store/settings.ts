@@ -19,12 +19,15 @@ export interface SettingsState {
   region: string;
   /** Turn off heavy background effects (also auto-off with prefers-reduced-motion). */
   reduceFx: boolean;
+  /** Root text scale: 1 = normal, 1.12 = large, 1.25 = extra large. */
+  textScale: number;
   onboarded: boolean;
   setTheme: (t: ThemeId) => void;
   setDesign: (d: DesignId) => void;
   setTmdbKey: (key: string, valid?: boolean) => void;
   setRegion: (r: string) => void;
   setReduceFx: (v: boolean) => void;
+  setTextScale: (v: number) => void;
   setOnboarded: (v: boolean) => void;
 }
 
@@ -39,12 +42,14 @@ export const useSettings = create<SettingsState>()(
       tmdbKey: ENV_KEY,
       region: guessRegion(),
       reduceFx: false,
+      textScale: 1,
       onboarded: false,
       setTheme: (theme) => set({ theme }),
       setDesign: (design) => set({ design }),
       setTmdbKey: (tmdbKey, tmdbValid) => set({ tmdbKey: tmdbKey.trim(), tmdbValid }),
       setRegion: (region) => set({ region }),
       setReduceFx: (reduceFx) => set({ reduceFx }),
+      setTextScale: (textScale) => set({ textScale }),
       setOnboarded: (onboarded) => set({ onboarded }),
     }),
     {

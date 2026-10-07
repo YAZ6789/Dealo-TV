@@ -7,13 +7,13 @@
   --bg: #010401;
   --bg-2: #031006;
   --bg-3: #06180b;
-  --panel: rgba(2, 14, 5, 0.82);
+  --panel: rgba(2, 14, 5, 0.92);
   --panel-solid: #020d04;
   --panel-border: rgba(0, 255, 156, 0.25);
   --panel-border-strong: rgba(0, 255, 156, 0.65);
   --text: #b6ffd9;
   --text-dim: #6fd6a2;
-  --text-faint: #3f8f66;
+  --text-faint: #5bb386;
   --accent: #00ff9c;
   --accent-2: #00c97b;
   --accent-3: #ffb000;
@@ -35,14 +35,14 @@
   --title-prefix: '> ';
   --hero-weight: 800;
   --blur: 2px;
-  --fs-md: 0.88rem;
-  --fs-sm: 0.8rem;
+  --fs-md: 0.92rem;
+  --fs-sm: 0.86rem;
   --fs-hero: clamp(1.9rem, 4.6vw, 3.8rem);
 }
 
 [data-theme='terminal'] body,
 [data-theme='terminal'] .app {
-  text-shadow: 0 0 6px rgba(0, 255, 156, 0.28);
+  text-shadow: 0 0 3px rgba(0, 255, 156, 0.16);
 }
 [data-theme='terminal'] .section-title::after {
   content: '_';
@@ -202,5 +202,5 @@
 .fx-terminal .fx-matrix {
   position: absolute;
   inset: 0;
-  opacity: 0.12;
+  opacity: 0.07;
 }

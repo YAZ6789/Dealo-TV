@@ -7,13 +7,13 @@
   --bg: #03060d;
   --bg-2: #08101f;
   --bg-3: #0f1a31;
-  --panel: rgba(9, 18, 36, 0.58);
+  --panel: rgba(9, 18, 36, 0.8);
   --panel-solid: #0a1426;
   --panel-border: rgba(0, 229, 255, 0.2);
   --panel-border-strong: rgba(0, 229, 255, 0.55);
   --text: #e4f7ff;
   --text-dim: #9cb6cc;
-  --text-faint: #62809a;
+  --text-faint: #839fb7;
   --accent: #00e5ff;
   --accent-2: #8b5cf6;
   --accent-3: #ff4fd8;
@@ -29,7 +29,7 @@
   --font-display: 'Orbitron', 'Inter Variable', sans-serif;
   --font-body: 'Inter Variable', system-ui, sans-serif;
   --title-prefix: '// ';
-  --title-spacing: 0.16em;
+  --title-spacing: 0.1em;
   --hero-weight: 900;
 }
 
@@ -158,7 +158,7 @@
   -webkit-mask-image: linear-gradient(to top, black 0%, transparent 85%);
   mask-image: linear-gradient(to top, black 0%, transparent 85%);
   animation: hud-grid 3.2s linear infinite;
-  opacity: 0.55;
+  opacity: 0.32;
 }
 @keyframes hud-grid {
   to {
@@ -177,5 +177,5 @@
   background-size: 34px 34px;
   -webkit-mask-image: radial-gradient(60% 50% at 70% 20%, black, transparent);
   mask-image: radial-gradient(60% 50% at 70% 20%, black, transparent);
-  opacity: 0.35;
+  opacity: 0.2;
 }

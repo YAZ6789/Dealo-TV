@@ -8,6 +8,28 @@ import { Art } from './Poster';
 
 const SAMPLE = { id: 'preview', title: 'Severance', year: 2022, genres: ['scifi' as const] };
 
+export function TextSizePicker() {
+  const scale = useSettings((s) => s.textScale);
+  const set = useSettings((s) => s.setTextScale);
+  const opts: [number, string][] = [
+    [1, 'Normal'],
+    [1.12, 'Large'],
+    [1.25, 'Extra large'],
+  ];
+  return (
+    <div className="seg" role="radiogroup" aria-label="Text size">
+      {opts.map(([v, label], i) => (
+        <button key={v} role="radio" aria-checked={scale === v} className={scale === v ? 'on' : ''} onClick={() => set(v)} style={{ fontSize: `${0.82 + i * 0.1}rem` }}>
+          A<span className="sr-only"> {label}</span>
+          <span aria-hidden className="seg-label">
+            {label}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /** Tiny schematic drawing of each design, rendered in the current skin. */
 function DesignGlyph({ id }: { id: DesignId }) {
   const a = 'var(--accent)';
@@ -195,6 +217,14 @@ export function ThemeSwitcher() {
             </button>
           </div>
           <SkinPicker />
+          <div className="reality__head" style={{ marginTop: 18 }}>
+            <div>
+              <div className="label">Text size</div>
+            </div>
+            <div style={{ marginLeft: 'auto' }}>
+              <TextSizePicker />
+            </div>
+          </div>
           <div className="reality__foot">
             <kbd>Alt</kbd>+<kbd>D</kbd> next design · <kbd>Alt</kbd>+<kbd>T</kbd> next skin
           </div>
