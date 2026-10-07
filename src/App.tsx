@@ -23,6 +23,9 @@ const Taste = lazy(() => import('./pages/Taste'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Import = lazy(() => import('./pages/Import'));
 const Welcome = lazy(() => import('./pages/Welcome'));
+const Wrapped = lazy(() => import('./pages/Wrapped'));
+const Upcoming = lazy(() => import('./pages/Upcoming'));
+const Assistant = lazy(() => import('./pages/Assistant'));
 
 function ScrollReset() {
   const { pathname } = useLocation();
@@ -67,6 +70,10 @@ function Shell() {
             <Route path="/settings" element={<Settings />} />
             <Route path="/settings/import" element={<Import />} />
             <Route path="/welcome" element={<Welcome />} />
+            <Route path="/wrapped" element={<Wrapped />} />
+            <Route path="/wrapped/:year" element={<Wrapped />} />
+            <Route path="/upcoming" element={<Upcoming />} />
+            <Route path="/assistant" element={<Assistant />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
