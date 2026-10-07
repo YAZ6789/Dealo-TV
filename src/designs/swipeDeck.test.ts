@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import type { LibraryEntry, Recommendation, ShowSummary } from '../types';
 import type { Collection } from './useCollections';
-import { buildDeck, decideSwipe, dragProgress, outcomeLabel, RATE_FOR, remainingOf, tiltFor } from './SwipeDeck';
+import { buildDeck, decideSwipe, defaultMode, dragProgress, MODE_ORDER, outcomeLabel, RATE_FOR, remainingOf, tiltFor } from './SwipeDeck';
 
 const show = (id: string): ShowSummary => ({ id, source: 'catalog', title: id, genres: [] });
 const rec = (id: string, match = 80): Recommendation => ({ show: show(id), match, score: match / 100, reasons: [], seeds: [] });
-const entry = (id: string, status: LibraryEntry['status'], rating?: number, completedAt = '2026-01-01'): LibraryEntry => ({
+const entry = (id: string, status: LibraryEntry['status'], rating?: number, completedAt = '2026-01-01', addedAt = ''): LibraryEntry => ({
   id,
   show: show(id),
   status,
   rating,
   watched: {},
-  addedAt: '',
+  addedAt,
   updatedAt: completedAt,
   completedAt,
 });
@@ -83,6 +83,35 @@ describe('buildDeck', () => {
   });
 });
 
+describe('watchlist mode', () => {
+  it('deals the watchlist newest-first, skipping blocked shows and other statuses', () => {
+    const entries = {
+      a: entry('a', 'plan', undefined, '', '2026-01-01'),
+      b: entry('b', 'plan', undefined, '', '2026-03-01'),
+      c: entry('c', 'watching'),
+      d: entry('d', 'plan', undefined, '', '2026-02-01'),
+    };
+    expect(buildDeck('watchlist', [], entries, { d: {} }).map((i) => i.show.id)).toEqual(['b', 'a']);
+  });
+  it('drops cards that left the watchlist (started, removed) elsewhere', () => {
+    const items = ['a', 'b', 'c'].map((id) => ({ show: show(id) }));
+    const entries = { a: entry('a', 'plan'), b: entry('b', 'watching') };
+    expect(remainingOf({ items, done: [] }, 'watchlist', entries, {}).map((i) => i.show.id)).toEqual(['a']);
+  });
+});
+
+describe('defaultMode', () => {
+  it('opens on the library first: unrated finished shows, then the watchlist, else For you', () => {
+    expect(defaultMode({ rate: 3, watchlist: 5 })).toBe('rate');
+    expect(defaultMode({ rate: 0, watchlist: 5 })).toBe('watchlist');
+    expect(defaultMode({ rate: 0, watchlist: 0 })).toBe('discover');
+    expect(defaultMode({})).toBe('discover');
+  });
+  it('orders decks library-first', () => {
+    expect(MODE_ORDER).toEqual(['rate', 'watchlist', 'discover', 'binge', 'gems']);
+  });
+});
+
 describe('remainingOf', () => {
   it('drops swiped cards and cards decided elsewhere meanwhile', () => {
     const items = ['a', 'b', 'c'].map((id) => ({ show: show(id) }));
@@ -97,6 +126,10 @@ describe('labels', () => {
     expect(outcomeLabel('discover', 'right')).toBe('Saved');
     expect(outcomeLabel('gems', 'up', 8)).toBe('Seen · 8/10');
     expect(outcomeLabel('rate', 'down')).toBe(`Rated ${RATE_FOR.down}/10`);
+    expect(outcomeLabel('watchlist', 'right')).toBe('Started watching');
+    expect(outcomeLabel('watchlist', 'left')).toBe('Removed from watchlist');
+    expect(outcomeLabel('watchlist', 'down')).toBe('Kept for later');
+    expect(outcomeLabel('watchlist', 'up', 7)).toBe('Seen · 7/10');
     expect(RATE_FOR).toEqual({ right: 9, left: 3, up: 10, down: 6 });
   });
 });

@@ -7,16 +7,19 @@ import {
   ArrowRight,
   ArrowUp,
   Bookmark,
+  Clock,
   Crown,
   Eye,
   Heart,
   Info,
   Meh,
   PartyPopper,
+  Play,
   RefreshCw,
   RotateCcw,
   Sparkles,
   ThumbsDown,
+  Trash2,
   X,
   type LucideIcon,
 } from 'lucide-react';
@@ -24,8 +27,8 @@ import type { BlockedEntry, LibraryEntry, RecFeedback, ShowId } from '../types';
 import { useCollections, type Collection, type Item } from './useCollections';
 import { useLibrary } from '../store/library';
 import { useShowActions } from '../hooks/useShowActions';
+import { useSettings } from '../store/settings';
 import { Poster } from '../components/Poster';
-import { RatingInput } from '../components/RatingInput';
 import { useToasts } from '../components/toast';
 import { GENRE_LABELS } from '../lib/genres';
 import { relTime, yearRange } from '../lib/labels';
@@ -42,13 +45,16 @@ import { useAmbientShow } from '../lib/ambient';
 /* ───────────────────────── pure logic (unit-tested) ───────────────────────── */
 
 export type Dir = 'right' | 'left' | 'up' | 'down';
-export type Mode = 'discover' | 'binge' | 'gems' | 'rate';
+/** Library modes first (what the app is about), recommendations after. */
+export type Mode = 'rate' | 'watchlist' | 'discover' | 'binge' | 'gems';
+export const MODE_ORDER: Mode[] = ['rate', 'watchlist', 'discover', 'binge', 'gems'];
+const LIBRARY_MODES: Mode[] = ['rate', 'watchlist'];
 export const DIRS: Dir[] = ['left', 'down', 'up', 'right'];
 
 /** Rating given by each swipe in "Rate my watched". */
 export const RATE_FOR: Record<Dir, number> = { right: 9, left: 3, up: 10, down: 6 };
 
-const COLLECTION_FOR: Record<Exclude<Mode, 'rate'>, Collection['id']> = { discover: 'foryou', binge: 'binge', gems: 'gems' };
+const COLLECTION_FOR: Record<Exclude<Mode, 'rate' | 'watchlist'>, Collection['id']> = { discover: 'foryou', binge: 'binge', gems: 'gems' };
 export const DECK_SIZE = 40;
 
 /** Fraction of the card size a drag must travel to commit, and the flick speed (px/ms) that commits a shorter drag. */
@@ -106,6 +112,14 @@ export function buildDeck(
       .slice(0, DECK_SIZE)
       .map((e) => ({ show: e.show, entry: e }));
   }
+  if (mode === 'watchlist') {
+    return Object.values(entries)
+      .filter((e) => e.status === 'plan' && !blocked[e.id])
+      .sort((a, b) => b.addedAt.localeCompare(a.addedAt))
+      .filter((e) => keep(e.id))
+      .slice(0, DECK_SIZE)
+      .map((e) => ({ show: e.show, entry: e }));
+  }
   const col = collections.find((c) => c.id === COLLECTION_FOR[mode]);
   return (col?.items ?? []).filter((it) => !entries[it.show.id] && !blocked[it.show.id] && keep(it.show.id)).slice(0, DECK_SIZE);
 }
@@ -123,13 +137,20 @@ export function remainingOf(
     const id = it.show.id;
     if (done.has(id)) return false;
     if (mode === 'rate') return entries[id]?.status === 'completed' && entries[id].rating == null;
+    if (mode === 'watchlist') return entries[id]?.status === 'plan';
     return !entries[id] && !blocked[id];
   });
+}
+
+/** The deck to open on: your own library first (unrated finished shows, then the watchlist), else recommendations. */
+export function defaultMode(sizes: Partial<Record<Mode, number>>): Mode {
+  return LIBRARY_MODES.find((m) => (sizes[m] ?? 0) > 0) ?? 'discover';
 }
 
 /** What a swipe means, per mode. */
 export function outcomeLabel(mode: Mode, dir: Dir, rating?: number): string {
   if (mode === 'rate') return `Rated ${RATE_FOR[dir]}/10`;
+  if (mode === 'watchlist' && dir !== 'up') return { right: 'Started watching', left: 'Removed from watchlist', down: 'Kept for later' }[dir];
   if (dir === 'right') return 'Saved';
   if (dir === 'left') return 'Not for me';
   if (dir === 'up') return rating != null ? `Seen · ${rating}/10` : 'Seen it';
@@ -157,17 +178,15 @@ interface DeckState {
   done: ShowId[];
 }
 interface SessionState {
-  mode: Mode;
+  /** Undefined until the user picks (or swipes): the default follows the library as it hydrates. */
+  mode?: Mode;
   decks: Partial<Record<Mode, DeckState>>;
   log: LogEntry[];
 }
-const useSession = create<SessionState>()(() => ({ mode: 'discover', decks: {}, log: [] }));
+const useSession = create<SessionState>()(() => ({ decks: {}, log: [] }));
 let logSeq = 1;
 
-/**
- * Swipes are fast, so their "→ Watchlist / Undo" toasts are kept to one at a time;
- * on phones (where toasts would cover the action buttons) they're dropped — the Undo button is right there.
- */
+/** Swipes are fast, so their "→ Watchlist · Undo" toasts are kept to one at a time. */
 let swipeToasts: number[] = [];
 function trackToasts(run: () => void) {
   const t = useToasts.getState();
@@ -175,10 +194,11 @@ function trackToasts(run: () => void) {
   for (const id of swipeToasts) t.dismiss(id);
   run();
   const mine = useToasts.getState().toasts.filter((x) => !before.has(x.id)).map((x) => x.id);
-  if (typeof matchMedia !== 'undefined' && matchMedia('(max-width: 860px)').matches) {
-    for (const id of mine) t.dismiss(id);
-    swipeToasts = [];
-  } else swipeToasts = mine;
+  swipeToasts = mine;
+  // On phones toasts sit over the deck switcher, so swipe toasts get a short life there.
+  if (mine.length && typeof matchMedia !== 'undefined' && matchMedia('(max-width: 860px)').matches) {
+    setTimeout(() => mine.forEach((id) => useToasts.getState().dismiss(id)), 2600);
+  }
 }
 
 function takeSnap(id: ShowId): Snap {
@@ -205,15 +225,18 @@ function restoreSnap(id: ShowId, snap: Snap) {
 /* ───────────────────────── presentation helpers ───────────────────────── */
 
 const MODES: { id: Mode; label: string; short: string; blurb: string }[] = [
-  { id: 'discover', label: 'Discover', short: 'Discover', blurb: 'Fresh picks from your taste profile' },
+  { id: 'rate', label: 'Rate my watched', short: 'Rate', blurb: 'Finished shows without a rating' },
+  { id: 'watchlist', label: 'Watchlist', short: 'Watchlist', blurb: 'Triage what you saved: start it, keep it or let it go' },
+  { id: 'discover', label: 'For you', short: 'For you', blurb: 'Fresh picks from your taste profile' },
   { id: 'binge', label: 'Quick binges', short: 'Binges', blurb: 'One or two seasons — done in a weekend' },
   { id: 'gems', label: 'Hidden gems', short: 'Gems', blurb: 'Brilliant and criminally under-watched' },
-  { id: 'rate', label: 'Rate my watched', short: 'Rate', blurb: 'Finished shows without a rating' },
 ];
 
 interface DirMeta {
   stamp: string;
   button: string;
+  /** Small number on the button disc (the rating a swipe gives in "Rate my watched"). */
+  badge?: string;
   icon: LucideIcon;
   key: LucideIcon;
   tone: 'ok' | 'danger' | 'accent' | 'dim';
@@ -221,10 +244,18 @@ interface DirMeta {
 function dirMeta(mode: Mode, dir: Dir): DirMeta {
   if (mode === 'rate') {
     return {
-      right: { stamp: 'Loved · 9', button: 'Loved · 9', icon: Heart, key: ArrowRight, tone: 'ok' as const },
-      left: { stamp: 'Disliked · 3', button: 'Disliked · 3', icon: ThumbsDown, key: ArrowLeft, tone: 'danger' as const },
-      up: { stamp: 'Great · 10', button: 'Great · 10', icon: Crown, key: ArrowUp, tone: 'accent' as const },
-      down: { stamp: 'Meh · 6', button: 'Meh · 6', icon: Meh, key: ArrowDown, tone: 'dim' as const },
+      right: { stamp: 'Loved · 9', button: 'Loved', badge: '9', icon: Heart, key: ArrowRight, tone: 'ok' as const },
+      left: { stamp: 'Disliked · 3', button: 'Disliked', badge: '3', icon: ThumbsDown, key: ArrowLeft, tone: 'danger' as const },
+      up: { stamp: 'Great · 10', button: 'Great', badge: '10', icon: Crown, key: ArrowUp, tone: 'accent' as const },
+      down: { stamp: 'Meh · 6', button: 'Meh', badge: '6', icon: Meh, key: ArrowDown, tone: 'dim' as const },
+    }[dir];
+  }
+  if (mode === 'watchlist') {
+    return {
+      right: { stamp: 'Start watching', button: 'Start', icon: Play, key: ArrowRight, tone: 'ok' as const },
+      left: { stamp: 'Not anymore', button: 'Remove', icon: Trash2, key: ArrowLeft, tone: 'danger' as const },
+      up: { stamp: 'Already seen', button: 'Seen it', icon: Eye, key: ArrowUp, tone: 'accent' as const },
+      down: { stamp: 'Keep for later', button: 'Later', icon: Clock, key: ArrowDown, tone: 'dim' as const },
     }[dir];
   }
   return {
@@ -263,6 +294,14 @@ function flingTarget(dir: Dir, from: Pose): Pose {
   return { x: from.x * 1.6, y: H, rot: from.rot * 1.4 };
 }
 
+/** "3d ago", or "Aug 18" (plus the year when it isn't this year) — short enough for one eyebrow line on a phone. */
+function shortWhen(iso?: string): string {
+  if (!iso) return '';
+  if (Date.now() - Date.parse(iso) < 86400 * 30 * 1000) return relTime(iso);
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: d.getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
+}
+
 /* ───────────────────────── card face ───────────────────────── */
 
 const CardFace = memo(function CardFace({ item, mode }: { item: Item; mode: Mode }) {
@@ -271,8 +310,10 @@ const CardFace = memo(function CardFace({ item, mode }: { item: Item; mode: Mode
   const reasons = (rec?.reasons ?? []).slice(0, 2);
   const eyebrow =
     mode === 'rate'
-      ? `Finished ${entry?.completedAt ? relTime(entry.completedAt) : ''} · how was it?`
-      : because
+      ? `Finished ${shortWhen(entry?.completedAt)} · how was it?`
+      : mode === 'watchlist'
+        ? `Watchlist · added ${shortWhen(entry?.addedAt)}`
+        : because
         ? 'Top pick for you'
         : rec?.exploratory
           ? 'Outside your usual'
@@ -305,7 +346,9 @@ const CardFace = memo(function CardFace({ item, mode }: { item: Item; mode: Mode
         {meta.length > 0 && (
           <div className="swipe-card__meta">
             {meta.map((m) => (
-              <span key={m}>{m}</span>
+              <span key={m} className={m === show.networks?.[0] ? 'is-net' : undefined}>
+                {m}
+              </span>
             ))}
           </div>
         )}
@@ -450,11 +493,12 @@ export default function SwipeDeck() {
   const actions = useShowActions();
   const nav = useNavigate();
   const reduced = useReducedMotion();
+  const reduceFx = useSettings((s) => s.reduceFx);
+  const segRef = useRef<HTMLDivElement>(null);
 
-  const mode = useSession((s) => s.mode);
+  const picked = useSession((s) => s.mode);
   const decks = useSession((s) => s.decks);
   const log = useSession((s) => s.log);
-  const deck = decks[mode];
 
   const swipedIds = useMemo(() => new Set(log.map((l) => l.item.show.id)), [log]);
   const sources = useMemo(() => {
@@ -462,6 +506,11 @@ export default function SwipeDeck() {
     for (const m of MODES) out[m.id] = buildDeck(m.id, collections, entries, blocked, swipedIds);
     return out;
   }, [collections, entries, blocked, swipedIds]);
+  // Library first: open on unrated finished shows, then the watchlist, else For you — decided once the library has loaded.
+  const mode: Mode = picked ?? (hydrated ? defaultMode({ rate: sources.rate.length, watchlist: sources.watchlist.length }) : 'discover');
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
+  const deck = decks[mode];
 
   // Snapshot the deck for a mode the first time it has cards (recs can arrive late).
   useEffect(() => {
@@ -497,7 +546,7 @@ export default function SwipeDeck() {
   const commit = useCallback(
     (dir: Dir, from: Pose = { x: 0, y: 0, rot: 0 }) => {
       const s = useSession.getState();
-      const m = s.mode;
+      const m = modeRef.current;
       const d = s.decks[m];
       const lib = useLibrary.getState();
       const item = remainingOf(d, m, lib.entries, lib.blocked)[0];
@@ -508,12 +557,17 @@ export default function SwipeDeck() {
 
       trackToasts(() => {
         if (m === 'rate') useLibrary.getState().rate(show.id, RATE_FOR[dir]);
-        else if (dir === 'right') actions.watchlist(show);
+        else if (m === 'watchlist') {
+          if (dir === 'right') actions.setStatus(show, 'watching');
+          else if (dir === 'left') actions.remove(show);
+          else if (dir === 'up') actions.setStatus(show, 'completed');
+        } else if (dir === 'right') actions.watchlist(show);
         else if (dir === 'left') actions.notInterested(show);
         else if (dir === 'up') actions.setStatus(show, 'completed');
       });
 
       useSession.setState((st) => ({
+        mode: m, // swiping commits to this deck, so the library-first default can't switch under you
         decks: { ...st.decks, [m]: { items: d.items, done: [...d.done, show.id] } },
         log: [...st.log, { key, item, dir, mode: m, rating: m === 'rate' ? RATE_FOR[dir] : undefined, snap }],
       }));
@@ -673,7 +727,7 @@ export default function SwipeDeck() {
         const v = e.key === '0' ? 10 : Number(e.key);
         rateSeen(v);
       } else if (keyDir[e.key]) {
-        if (t.closest('.rating')) return; // let the rating radios use arrows
+        if (t.closest('.swipe-rate__chips')) return; // don't swipe away while picking a rating
         commit(keyDir[e.key]);
       } else if (e.key === 'Backspace' || e.key.toLowerCase() === 'z') undo();
       else if (e.key === 'Enter') {
@@ -698,26 +752,48 @@ export default function SwipeDeck() {
     }
   };
 
+  // Phones scroll the deck switcher: keep the active deck in view and drop the edge fade at the end.
+  useEffect(() => {
+    const seg = segRef.current;
+    if (!seg) return;
+    const on = seg.querySelector<HTMLElement>('button.on');
+    if (on && seg.scrollWidth > seg.clientWidth) {
+      const a = on.getBoundingClientRect();
+      const box = seg.getBoundingClientRect();
+      const pad = 28; // room for the edge fade
+      const delta = a.left < box.left ? a.left - box.left - pad : a.right > box.right - pad ? a.right - box.right + pad : 0;
+      if (delta) seg.scrollTo({ left: seg.scrollLeft + delta, behavior: reduced ? 'auto' : 'smooth' });
+    }
+    markSegEnd(seg);
+  }, [mode, reduced]);
+
   /* ── counts ── */
-  const saved = log.filter((l) => l.mode !== 'rate' && l.dir === 'right').length;
-  const rated = log.filter((l) => l.rating != null).length;
-  const loading = mode !== 'rate' && !remaining.length && !deck?.done.length && (!hydrated || (recs.stage !== 'ready' && recs.stage !== 'error'));
+  const tally = summarize(log);
+  const count = (k: string) => tally.find((t) => t.label === k)?.v ?? 0;
+  const counterKey = mode === 'rate' ? 'rated' : mode === 'watchlist' ? 'started' : 'saved';
+  const isLib = LIBRARY_MODES.includes(mode);
+  const loading = !remaining.length && !deck?.done.length && (!hydrated || (!isLib && recs.stage !== 'ready' && recs.stage !== 'error'));
   const modeInfo = MODES.find((m) => m.id === mode)!;
   const countFor = (m: Mode) => {
     const d = decks[m];
     return d ? remainingOf(d, m, entries, blocked).length : sources[m].length;
   };
   const visible = remaining.slice(0, 4);
+  // Where to go when this deck is done: the next deck (library first) that still has cards, else For you.
+  const nextDeck = (() => {
+    const pick = MODES.find((m) => m.id !== mode && countFor(m.id) > 0) ?? (mode !== 'discover' ? MODES.find((m) => m.id === 'discover') : undefined);
+    return pick ? { id: pick.id, label: pick.label, n: countFor(pick.id) } : undefined;
+  })();
   const done = !!deck && !remaining.length && !loading;
 
   return (
-    <div className="swipe" data-mode={mode}>
+    <div className={`swipe ${reduceFx ? 'swipe--lowfx' : ''}`} data-mode={mode}>
       <header className="swipe-head">
         <div className="swipe-head__title">
           <h1>Swipe deck</h1>
           <p>Swipe right to save, left to skip — rate fast</p>
         </div>
-        <div className="seg swipe-modes" role="tablist" aria-label="Deck">
+        <div className="seg swipe-modes" role="tablist" aria-label="Deck" ref={segRef} onScroll={(e) => markSegEnd(e.currentTarget)}>
           {MODES.map((m) => (
             <button key={m.id} role="tab" aria-selected={m.id === mode} className={m.id === mode ? 'on' : ''} onClick={() => setMode(m.id)} title={m.blurb}>
               <span className="swipe-modes__long">{m.label}</span>
@@ -727,7 +803,7 @@ export default function SwipeDeck() {
           ))}
         </div>
         <div className="swipe-counter" aria-live="polite">
-          <b>{remaining.length}</b> left · <b>{mode === 'rate' ? rated : saved}</b> {mode === 'rate' ? 'rated' : 'saved'} this session
+          <b>{remaining.length}</b> left · <b>{count(counterKey)}</b> {counterKey} this session
         </div>
       </header>
 
@@ -768,7 +844,7 @@ export default function SwipeDeck() {
                 <p className="hint">Dealing your cards…</p>
               </div>
             )}
-            {done && <EmptyDeck mode={mode} log={log} available={sources[mode].length} hadCards={!!deck?.items.length} onDeal={() => deal()} onDiscover={() => (mode === 'discover' ? nav('/discover') : deal('discover'))} />}
+            {done && <EmptyDeck mode={mode} log={log} available={sources[mode].length} hadCards={!!deck?.items.length} onDeal={() => deal()} next={nextDeck} onNext={() => (nextDeck ? setMode(nextDeck.id) : nav('/discover'))} />}
             {[...visible].reverse().map((it) => {
               const depth = visible.indexOf(it);
               return (
@@ -800,7 +876,7 @@ export default function SwipeDeck() {
           )}
 
           <div className="swipe-controls" role="toolbar" aria-label="Swipe actions">
-            <button className="swipe-btn swipe-btn--small" onClick={undo} disabled={!log.length} aria-label="Undo last swipe (Z)" title="Undo (Z / Backspace)">
+            <button className="swipe-btn swipe-btn--small" data-dir="undo" onClick={undo} disabled={!log.length} aria-label="Undo last swipe (Z)" title="Undo (Z / Backspace)">
               <span className="swipe-btn__disc">
                 <RotateCcw size={18} />
               </span>
@@ -811,15 +887,24 @@ export default function SwipeDeck() {
               const Icon = m.icon;
               const big = d === 'left' || d === 'right';
               return (
-                <button key={d} className={`swipe-btn tone-${m.tone} ${big ? 'swipe-btn--big' : ''}`} onClick={() => commit(d)} disabled={!top} title={`${m.stamp} (${d} arrow)`}>
+                <button
+                  key={d}
+                  data-dir={d}
+                  className={`swipe-btn tone-${m.tone} ${big ? 'swipe-btn--big' : ''}`}
+                  onClick={() => commit(d)}
+                  disabled={!top}
+                  aria-label={m.stamp}
+                  title={`${m.stamp} (${d} arrow)`}
+                >
                   <span className="swipe-btn__disc">
                     <Icon size={big ? 26 : 20} strokeWidth={2.4} />
+                    {m.badge && <span className="swipe-btn__badge">{m.badge}</span>}
                   </span>
                   <span className="swipe-btn__label">{m.button}</span>
                 </button>
               );
             })}
-            <button className="swipe-btn swipe-btn--small" onClick={() => open(top)} disabled={!top} aria-label="Open show page (Enter)" title="Open show page (Enter)">
+            <button className="swipe-btn swipe-btn--small" data-dir="open" onClick={() => open(top)} disabled={!top} aria-label="Open show page (Enter)" title="Open show page (Enter)">
               <span className="swipe-btn__disc">
                 <Info size={18} />
               </span>
@@ -832,6 +917,10 @@ export default function SwipeDeck() {
       </div>
     </div>
   );
+}
+
+function markSegEnd(seg: HTMLElement) {
+  seg.classList.toggle('is-end', seg.scrollLeft + seg.clientWidth >= seg.scrollWidth - 2);
 }
 
 /* ───────────────────────── quick rating after "Seen it" ───────────────────────── */
@@ -867,11 +956,24 @@ function RatePop({ title, value, onRate, onClose }: { title: string; value?: num
         <span>
           Marked <b>{title}</b> as watched. {value != null ? `Rated ${value}/10.` : 'How was it?'}
         </span>
-        <button className="btn btn--ghost btn--sm btn--icon" onClick={onClose} aria-label="Close rating">
-          <X size={16} />
+        <button className="swipe-rate__close" onClick={onClose} aria-label="Close rating">
+          <X size={18} />
         </button>
       </div>
-      <RatingInput value={value} onChange={onRate} />
+      <div className="swipe-rate__chips" role="radiogroup" aria-label="Your rating">
+        {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+          <button
+            key={n}
+            type="button"
+            role="radio"
+            aria-checked={value === n}
+            className={`${value != null && n <= value ? 'on' : ''} ${value === n ? 'is-value' : ''}`}
+            onClick={() => onRate(value === n ? undefined : n)}
+          >
+            {n}
+          </button>
+        ))}
+      </div>
       <div className="swipe-rate__hint">Press 1–9, 0 = 10</div>
       {!hold && <div key={round} className="swipe-rate__timer" aria-hidden />}
     </div>
@@ -881,7 +983,7 @@ function RatePop({ title, value, onRate, onClose }: { title: string; value?: num
 /* ───────────────────────── session list + empty state ───────────────────────── */
 
 function outcomeIcon(l: LogEntry): LucideIcon {
-  if (l.mode === 'rate') return dirMeta('rate', l.dir).icon;
+  if (l.mode === 'rate' || l.mode === 'watchlist') return dirMeta(l.mode, l.dir).icon;
   return l.dir === 'right' ? Bookmark : dirMeta(l.mode, l.dir).icon;
 }
 function toneOf(l: LogEntry) {
@@ -890,12 +992,16 @@ function toneOf(l: LogEntry) {
 
 function summarize(log: LogEntry[]) {
   const n = (f: (l: LogEntry) => boolean) => log.filter(f).length;
+  const recMode = (l: LogEntry) => l.mode !== 'rate' && l.mode !== 'watchlist';
   return [
-    { label: 'saved', v: n((l) => l.mode !== 'rate' && l.dir === 'right'), tone: 'ok' },
-    { label: 'passed', v: n((l) => l.mode !== 'rate' && l.dir === 'left'), tone: 'danger' },
+    { label: 'started', v: n((l) => l.mode === 'watchlist' && l.dir === 'right'), tone: 'ok' },
+    { label: 'saved', v: n((l) => recMode(l) && l.dir === 'right'), tone: 'ok' },
     { label: 'seen', v: n((l) => l.mode !== 'rate' && l.dir === 'up'), tone: 'accent' },
-    { label: 'skipped', v: n((l) => l.mode !== 'rate' && l.dir === 'down'), tone: 'dim' },
     { label: 'rated', v: n((l) => l.rating != null), tone: 'accent' },
+    { label: 'removed', v: n((l) => l.mode === 'watchlist' && l.dir === 'left'), tone: 'danger' },
+    { label: 'passed', v: n((l) => recMode(l) && l.dir === 'left'), tone: 'danger' },
+    { label: 'kept', v: n((l) => l.mode === 'watchlist' && l.dir === 'down'), tone: 'dim' },
+    { label: 'skipped', v: n((l) => recMode(l) && l.dir === 'down'), tone: 'dim' },
   ].filter((x) => x.v > 0);
 }
 
@@ -949,27 +1055,42 @@ function EmptyDeck({
   log,
   available,
   hadCards,
+  next,
   onDeal,
-  onDiscover,
+  onNext,
 }: {
   mode: Mode;
   log: LogEntry[];
   available: number;
   hadCards: boolean;
+  /** The deck to suggest next (undefined = leave for the Discover page). */
+  next?: { id: Mode; label: string; n: number };
   onDeal: () => void;
-  onDiscover: () => void;
+  onNext: () => void;
 }) {
   const stats = summarize(log);
   const swiped = log.filter((l) => l.mode === mode).length;
   const cleared = hadCards && swiped > 0;
-  const title = cleared ? (mode === 'rate' ? 'All rated!' : 'Deck cleared!') : mode === 'rate' ? 'Nothing to rate' : 'No cards here yet';
+  const title = cleared
+    ? mode === 'rate'
+      ? 'All rated!'
+      : mode === 'watchlist'
+        ? 'Watchlist sorted!'
+        : 'Deck cleared!'
+    : mode === 'rate'
+      ? 'Nothing to rate'
+      : mode === 'watchlist'
+        ? 'Watchlist is empty'
+        : 'No cards here yet';
   const sub = cleared
     ? `You went through ${swiped} card${swiped === 1 ? '' : 's'} in ${MODES.find((m) => m.id === mode)!.label}.`
     : mode === 'rate'
       ? 'Every show you finished already has a rating. Nice.'
-      : mode === 'discover'
-        ? 'Add a few shows you love and recommendations will start flowing.'
-        : 'This shelf needs a few more ratings to fill up — try Discover.';
+      : mode === 'watchlist'
+        ? 'Swipe right in For you to save shows you want to watch.'
+        : mode === 'discover'
+          ? 'Add a few shows you love and recommendations will start flowing.'
+          : 'This shelf needs a few more ratings to fill up — try For you.';
   return (
     <div className={`swipe-empty ${cleared ? 'is-party' : ''}`}>
       <div className="swipe-empty__icon" aria-hidden>
@@ -999,8 +1120,8 @@ function EmptyDeck({
             <RefreshCw size={16} /> Deal {available} more
           </button>
         )}
-        <button className={`btn ${available > 0 ? 'btn--ghost' : 'btn--primary'}`} onClick={onDiscover}>
-          <Sparkles size={16} /> {mode === 'discover' ? 'Browse Discover' : 'Go to Discover deck'}
+        <button className={`btn ${available > 0 ? 'btn--ghost' : 'btn--primary'}`} onClick={onNext}>
+          <Sparkles size={16} /> {next ? `Go to ${next.label}${next.n ? ` · ${next.n}` : ''}` : 'Browse Discover'}
         </button>
       </div>
     </div>

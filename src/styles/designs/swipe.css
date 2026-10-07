@@ -104,13 +104,32 @@
     grid-row: auto;
     width: 100%;
   }
+  /* 5 decks don't fit a phone: the control scrolls sideways (active tab kept in view) */
+  .swipe-head .swipe-modes {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    touch-action: pan-x;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 22px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 22px), transparent);
+  }
+  .swipe-head .swipe-modes.is-end {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .swipe-head .swipe-modes::-webkit-scrollbar {
+    display: none;
+  }
   .swipe-modes button {
-    flex: 1;
-    padding: 0 6px;
-    min-width: 0;
+    flex: 1 0 auto;
+    height: 40px;
+    padding: 0 14px;
+    scroll-snap-align: start;
   }
   .swipe-modes button .n {
-    display: none;
+    margin-left: 5px;
   }
   .swipe-modes__long {
     display: none;
@@ -191,6 +210,7 @@
 
 /* ───────────── stage ───────────── */
 .swipe-stage {
+  grid-template-columns: minmax(0, 1fr);
   --sr: 0;
   --sl: 0;
   --su: 0;
@@ -571,6 +591,7 @@
   padding: 4px 0 2px;
 }
 .swipe-btn {
+  min-width: 44px;
   display: grid;
   grid-template-rows: 62px auto;
   align-items: center;
@@ -580,6 +601,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 .swipe-btn__disc {
+  position: relative;
   display: grid;
   place-items: center;
   width: 50px;
@@ -604,6 +626,23 @@
   height: 40px;
   border-width: 1px;
   border-color: var(--panel-border-strong);
+}
+.swipe-btn__badge {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--panel-solid);
+  background: var(--tone, var(--accent));
 }
 .swipe-btn__label {
   font-size: var(--fs-xs);
@@ -651,8 +690,8 @@
     height: 56px;
   }
   .swipe-btn--small .swipe-btn__disc {
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
   }
   .swipe-btn--small .swipe-btn__label {
     font-weight: 500;
@@ -723,9 +762,55 @@
 .swipe-rate__head b {
   color: var(--text);
 }
-.swipe-rate .rating__seg {
-  width: 26px;
-  height: 34px;
+.swipe-rate__close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin: -8px -8px -8px 0;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+}
+.swipe-rate__close:hover,
+.swipe-rate__close:focus-visible {
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.swipe-rate__chips {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 4px;
+  width: 100%;
+}
+.swipe-rate__chips button {
+  height: 40px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--panel-border-strong);
+  background: var(--bg-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--text-dim);
+  transition:
+    background 0.12s,
+    color 0.12s,
+    transform 0.12s;
+}
+.swipe-rate__chips button:hover {
+  color: var(--text);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.swipe-rate__chips button.on {
+  background: color-mix(in srgb, var(--accent) 28%, var(--panel-solid));
+  border-color: var(--accent);
+  color: var(--text);
+}
+.swipe-rate__chips button.is-value {
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: var(--glow-soft);
 }
 .swipe-rate__hint {
   font-family: var(--font-mono);
@@ -751,9 +836,12 @@
   .swipe-rate {
     bottom: calc(92px + 4px);
   }
-  .swipe-rate .rating__seg {
-    width: 22px;
-    height: 32px;
+  .swipe-rate__chips {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .swipe-rate__chips button {
+    height: 42px;
   }
 }
 
@@ -1013,4 +1101,168 @@
   .swipe-rate__hint {
     display: none;
   }
+}
+
+/* small phones: tighten the action row so all six buttons fit, keep the meta line on one row */
+@media (max-width: 380px) {
+  .swipe-card__meta .is-net {
+    display: none;
+  }
+  .swipe-controls {
+    gap: 4px;
+  }
+  .swipe-btn__disc {
+    width: 44px;
+    height: 44px;
+  }
+  .swipe-btn--big .swipe-btn__disc {
+    width: 52px;
+    height: 52px;
+  }
+  .swipe-btn {
+    grid-template-rows: 52px auto;
+  }
+}
+
+/* ───────────── landscape phone: card beside a 3×2 button pad ───────────── */
+@media (orientation: landscape) and (max-height: 520px) {
+  .swipe {
+    --peek: 10px;
+    gap: 6px;
+    padding: 6px 16px;
+  }
+  .swipe-head {
+    grid-template-columns: minmax(0, 1fr) auto;
+    justify-items: stretch;
+    align-items: center;
+  }
+  .swipe-head .swipe-modes {
+    grid-column: auto;
+    grid-row: auto;
+    width: auto;
+    justify-self: start;
+  }
+  .swipe-modes button {
+    height: 40px;
+  }
+  .swipe-counter {
+    justify-self: end;
+  }
+  .swipe-stage {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr);
+    align-items: center;
+    column-gap: 16px;
+  }
+  .swipe-stack {
+    width: min(600px, 100%);
+    max-height: none;
+    justify-self: end;
+  }
+  .swipe-card__body {
+    grid-template-columns: minmax(110px, 32%) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .swipe-card__media::after {
+    inset: 0 0 0 auto;
+    width: 30%;
+    height: auto;
+    background: linear-gradient(to left, var(--panel-solid), transparent);
+  }
+  .swipe-card__match {
+    top: 8px;
+    right: auto;
+    left: 8px;
+    padding: 4px 8px;
+  }
+  .swipe-card__match b {
+    font-size: var(--fs-md);
+  }
+  .swipe-card__info {
+    align-content: center;
+    gap: 5px;
+    padding: 10px 14px;
+    overflow: hidden;
+  }
+  .swipe-card__title {
+    font-size: 1.2rem;
+  }
+  .swipe-card__reasons li:nth-child(2),
+  .swipe-card__overview {
+    display: none;
+  }
+  .swipe-stamp {
+    font-size: 0.95rem;
+  }
+  .swipe-stamp--right,
+  .swipe-stamp--left {
+    top: 14px;
+  }
+  .swipe-stamp--up,
+  .swipe-stamp--down {
+    top: 40%;
+  }
+  .swipe-controls {
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    align-content: center;
+    gap: 6px 10px;
+    padding: 0;
+  }
+  .swipe-btn {
+    grid-template-rows: 52px auto;
+  }
+  .swipe-btn__disc {
+    width: 46px;
+    height: 46px;
+  }
+  .swipe-btn--big .swipe-btn__disc {
+    width: 52px;
+    height: 52px;
+  }
+  .swipe-btn[data-dir='left'] {
+    order: 1;
+  }
+  .swipe-btn[data-dir='up'] {
+    order: 2;
+  }
+  .swipe-btn[data-dir='right'] {
+    order: 3;
+  }
+  .swipe-btn[data-dir='undo'] {
+    order: 4;
+  }
+  .swipe-btn[data-dir='down'] {
+    order: 5;
+  }
+  .swipe-btn[data-dir='open'] {
+    order: 6;
+  }
+  .swipe-rate {
+    left: 0;
+    bottom: 4px;
+    width: min(460px, 62%);
+    transform: none;
+    padding: 10px 12px 12px;
+    gap: 8px;
+  }
+  @keyframes swipe-rate-in {
+    from {
+      opacity: 0;
+    }
+  }
+  .swipe-rate__chips {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .swipe-rate__chips button {
+    height: 40px;
+  }
+}
+
+/* app setting "Reduce effects": keep the card motion, drop the decoration */
+.swipe--lowfx .swipe-confetti,
+.swipe--lowfx .swipe-stage::before,
+.swipe--lowfx .swipe-stage::after {
+  display: none;
 }
