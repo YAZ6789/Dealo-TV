@@ -86,6 +86,7 @@
   display: grid;
   gap: 8px;
   min-width: 0;
+  container-type: inline-size;
   animation: hud-in 0.3s var(--ease) both;
 }
 .hud-compact__text {
@@ -130,6 +131,7 @@ div.hud-compact__text {
   min-height: 1.2em;
   font-size: 0.75rem;
   color: var(--text-dim);
+  white-space: nowrap;
 }
 .hud-compact__actions {
   display: flex;
@@ -145,6 +147,16 @@ div.hud-compact__text {
 .hud-compact__actions .btn--icon {
   width: 40px;
   margin-left: auto;
+}
+/* narrow strip: "Details" becomes an icon button */
+@container (max-width: 290px) {
+  .hud-compact__details {
+    width: 40px;
+    padding: 0;
+  }
+  .hud-compact__label {
+    display: none;
+  }
 }
 
 /* full readout sheet (phones): between the top bar and the bottom tab bar */
@@ -593,6 +605,9 @@ div.hud-compact__text {
 }
 .ring-stage--compact .ring-ticker .mono {
   min-width: 13ch;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1010,6 +1025,14 @@ div.hud-compact__text {
   height: calc(100dvh - var(--topbar-h) - var(--tab-space));
   margin-bottom: -96px; /* the page's own tab-bar padding: this stage already stops above the bar */
 }
+.sky-stage--compact .sky {
+  top: 104px; /* below the taste line and filters, so the map uses the free height */
+  height: calc(100% - 104px);
+}
+.sky-stage--compact.has-sel .sky-zoom,
+.sky-stage--compact.has-sel .sky-legend {
+  display: none;
+}
 .sky-stage--compact .sky-top {
   top: 8px;
   flex-direction: column;
@@ -1031,10 +1054,8 @@ div.hud-compact__text {
   font-size: 0.85rem;
 }
 .sky-stage--compact .sky-zoom {
-  top: 50%;
-  bottom: auto;
   right: 10px;
-  transform: translateY(-50%);
+  bottom: 10px;
   gap: 4px;
 }
 .sky-stage--compact .sky-zoom .btn {
@@ -1068,8 +1089,8 @@ div.hud-compact__text {
   grid-template-columns: 64px minmax(0, 1fr);
   gap: 12px;
   align-items: start;
-  padding: 12px 12px 12px 12px;
-  background: color-mix(in srgb, var(--panel-solid) 96%, transparent);
+  padding: 12px;
+  background: var(--panel-solid);
   border: 1px solid var(--panel-border-strong);
   border-radius: var(--radius);
   box-shadow: var(--shadow), var(--glow-soft);
@@ -1125,6 +1146,13 @@ div.hud-compact__text {
   }
   .sky-stage--compact .sky-top > div:first-child {
     display: none;
+  }
+  .sky-stage--compact .sky {
+    top: 0;
+    height: 100%;
+  }
+  .sky-stage--compact.has-sel .sky-zoom {
+    display: grid;
   }
   .sky-peek {
     left: auto;
@@ -1508,6 +1536,7 @@ div.hud-compact__text {
   right: calc(42% + 8px);
 }
 .tunnel-stage--land .tunnel-hud {
+  grid-template-columns: minmax(0, 1fr);
   left: auto;
   width: calc(42% - 16px);
   top: 60px;

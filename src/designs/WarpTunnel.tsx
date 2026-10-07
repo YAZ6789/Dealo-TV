@@ -174,13 +174,23 @@ export default function WarpTunnel() {
   });
 
   const snapTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const onWheel = (e: React.WheelEvent) => {
-    if ((e.target as HTMLElement).closest('.tunnel-hud, .tunnel-tracks')) return;
+  const stage = useRef<HTMLDivElement>(null);
+  const onWheel = useRef<(e: WheelEvent) => void>(() => {});
+  onWheel.current = (e) => {
+    if ((e.target as HTMLElement).closest('.tunnel-hud, .tunnel-tracks, .hud-sheet-wrap')) return;
+    e.preventDefault(); // the wheel flies the camera; it must not also scroll the page
     target.current = Math.max(0, Math.min(maxCam, target.current + e.deltaY * 1.4));
     kick();
     clearTimeout(snapTimer.current);
     snapTimer.current = setTimeout(() => go(0), 160);
   };
+  useEffect(() => {
+    const el = stage.current;
+    if (!el) return;
+    const h = (e: WheelEvent) => onWheel.current(e);
+    el.addEventListener('wheel', h, { passive: false });
+    return () => el.removeEventListener('wheel', h);
+  }, []);
 
   /* Vertical swipe / drag flies through the tunnel (the stage fits the screen, so it never fights a page scroll). */
   const drag = useRef<{ id: number; y: number; t0: number; last: number; at: number; v: number; moved: boolean } | null>(null);
@@ -223,7 +233,7 @@ export default function WarpTunnel() {
   return (
     <div
       className={`tunnel-stage ${warping ? 'warping' : ''} ${compact ? 'tunnel-stage--compact' : ''} ${landscapePhone ? 'tunnel-stage--land' : ''} ${calm ? 'fx-calm' : ''}`}
-      onWheel={onWheel}
+      ref={stage}
       onPointerDown={onDown}
       onPointerMove={onMove}
       onPointerUp={onUp}

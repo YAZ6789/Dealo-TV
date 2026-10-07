@@ -88,7 +88,9 @@ export default function Constellation() {
   const u = unitsPerPx / view.k; // world units per screen px at the current zoom
   // Text sizes in screen px (a touch larger on phones).
   const LABEL_PX = compact ? 14 : 12.5;
-  const SECTOR_PX = compact ? 15 : 14;
+  // Small maps (landscape phones) get smaller sector names so neighbours don't pile up.
+  const mapPx = Math.min(box.w, box.h);
+  const SECTOR_PX = compact ? Math.max(11, Math.min(15, mapPx / 26)) : 14;
 
   const related = useMemo(() => {
     if (!focus) return new Set<string>();
@@ -105,6 +107,8 @@ export default function Constellation() {
       (selected?.id === n.id ? 1000 : 0) + (focus?.id === n.id ? 900 : 0) + (important.has(n.id) ? 100 : 0) + (n.rec?.match ?? (n.entry?.rating ?? 6) * 10);
     want.sort((a, b) => prio(b) - prio(a));
     const boxes: { x0: number; y0: number; x1: number; y1: number }[] = [];
+    // keep labels on screen: the visible world rect at the current view
+    const vis = { x0: (-box.w / 2 + 6) * u - view.x, x1: (box.w / 2 - 6) * u - view.x, y0: (-box.h / 2 + 4) * u - view.y, y1: (box.h / 2 - 4) * u - view.y };
     // stars themselves are obstacles too
     for (const n of visible) boxes.push({ x0: n.x - n.r, y0: n.y - n.r, x1: n.x + n.r, y1: n.y + n.r });
     const out = new Map<string, { x: number; y: number; anchor: 'middle' | 'start' | 'end'; text: string }>();
@@ -121,7 +125,8 @@ export default function Constellation() {
       ];
       for (const c of cands) {
         const b = { x0: c.x0, y0: c.y0, x1: c.x0 + w, y1: c.y0 + h };
-        const hit = boxes.some((o) => !(b.x1 < o.x0 || b.x0 > o.x1 || b.y1 < o.y0 || b.y0 > o.y1) && !(o.x0 === n.x - n.r && o.y0 === n.y - n.r));
+        const off = b.x0 < vis.x0 || b.x1 > vis.x1 || b.y0 < vis.y0 || b.y1 > vis.y1;
+        const hit = off || boxes.some((o) => !(b.x1 < o.x0 || b.x0 > o.x1 || b.y1 < o.y0 || b.y0 > o.y1) && !(o.x0 === n.x - n.r && o.y0 === n.y - n.r));
         if (!hit) {
           boxes.push(b);
           out.set(n.id, { x: c.x - n.x, y: c.y - n.y, anchor: c.anchor, text });
@@ -130,7 +135,7 @@ export default function Constellation() {
       }
     }
     return out;
-  }, [visible, view.k, u, important, selected, focus, related, LABEL_PX]);
+  }, [visible, view.k, view.x, view.y, box, u, important, selected, focus, related, LABEL_PX]);
 
   // Sector names sit just outside the disc; on a narrow screen pull them in so
   // "ANIMATION" or "THRILLER" never run off the edge (at the home zoom).
@@ -140,16 +145,26 @@ export default function Constellation() {
     const halfH = (box.h * unitsPerPx) / 2;
     const fs = SECTOR_PX * u;
     const margin = 10 * unitsPerPx;
+    const placed: { x0: number; x1: number; y0: number; y1: number }[] = [];
     return sky.sectors.map((s) => {
       const text = s.key === 'other' ? 'OTHER' : GENRE_LABELS[s.key].toUpperCase();
       const hw = (text.length * fs * 0.84) / 2;
-      let x = Math.cos(s.mid) * (R + 40);
-      let y = Math.sin(s.mid) * (R + 40);
       const maxX = Math.max(hw, Math.min(size / 2, halfW) - margin - hw);
       const maxY = Math.max(fs, Math.min(size / 2, halfH) - margin - fs / 2);
-      x = Math.max(-maxX, Math.min(maxX, x));
-      y = Math.max(-maxY, Math.min(maxY, y));
-      return { key: s.key, start: s.start, text, x, y };
+      // Narrow neighbouring sectors can put two names on top of each other: step outwards/inwards until clear.
+      let best = { x: 0, y: 0 };
+      for (const dr of [0, 1.4, -1.4, 2.8, -2.8]) {
+        const r = R + 40 + dr * fs;
+        const x = Math.max(-maxX, Math.min(maxX, Math.cos(s.mid) * r));
+        const y = Math.max(-maxY, Math.min(maxY, Math.sin(s.mid) * r));
+        const b = { x0: x - hw, x1: x + hw, y0: y - fs * 0.6, y1: y + fs * 0.6 };
+        best = { x, y };
+        if (!placed.some((o) => !(b.x1 < o.x0 || b.x0 > o.x1 || b.y1 < o.y0 || b.y0 > o.y1))) {
+          placed.push(b);
+          break;
+        }
+      }
+      return { key: s.key, start: s.start, text, ...best };
     });
   }, [sky.sectors, box, unitsPerPx, u, SECTOR_PX]);
 
@@ -311,9 +326,9 @@ export default function Constellation() {
           {[0.25, 0.5, 0.75, 1].map((f) => (
             <circle key={f} r={R * f} className={`sky-orbit ${f === sky.split ? 'split' : ''}`} />
           ))}
-          <text className="sky-ring-label" y={-R * sky.split - 8 * u} textAnchor="middle" style={{ fontSize: 11 * u }}>
+          {mapPx >= 330 && (<text className="sky-ring-label" y={-R * sky.split - 8 * u} textAnchor="middle" style={{ fontSize: 11 * u }}>
             YOUR LIBRARY ▲ ▼ DISCOVERY FIELD
-          </text>
+          </text>)}
           {/* sectors */}
           {sectorLabels.map((s) => (
             <g key={s.key}>

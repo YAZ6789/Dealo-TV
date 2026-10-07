@@ -235,8 +235,8 @@ export function ShowHud({
               <Clock size={15} /> Watchlist
             </button>
           ) : null}
-          <Link to={showPath(show.id)} onClick={() => remember(show)} className="btn btn--sm">
-            <Info size={15} /> Details
+          <Link to={showPath(show.id)} onClick={() => remember(show)} className="btn btn--sm hud-compact__details" aria-label="Details">
+            <Info size={15} /> <span className="hud-compact__label">Details</span>
           </Link>
           {onMore && (
             <button type="button" className="btn btn--sm btn--icon" onClick={onMore} aria-label="More about this show" title="More">
