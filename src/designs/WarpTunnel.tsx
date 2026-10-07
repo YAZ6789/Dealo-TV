@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronsDown, ChevronsUp } from 'lucide-react';
-import { useCollections, type CollectionId, type Item } from './useCollections';
+import { defaultCollection, useCollections, type CollectionId, type Item } from './useCollections';
 import { ShowHud } from './ShowHud';
 import { Poster } from '../components/Poster';
 import { remember, showPath } from '../lib/showCache';
@@ -15,10 +15,10 @@ import { remember, showPath } from '../lib/showCache';
 
 const SPACING = 440;
 const TRACKS: { id: CollectionId; label: string }[] = [
-  { id: 'foryou', label: 'Into the future · For you' },
-  { id: 'watched', label: 'Into the past · Your history' },
-  { id: 'continue', label: 'In progress' },
+  { id: 'watched', label: 'Into the past · Watched' },
+  { id: 'continue', label: 'Watching now' },
   { id: 'watchlist', label: 'Watchlist' },
+  { id: 'foryou', label: 'Into the future · For you' },
 ];
 
 interface Gate {
@@ -29,7 +29,9 @@ interface Gate {
 export default function WarpTunnel() {
   const { collections } = useCollections();
   const nav = useNavigate();
-  const [tid, setTid] = useState<CollectionId>('foryou');
+  // Opens on your library until you pick a track yourself.
+  const [picked, setTid] = useState<CollectionId | null>(null);
+  const tid = picked ?? defaultCollection(collections);
   const items: Item[] = useMemo(() => {
     const c = collections.find((x) => x.id === tid);
     const list = (c?.items ?? []).slice(0, 60);

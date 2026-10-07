@@ -81,6 +81,128 @@
   font-weight: 700;
 }
 
+/* compact strip (phones): status · title · progress · primary action */
+.hud-compact {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  animation: hud-in 0.3s var(--ease) both;
+}
+.hud-compact__text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  width: 100%;
+  padding: 0;
+  text-align: left;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+div.hud-compact__text {
+  cursor: default;
+}
+.hud-compact__eyebrow {
+  font-size: 0.75rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hud-compact__title {
+  display: block;
+  font-size: clamp(1.15rem, 5.2vw, 1.5rem);
+  line-height: 1.12;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: none;
+}
+.hud-compact .hud-meta {
+  font-size: 0.75rem;
+  min-height: 1.2em;
+}
+.hud-compact__progress {
+  display: grid;
+  grid-template-columns: minmax(60px, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 1.2em;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+.hud-compact__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.hud-compact__actions .btn {
+  height: 40px;
+  min-width: 40px;
+  flex: none;
+}
+.hud-compact__actions .btn--icon {
+  width: 40px;
+  margin-left: auto;
+}
+
+/* full readout sheet (phones): between the top bar and the bottom tab bar */
+.hud-sheet-wrap {
+  --tab-space: calc(70px + env(safe-area-inset-bottom, 0px));
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: var(--topbar-h);
+  bottom: var(--tab-space);
+  z-index: 58;
+  display: grid;
+  align-items: end;
+  padding: 8px 8px 8px;
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  animation: fade-in 0.2s var(--ease) both;
+}
+.hud-sheet {
+  position: relative;
+  display: grid;
+  gap: 14px;
+  max-height: 100%;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 18px 16px 16px;
+  background: color-mix(in srgb, var(--panel-solid) 97%, transparent);
+  border: 1px solid var(--panel-border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow), var(--glow-soft);
+  animation: hud-sheet-in 0.28s var(--ease) both;
+}
+@keyframes hud-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+.hud-sheet__close {
+  position: sticky;
+  top: 0;
+  justify-self: end;
+  margin-bottom: -54px;
+  z-index: 2;
+}
+.hud-sheet .hud-title {
+  padding-right: 48px;
+  font-size: clamp(1.4rem, 6vw, 2rem);
+}
+.hud-sheet .hud-overview {
+  -webkit-line-clamp: 8;
+}
+.hud-sheet .cluster .btn {
+  height: 40px;
+}
+.hud-sheet .cluster .btn--icon {
+  width: 40px;
+}
+
 /* ───────────── HOLO RING ───────────── */
 .ring-stage {
   position: relative;
@@ -391,6 +513,140 @@
   .ring-hint {
     display: none;
   }
+}
+
+/* Poster art titles: size to the card, never clip mid-word ("SEVERANC"). */
+.ring-card,
+.tunnel-card {
+  container-type: inline-size;
+}
+.ring-card > .art,
+.tunnel-card > .art {
+  padding: 9%;
+}
+.ring-card .art__title,
+.tunnel-card .art__title {
+  font-size: clamp(0.6rem, 10.5cqi, 1.25rem);
+  hyphens: auto;
+}
+.ring-card .art__kicker,
+.tunnel-card .art__kicker {
+  font-size: clamp(0.5rem, 6.4cqi, 0.68rem);
+  overflow-wrap: anywhere;
+}
+
+/* Holo Ring — phones (JS adds .ring-stage--compact at the tab-bar breakpoint) */
+.ring-stage--compact {
+  --tab-space: calc(70px + env(safe-area-inset-bottom, 0px));
+  min-height: 0;
+  height: calc(100vh - var(--topbar-h) - 70px);
+  height: calc(100dvh - var(--topbar-h) - var(--tab-space));
+  margin-bottom: -96px; /* the page's own tab-bar padding: this stage already stops above the bar */
+  padding: 4px var(--gutter) 8px;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-areas: 'dial' 'body' 'ticker' 'strip';
+}
+.ring-stage--compact .ring-dial {
+  grid-area: dial;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 22px), transparent);
+  mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 22px), transparent);
+}
+.ring-stage--compact .ring-dial button {
+  min-height: 44px;
+  padding: 10px 12px 12px;
+}
+.ring-stage--compact .ring-dial button.on::after {
+  left: 12px;
+  right: 12px;
+  bottom: 4px;
+}
+.ring-stage--compact .ring-body {
+  grid-area: body;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  align-items: stretch;
+}
+.ring-stage--compact .ring-carousel {
+  top: 41%;
+}
+.ring-stage--compact .ring-viewport {
+  height: auto;
+  min-height: 150px;
+  touch-action: none; /* the stage fits the screen: horizontal swipes spin, nothing to scroll */
+}
+.ring-stage--compact .ring-ticker {
+  grid-area: ticker;
+  position: relative;
+  margin-top: -48px;
+  padding: 0 0 6px;
+  gap: 10px;
+  font-size: 0.75rem;
+  pointer-events: none;
+}
+.ring-stage--compact .ring-ticker .btn {
+  width: 40px;
+  height: 40px;
+  pointer-events: auto;
+  background: color-mix(in srgb, var(--panel-solid) 80%, transparent);
+}
+.ring-stage--compact .ring-ticker .mono {
+  min-width: 13ch;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ring-strip {
+  grid-area: strip;
+  position: relative;
+  z-index: 5;
+  margin-top: 8px;
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--panel-solid) 92%, transparent);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.ring-strip::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 16px;
+  width: 48px;
+  height: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+}
+/* landscape phones: ring left, strip right */
+@media (max-height: 520px) and (orientation: landscape) {
+  .ring-stage--compact {
+    grid-template-columns: minmax(0, 1fr) minmax(250px, 42%);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas: 'dial dial' 'body strip' 'body ticker';
+    column-gap: 12px;
+  }
+  .ring-stage--compact .ring-viewport {
+    min-height: 120px;
+  }
+  .ring-stage--compact .ring-ticker {
+    margin-top: 6px;
+    padding: 0;
+  }
+  .ring-strip {
+    margin-top: 0;
+    align-self: end;
+  }
+}
+
+/* calm: reduceFx, reduced motion or touch devices — no idle animation */
+.fx-calm .ring-item.active .ring-card::after,
+.fx-calm .ring-floor__ticks,
+.fx-calm .ring-floor__ring {
+  animation: none;
+}
+.fx-calm .ring-beam {
+  filter: none;
 }
 
 /* ───────────── CONSTELLATION ───────────── */

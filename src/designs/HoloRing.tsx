@@ -1,16 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
-import { useCollections, type CollectionId, type Item } from './useCollections';
-import { ShowHud } from './ShowHud';
+import { defaultCollection, useCollections, type CollectionId, type Item } from './useCollections';
+import { HudSheet, ShowHud, useCalmFx, useCompact, useFitArtTitles } from './ShowHud';
 import { Poster } from '../components/Poster';
 import { remember, showPath } from '../lib/showCache';
 import { progressOf } from '../lib/progress';
 
 /**
  * HOLO RING — a 3D carousel of posters standing on a holographic platform,
- * like a sci-fi film's computer console. Drag, scroll, arrow keys or click a
- * poster to spin; Enter opens the focused show. Collections sit on an arc dial.
+ * like a sci-fi film's computer console. Drag, swipe, scroll, arrow keys or
+ * click a poster to spin; Enter opens the focused show. Collections sit on an
+ * arc dial (library first, recommendations last). On phones the readout folds
+ * into a one-glance strip under the ring, with the full readout one tap away.
  */
 
 const MAX_ITEMS = 20;
@@ -26,10 +28,25 @@ function useViewport() {
   return w;
 }
 
+/** Height of an element, kept live. */
+function useHeight(ref: React.RefObject<HTMLElement | null>, fallback: number) {
+  const [h, setH] = useState(fallback);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => el.clientHeight && setH(el.clientHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref]);
+  return h;
+}
+
 export default function HoloRing() {
   const { collections, recs } = useCollections();
   const nav = useNavigate();
-  const [cid, setCid] = useState<CollectionId>(() => (collections.find((c) => c.id === 'continue') ? 'continue' : 'foryou'));
+  // Opens on your library (Watched → Watching → Watchlist) until you pick a list yourself.
+  const [picked, setCid] = useState<CollectionId | null>(null);
+  const cid = picked ?? defaultCollection(collections);
   const col = collections.find((c) => c.id === cid) ?? collections[0];
   const items: Item[] = useMemo(() => (col?.items ?? []).slice(0, MAX_ITEMS), [col]);
   const n = items.length;
@@ -37,15 +54,29 @@ export default function HoloRing() {
   const step = 360 / slots;
 
   const vw = useViewport();
-  // Card size from the viewport, shrunk if the ring would get wider than the stage.
-  const maxR = Math.max(260, vw * (vw > 1100 ? 0.35 : 0.42));
-  let cardW = Math.max(110, Math.min(200, vw * 0.15));
-  if ((cardW / 2 / Math.tan(Math.PI / slots)) * 1.12 > maxR) cardW = Math.max(96, (2 * maxR * Math.tan(Math.PI / slots)) / 1.12);
+  const compact = useCompact();
+  const calm = useCalmFx();
+  const viewport = useRef<HTMLDivElement>(null);
+  const dial = useRef<HTMLElement>(null);
+  const vh = useHeight(viewport, 480);
+  const [sheet, setSheet] = useState(false);
+  useFitArtTitles(viewport, [items, compact, vw, vh]);
+  let cardW: number;
+  if (compact) {
+    // Phones: the front card is sized to the space left between the tabs and the strip;
+    // the far side of the ring may run off the edges (it reads as "swipe for more").
+    cardW = Math.round(Math.max(70, Math.min(170, vw * 0.36, (vh - 40) / 2)));
+  } else {
+    // Card size from the viewport, shrunk if the ring would get wider than the stage.
+    const maxR = Math.max(260, vw * (vw > 1100 ? 0.35 : 0.42));
+    cardW = Math.max(110, Math.min(200, vw * 0.15));
+    if ((cardW / 2 / Math.tan(Math.PI / slots)) * 1.12 > maxR) cardW = Math.max(96, (2 * maxR * Math.tan(Math.PI / slots)) / 1.12);
+  }
   const radius = Math.round((cardW / 2 / Math.tan(Math.PI / slots)) * 1.12);
 
   const [rot, setRot] = useState(0); // degrees, continuous
   const [dragging, setDragging] = useState(false);
-  const drag = useRef<{ x: number; rot: number; moved: boolean } | null>(null);
+  const drag = useRef<{ x: number; rot: number; moved: boolean; id: number; t: number; v: number; lx: number } | null>(null);
   const wheelTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const stage = useRef<HTMLDivElement>(null);
 
@@ -54,7 +85,19 @@ export default function HoloRing() {
   const current = activeIdx >= 0 ? items[activeIdx] : undefined;
 
   // reset when switching collections
-  useEffect(() => setRot(0), [cid]);
+  useEffect(() => {
+    setRot(0);
+    setSheet(false);
+  }, [cid]);
+
+  // Keep the chosen tab visible in the scrolling tab row (phones).
+  useEffect(() => {
+    const nav = dial.current;
+    const on = nav?.querySelector<HTMLElement>('button.on');
+    if (!nav || !on || nav.scrollWidth <= nav.clientWidth) return;
+    const left = on.offsetLeft - (nav.clientWidth - on.offsetWidth) / 2;
+    nav.scrollTo({ left: Math.max(0, left), behavior: calm ? 'auto' : 'smooth' });
+  }, [cid, calm, collections.length]);
 
   const goTo = useCallback(
     (i: number) => {
@@ -85,7 +128,7 @@ export default function HoloRing() {
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement;
-      if (t.closest('input, textarea, select, [role="menu"], .menu') || document.querySelector('.overlay')) return;
+      if (t.closest('input, textarea, select, [role="menu"], .menu') || document.querySelector('.overlay, .hud-sheet-wrap')) return;
       if (e.key === 'Enter' && t.closest('button, a')) return; // let focused controls handle Enter
       if (e.key === 'ArrowRight') move(1);
       else if (e.key === 'ArrowLeft') move(-1);
@@ -120,38 +163,63 @@ export default function HoloRing() {
 
   const onPointerDown = (e: React.PointerEvent) => {
     if ((e.target as HTMLElement).closest('button, a')) return;
-    drag.current = { x: e.clientX, rot, moved: false };
+    if (drag.current) return; // second finger: ignore
+    drag.current = { x: e.clientX, rot, moved: false, id: e.pointerId, t: performance.now(), v: 0, lx: e.clientX };
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     setDragging(true);
   };
+  const degPerPx = step / (cardW * 0.9);
   const onPointerMove = (e: React.PointerEvent) => {
-    if (!drag.current) return;
-    const dx = e.clientX - drag.current.x;
-    if (Math.abs(dx) > 4) drag.current.moved = true;
-    setRot(drag.current.rot - dx * (step / (cardW * 0.9)));
+    const d = drag.current;
+    if (!d || e.pointerId !== d.id) return;
+    const dx = e.clientX - d.x;
+    if (Math.abs(dx) > 6) d.moved = true;
+    const now = performance.now();
+    if (now > d.t) d.v = 0.7 * ((e.clientX - d.lx) / (now - d.t)) + 0.3 * d.v; // px per ms, smoothed
+    d.t = now;
+    d.lx = e.clientX;
+    setRot(d.rot - dx * degPerPx);
   };
-  const onPointerUp = (e: React.PointerEvent) => {
-    if (!drag.current) return;
-    const moved = drag.current.moved;
+  /** Gesture taken over by the browser (e.g. a vertical page scroll): settle, never treat it as a tap. */
+  const onPointerCancel = (e: React.PointerEvent) => {
+    if (!drag.current || e.pointerId !== drag.current.id) return;
     drag.current = null;
     setDragging(false);
-    if (moved) {
-      setRot(snap);
+    setRot(snap);
+  };
+  const onPointerUp = (e: React.PointerEvent) => {
+    const d = drag.current;
+    if (!d || e.pointerId !== d.id) return;
+    drag.current = null;
+    setDragging(false);
+    if (d.moved) {
+      // a flick carries on for up to ~3 cards
+      const fling = performance.now() - d.t < 80 ? Math.max(-3, Math.min(3, -d.v * 0.9)) * step : 0;
+      setRot((r) => snap(r + fling));
       return;
     }
-    // a click: find the poster under the pointer
-    const el = document.elementFromPoint(e.clientX, e.clientY)?.closest<HTMLElement>('[data-ring-i]');
-    if (!el) return;
-    const i = Number(el.dataset.ringI);
+    // A tap: the front-most poster whose projected box holds the point. (3D hit-testing
+    // misses the angled side cards, so this compares boxes and angles instead.)
+    const angleFromFront = (i: number) => Math.abs(((((i * step - rot) % 360) + 540) % 360) - 180);
+    let i = -1;
+    for (const el of viewport.current?.querySelectorAll<HTMLElement>('[data-ring-i]') ?? []) {
+      const r = el.querySelector('.ring-card')!.getBoundingClientRect();
+      const k = Number(el.dataset.ringI);
+      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom || angleFromFront(k) > 100) continue;
+      if (i < 0 || angleFromFront(k) < angleFromFront(i)) i = k;
+    }
+    if (i < 0) return;
     if (i === activeIdx && current) {
       remember(current.show);
       nav(showPath(current.show.id));
     } else goTo(i);
   };
 
+  const closeSheet = useCallback(() => setSheet(false), []);
+
   return (
-    <div className="ring-stage" ref={stage}>
-      <nav className="ring-dial" aria-label="Collections">
+    <div className={`ring-stage ${compact ? 'ring-stage--compact' : ''} ${calm ? 'fx-calm' : ''}`} ref={stage}>
+      <nav className="ring-dial" aria-label="Collections" ref={dial}>
         {collections.map((c, i) => {
           const off = i - (collections.length - 1) / 2;
           return (
@@ -160,6 +228,7 @@ export default function HoloRing() {
               className={c.id === cid ? 'on' : ''}
               style={{ transform: `translateY(${off * off * 2.4}px) rotate(${off * 1.2}deg)` }}
               onClick={() => setCid(c.id)}
+              aria-pressed={c.id === cid}
             >
               {c.label}
               <span className="n">{c.items.length}</span>
@@ -169,18 +238,21 @@ export default function HoloRing() {
       </nav>
 
       <div className="ring-body">
-        <aside className="ring-panel ring-panel--left" aria-live="polite">
-          {current ? <ShowHud key={current.show.id} item={current} side="info" /> : null}
-        </aside>
+        {!compact && (
+          <aside className="ring-panel ring-panel--left" aria-live="polite">
+            {current ? <ShowHud key={current.show.id} item={current} side="info" /> : null}
+          </aside>
+        )}
 
         <div
+          ref={viewport}
           className={`ring-viewport ${dragging ? 'dragging' : ''}`}
           style={{ '--card-w': `${cardW}px`, '--ring-r': `${radius}px` } as React.CSSProperties}
           onWheel={onWheel}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
-          onPointerCancel={onPointerUp}
+          onPointerCancel={onPointerCancel}
           role="listbox"
           aria-label={col?.label}
           aria-activedescendant={current ? `ring-${activeIdx}` : undefined}
@@ -232,9 +304,11 @@ export default function HoloRing() {
                           </span>
                         )}
                       </div>
-                      <div className="ring-reflect" aria-hidden>
-                        <Poster show={it.show} />
-                      </div>
+                      {(!calm || d < 60) && (
+                        <div className="ring-reflect" aria-hidden>
+                          <Poster show={it.show} />
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -249,7 +323,7 @@ export default function HoloRing() {
           )}
         </div>
 
-        <aside className="ring-panel ring-panel--right">{current ? <ShowHud key={current.show.id} item={current} side="actions" /> : null}</aside>
+        {!compact && <aside className="ring-panel ring-panel--right">{current ? <ShowHud key={current.show.id} item={current} side="actions" /> : null}</aside>}
       </div>
 
       <div className="ring-ticker">
@@ -264,6 +338,13 @@ export default function HoloRing() {
         </button>
         <span className="ring-hint">drag · scroll · ← → · enter</span>
       </div>
+
+      {compact && current && (
+        <div className="ring-strip" aria-live="polite">
+          <ShowHud key={current.show.id} item={current} side="compact" onMore={() => setSheet(true)} />
+        </div>
+      )}
+      {sheet && current && <HudSheet item={current} onClose={closeSheet} />}
     </div>
   );
 }
