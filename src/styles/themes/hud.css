@@ -1,0 +1,181 @@
+/* ==========================================================================
+   HOLOGRAPHIC HUD — ship-console glass, cyan/violet light, corner brackets,
+   perspective grid floor and scanlines.
+   ========================================================================== */
+
+[data-theme='hud'] {
+  --bg: #03060d;
+  --bg-2: #08101f;
+  --bg-3: #0f1a31;
+  --panel: rgba(9, 18, 36, 0.58);
+  --panel-solid: #0a1426;
+  --panel-border: rgba(0, 229, 255, 0.2);
+  --panel-border-strong: rgba(0, 229, 255, 0.55);
+  --text: #e4f7ff;
+  --text-dim: #9cb6cc;
+  --text-faint: #62809a;
+  --accent: #00e5ff;
+  --accent-2: #8b5cf6;
+  --accent-3: #ff4fd8;
+  --accent-ink: #001419;
+  --ok: #3cf0a8;
+  --warn: #ffc65c;
+  --danger: #ff5577;
+  --glow: 0 0 0 1px rgba(0, 229, 255, 0.4), 0 0 26px rgba(0, 229, 255, 0.28);
+  --glow-soft: 0 0 20px rgba(0, 229, 255, 0.16);
+  --radius: 3px;
+  --radius-sm: 2px;
+  --radius-pill: 3px;
+  --font-display: 'Orbitron', 'Inter Variable', sans-serif;
+  --font-body: 'Inter Variable', system-ui, sans-serif;
+  --title-prefix: '// ';
+  --title-spacing: 0.16em;
+  --hero-weight: 900;
+}
+
+/* corner brackets on panels & posters */
+[data-theme='hud'] .panel::before,
+[data-theme='hud'] .card__poster::before,
+[data-theme='hud'] .detail-hero__poster::before,
+[data-theme='hud'] .modal::before,
+[data-theme='hud'] .palette::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  z-index: 3;
+  pointer-events: none;
+  --c: var(--accent);
+  --l: 14px;
+  background:
+    linear-gradient(var(--c), var(--c)) top left / var(--l) 2px,
+    linear-gradient(var(--c), var(--c)) top left / 2px var(--l),
+    linear-gradient(var(--c), var(--c)) top right / var(--l) 2px,
+    linear-gradient(var(--c), var(--c)) top right / 2px var(--l),
+    linear-gradient(var(--c), var(--c)) bottom left / var(--l) 2px,
+    linear-gradient(var(--c), var(--c)) bottom left / 2px var(--l),
+    linear-gradient(var(--c), var(--c)) bottom right / var(--l) 2px,
+    linear-gradient(var(--c), var(--c)) bottom right / 2px var(--l);
+  background-repeat: no-repeat;
+  opacity: 0.85;
+  filter: drop-shadow(0 0 4px var(--accent));
+}
+[data-theme='hud'] .card__poster::before {
+  --l: 10px;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+[data-theme='hud'] .card:hover .card__poster::before {
+  opacity: 1;
+}
+[data-theme='hud'] .modal,
+[data-theme='hud'] .palette {
+  position: relative;
+}
+
+/* scan sweep across hovered posters */
+[data-theme='hud'] .card__poster::after,
+[data-theme='hud'] .wcard__media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent 0%, rgba(0, 229, 255, 0.18) 48%, rgba(0, 229, 255, 0.5) 50%, transparent 52%);
+  background-size: 100% 220%;
+  background-position: 0 -120%;
+  opacity: 0;
+}
+[data-theme='hud'] .card:hover .card__poster::after,
+[data-theme='hud'] .wcard:hover .wcard__media::after {
+  opacity: 1;
+  animation: hud-sweep 1.1s var(--ease) both;
+}
+@keyframes hud-sweep {
+  to {
+    background-position: 0 120%;
+  }
+}
+
+[data-theme='hud'] .hero__title,
+[data-theme='hud'] .page-title {
+  background: linear-gradient(180deg, #ffffff 30%, #9ef3ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 22px rgba(0, 229, 255, 0.35));
+}
+[data-theme='hud'] .btn--primary {
+  box-shadow: 0 0 22px rgba(0, 229, 255, 0.45);
+}
+[data-theme='hud'] .logo__text {
+  text-shadow: 0 0 14px rgba(0, 229, 255, 0.5);
+}
+[data-theme='hud'] .topbar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent) 20%, var(--accent-2) 80%, transparent);
+  opacity: 0.7;
+  animation: hud-line 6s linear infinite;
+  background-size: 200% 100%;
+}
+@keyframes hud-line {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* ── background FX ── */
+.fx-hud .fx-glow {
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(40% 35% at 15% 10%, rgba(0, 229, 255, 0.14), transparent 70%),
+    radial-gradient(35% 30% at 90% 25%, rgba(139, 92, 246, 0.16), transparent 70%),
+    radial-gradient(60% 40% at 50% 110%, rgba(0, 229, 255, 0.12), transparent 70%);
+  animation: hud-drift 24s ease-in-out infinite alternate;
+}
+@keyframes hud-drift {
+  to {
+    transform: translate3d(3%, -2%, 0) scale(1.05);
+  }
+}
+.fx-hud .fx-grid {
+  position: absolute;
+  left: -50%;
+  right: -50%;
+  bottom: -10vh;
+  height: 70vh;
+  transform: perspective(520px) rotateX(64deg);
+  transform-origin: bottom center;
+  background-image:
+    linear-gradient(rgba(0, 229, 255, 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 255, 0.22) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: linear-gradient(to top, black 0%, transparent 85%);
+  mask-image: linear-gradient(to top, black 0%, transparent 85%);
+  animation: hud-grid 3.2s linear infinite;
+  opacity: 0.55;
+}
+@keyframes hud-grid {
+  to {
+    background-position: 0 64px, 0 0;
+  }
+}
+.fx-hud .fx-scan {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px);
+}
+.fx-hud .fx-dots {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(0, 229, 255, 0.35) 1px, transparent 1.4px);
+  background-size: 34px 34px;
+  -webkit-mask-image: radial-gradient(60% 50% at 70% 20%, black, transparent);
+  mask-image: radial-gradient(60% 50% at 70% 20%, black, transparent);
+  opacity: 0.35;
+}

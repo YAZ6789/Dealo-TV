@@ -1,0 +1,210 @@
+/* ==========================================================================
+   CYBERPUNK NEON — hot pink / acid yellow / cyan on black, clipped corners,
+   glitch hovers, neon flicker and rain.
+   ========================================================================== */
+
+[data-theme='neon'] {
+  --bg: #07060b;
+  --bg-2: #110e18;
+  --bg-3: #1b1526;
+  --panel: rgba(18, 12, 26, 0.72);
+  --panel-solid: #120d1a;
+  --panel-border: rgba(255, 42, 109, 0.28);
+  --panel-border-strong: rgba(255, 42, 109, 0.7);
+  --text: #fdf2ff;
+  --text-dim: #c3a9cc;
+  --text-faint: #8a7395;
+  --accent: #ff2a6d;
+  --accent-2: #05d9e8;
+  --accent-3: #f9f002;
+  --accent-ink: #0b0006;
+  --ok: #f9f002;
+  --warn: #ff9f1c;
+  --danger: #ff3b3b;
+  --glow: 0 0 0 1px rgba(255, 42, 109, 0.6), 0 0 22px rgba(255, 42, 109, 0.45), 0 0 50px rgba(5, 217, 232, 0.15);
+  --glow-soft: 0 0 18px rgba(255, 42, 109, 0.25);
+  --radius: 0px;
+  --radius-sm: 0px;
+  --radius-pill: 0px;
+  --font-display: 'Chakra Petch', 'Rajdhani', sans-serif;
+  --font-body: 'Chakra Petch', 'Inter Variable', sans-serif;
+  --title-prefix: '▚ ';
+  --title-spacing: 0.12em;
+  --title-weight: 700;
+  --hero-weight: 700;
+  --card-clip: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+  --blur: 6px;
+}
+
+[data-theme='neon'] .btn,
+[data-theme='neon'] .search-trigger,
+[data-theme='neon'] .input,
+[data-theme='neon'] .select,
+[data-theme='neon'] .panel,
+[data-theme='neon'] .modal,
+[data-theme='neon'] .palette {
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+}
+[data-theme='neon'] .panel,
+[data-theme='neon'] .modal,
+[data-theme='neon'] .palette {
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+}
+[data-theme='neon'] .btn--primary {
+  background: var(--accent-3);
+  border-color: var(--accent-3);
+  color: #0b0b00;
+  text-shadow: none;
+}
+[data-theme='neon'] .btn--primary:hover {
+  background: #fffa66;
+  box-shadow: 0 0 26px rgba(249, 240, 2, 0.55);
+}
+[data-theme='neon'] .chip--on,
+[data-theme='neon'] .seg button.on {
+  background: var(--accent);
+  color: #fff;
+}
+[data-theme='neon'] .bar__fill {
+  background: linear-gradient(90deg, var(--accent), var(--accent-3));
+  box-shadow: 0 0 10px var(--accent);
+}
+[data-theme='neon'] .match {
+  color: var(--accent-3);
+  text-shadow: 0 0 10px rgba(249, 240, 2, 0.6);
+}
+[data-theme='neon'] .section-title::before {
+  color: var(--accent-2);
+}
+[data-theme='neon'] .nav a.active::after {
+  background: var(--accent-3);
+  box-shadow: 0 0 12px var(--accent-3);
+  height: 3px;
+  transform: skewX(-30deg);
+}
+
+/* glitchy headline with chromatic split */
+[data-theme='neon'] .hero__title,
+[data-theme='neon'] .page-title {
+  position: relative;
+  color: #fff;
+  text-shadow: 2px 0 0 rgba(255, 42, 109, 0.9), -2px 0 0 rgba(5, 217, 232, 0.9), 0 0 30px rgba(255, 42, 109, 0.5);
+  animation: neon-flicker 7s infinite;
+}
+@keyframes neon-flicker {
+  0%, 19%, 21%, 62%, 64%, 100% {
+    opacity: 1;
+  }
+  20%, 63% {
+    opacity: 0.55;
+  }
+}
+[data-theme='neon'] .logo__text {
+  color: #fff;
+  text-shadow: 0 0 8px var(--accent), 0 0 22px var(--accent);
+}
+[data-theme='neon'] .logo__text b {
+  color: var(--accent-3);
+  text-shadow: 0 0 10px var(--accent-3);
+}
+
+/* glitch on poster hover */
+[data-theme='neon'] .card:hover .card__poster > img,
+[data-theme='neon'] .card:hover .card__poster > .art,
+[data-theme='neon'] .wcard:hover .wcard__media > img {
+  animation: neon-glitch 0.5s steps(2) 1;
+}
+@keyframes neon-glitch {
+  0% {
+    clip-path: inset(12% 0 70% 0);
+    transform: translate(-6px, 0) scale(1.05);
+    filter: hue-rotate(80deg) saturate(2);
+  }
+  25% {
+    clip-path: inset(60% 0 8% 0);
+    transform: translate(6px, 0) scale(1.05);
+  }
+  50% {
+    clip-path: inset(32% 0 40% 0);
+    transform: translate(-3px, 0) scale(1.05);
+    filter: hue-rotate(-60deg) saturate(2);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    transform: scale(1.05);
+    filter: none;
+  }
+}
+[data-theme='neon'] .card__poster::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  border: 2px solid transparent;
+  background: linear-gradient(135deg, var(--accent), transparent 30%, transparent 70%, var(--accent-2)) border-box;
+  -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+[data-theme='neon'] .card:hover .card__poster::after {
+  opacity: 1;
+}
+
+/* ── background FX ── */
+.fx-neon .fx-sky {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(50% 40% at 85% 0%, rgba(255, 42, 109, 0.22), transparent 70%),
+    radial-gradient(45% 35% at 0% 30%, rgba(5, 217, 232, 0.14), transparent 70%),
+    radial-gradient(70% 40% at 50% 120%, rgba(249, 240, 2, 0.07), transparent 70%);
+}
+.fx-neon .fx-rain {
+  position: absolute;
+  inset: -100px 0 0;
+  background-image:
+    linear-gradient(to bottom, transparent 0%, rgba(5, 217, 232, 0.35) 50%, transparent 100%),
+    linear-gradient(to bottom, transparent 0%, rgba(255, 42, 109, 0.3) 50%, transparent 100%);
+  background-size: 1px 120px, 1px 90px;
+  background-position: 0 0, 37px 40px;
+  background-repeat: repeat;
+  -webkit-mask-image: repeating-linear-gradient(90deg, black 0 1px, transparent 1px 73px);
+  mask-image: repeating-linear-gradient(90deg, black 0 1px, transparent 1px 73px);
+  opacity: 0.45;
+  animation: neon-rain 1.4s linear infinite;
+}
+@keyframes neon-rain {
+  to {
+    background-position: 0 120px, 37px 130px;
+  }
+}
+.fx-neon .fx-noise {
+  position: absolute;
+  inset: 0;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: neon-noise 0.5s steps(3) infinite;
+}
+@keyframes neon-noise {
+  33% {
+    transform: translate(-12px, 8px);
+  }
+  66% {
+    transform: translate(10px, -6px);
+  }
+}
+.fx-neon .fx-horizon {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 36vh;
+  background:
+    linear-gradient(to top, rgba(255, 42, 109, 0.14), transparent),
+    repeating-linear-gradient(90deg, rgba(255, 42, 109, 0.12) 0 2px, transparent 2px 120px);
+  -webkit-mask-image: linear-gradient(to top, black, transparent);
+  mask-image: linear-gradient(to top, black, transparent);
+}
