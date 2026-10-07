@@ -279,7 +279,7 @@ export function HudSheet({ item, onClose, children }: { item: Item; onClose: () 
     };
   }, [onClose]);
   return createPortal(
-    <div className="hud-sheet-wrap" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="hud-sheet-wrap" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <section className="hud-sheet" role="dialog" aria-modal="true" aria-label={item.show.title}>
         <button ref={close} className="btn btn--icon hud-sheet__close" onClick={onClose} aria-label="Close">
           <X size={18} />
