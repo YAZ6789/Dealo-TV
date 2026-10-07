@@ -12,6 +12,7 @@ import { initLibrary, useLibrary } from './store/library';
 import { useSettings } from './store/settings';
 import { scheduleRecommendations } from './recommend/pipeline';
 import { enrichLibrary } from './store/enrich';
+import { startSheetAutoSync } from './store/sheetSync';
 import { HomeRouter } from './designs/HomeRouter';
 
 const Discover = lazy(() => import('./pages/Discover'));
@@ -78,7 +79,10 @@ function Shell() {
 
 export default function App() {
   useEffect(() => {
-    void initLibrary().then(() => setTimeout(() => void enrichLibrary(), 4000));
+    void initLibrary().then(() => {
+      setTimeout(() => void enrichLibrary(), 4000);
+      startSheetAutoSync();
+    });
     // Re-rank whenever the library changes (debounced; network parts are cached).
     return useLibrary.subscribe((s, prev) => {
       if (s.hydrated && (s.entries !== prev.entries || s.blocked !== prev.blocked || s.feedback !== prev.feedback || s.taste !== prev.taste)) scheduleRecommendations();

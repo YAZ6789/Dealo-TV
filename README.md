@@ -40,7 +40,9 @@ npm test           # unit tests (recommender, importer, stats, layout, catalog)
 
 1. In Google Sheets: **Share → General access → Anyone with the link → Viewer**.
 2. In Dealo: **Settings → Import → Google Sheets**, paste the link, optionally list tab names (e.g. `Watched`, `Want to watch` — a tab name like that becomes the default status for its rows).
-3. Check the detected columns, review the matches, import. The sheet is remembered — hit **Re-sync** later to pull new rows (smart merge never loses progress).
+3. Check the detected columns, review the matches, import.
+
+**It stays in sync.** The sheet is remembered and re-read automatically when Dealo opens, whenever you come back to the tab, and every 15 minutes while it's open (or hit **Sync now**). Only what you *changed in the sheet* since the last sync is applied — new rows are added, edited cells update the show, progress never moves backwards, and edits you made in the app to rows you didn't touch in the sheet are kept. Rows it can't match confidently are held back with a **Review** prompt. Deleting a row from the sheet doesn't remove the show from your library. Auto-sync can be switched off per sheet in **Settings → Import**.
 
 Recognised columns (any order, any reasonable header): title, status, season, episode, progress (`S2E5`, `2x05`, `Season 2 Episode 5`), rating (out of 5, 10 or 100, stars, `8/10`, `85%`), notes, year, genre, platform, started / finished dates, favourite, watched? (yes/no checkbox), TMDB / IMDb ids. Status words like *finished, done, ✓, watching, want to watch, on hold, dropped, not interested* are understood. Your browser reads the sheet directly; nothing is uploaded anywhere.
 

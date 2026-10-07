@@ -233,6 +233,26 @@ export interface ImportSource {
   defaultStatus?: WatchStatus;
   mapping?: Partial<Record<ColumnRole, string>>;
   lastSyncAt?: string;
+  /** Re-read the sheet automatically (on open, on return to the tab, every 15 min). Default on. */
+  autoSync?: boolean;
+  /** Last-synced snapshot of every row, keyed by title|year — used to spot edits made in the sheet. */
+  rowState?: Record<string, SheetRowState>;
+  /** Row key → the library show it was matched to (keeps ambiguous titles linked). */
+  links?: Record<string, ShowId>;
+  lastSync?: { at: string; added: number; updated: number; blocked: number; pending: number; error?: string };
+}
+
+/** The importable fields of one sheet row, as last seen. */
+export interface SheetRowState {
+  status?: WatchStatus;
+  blocked?: boolean;
+  rating?: number;
+  /** "S2E5" */
+  pos?: string;
+  notes?: string;
+  fav?: boolean;
+  started?: string;
+  finished?: string;
 }
 
 export type ColumnRole =

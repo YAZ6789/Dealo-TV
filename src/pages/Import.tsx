@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertTriangle, ArrowLeft, ArrowRight, Check, FileSpreadsheet, Link2, Plus, RefreshCw, Search, Sheet, Trash2, Upload, X } from 'lucide-react';
 import type { ColumnRole, ImportSource, ShowSummary, WatchStatus } from '../types';
 import { STATUS_ORDER } from '../types';
@@ -10,10 +10,11 @@ import { fetchSheet, parseSheetUrl, SheetAccessError } from '../import/sheets';
 import { readSpreadsheetFile } from '../import/excel';
 import type { Table } from '../import/table';
 import { COLUMN_ROLES, ROLE_LABELS, detectColumns, mappingFromHeaders, mappingToHeaders, normalizeStatus, type ColumnMapping } from '../import/mapping';
-import { tableToRows, dedupeRows, type ImportRow } from '../import/rows';
+import { tableToRows, dedupeRows } from '../import/rows';
 import { matchRows, type MatchResult } from '../import/match';
 import { planImport, type ConflictPolicy } from '../import/plan';
-import { slugify } from '../lib/text';
+import { customShowFor, rowKey, rowStateOf } from '../import/sync';
+import { syncSource } from '../store/sheetSync';
 import { STATUS_LABEL, relTime } from '../lib/labels';
 import { fmtEp } from '../lib/progress';
 import { Poster } from '../components/Poster';
@@ -44,16 +45,6 @@ const guessStatus = (name: string): WatchStatus | undefined => {
   return s && s !== 'blocked' ? s : undefined;
 };
 
-function customShow(row: ImportRow): ShowSummary {
-  return {
-    id: `custom:${slugify(row.title)}${row.year ? `-${row.year}` : ''}`,
-    source: 'custom',
-    title: row.title,
-    year: row.year,
-    genres: row.genres ?? [],
-    networks: row.platform ? [row.platform] : undefined,
-  };
-}
 
 function prepare(name: string, table: Table, extra: Partial<SheetData> = {}): SheetData {
   const { mapping, confidence } = detectColumns(table);
@@ -147,8 +138,19 @@ export default function Import() {
             setSummary(applied);
             // Remember Google Sheet sources for one-click re-sync.
             const lib = useLibrary.getState();
+            // What the user picked for each row (rows were de-duplicated across tabs by title|year).
+            const chosen = new Map(results.map((r) => [rowKey(r.row), r.choice.kind === 'show' ? r.choice.show.id : r.choice.kind === 'custom' ? customShowFor(r.row).id : undefined]));
             for (const s of sheets.filter((x) => x.include && x.gsheet)) {
               const same = lib.importSources.find((x) => x.url === s.gsheet!.url && (x.tab ?? '') === (s.gsheet!.tab ?? ''));
+              // Snapshot every row so automatic syncs only apply what you later change in the sheet.
+              const rowState: ImportSource['rowState'] = {};
+              const links: ImportSource['links'] = {};
+              for (const row of tableToRows(s.table, s.mapping, { defaultStatus: s.defaultStatus }).rows) {
+                const key = rowKey(row);
+                rowState[key] = rowStateOf(row);
+                const id = chosen.get(key);
+                if (id) links[key] = id;
+              }
               const src: ImportSource = {
                 id: s.gsheet!.sourceId ?? same?.id ?? `gs-${Date.now()}-${s.name}`,
                 kind: 'gsheet',
@@ -158,6 +160,10 @@ export default function Import() {
                 defaultStatus: s.defaultStatus,
                 mapping: mappingToHeaders(s.table, s.mapping),
                 lastSyncAt: new Date().toISOString(),
+                autoSync: same?.autoSync ?? true,
+                rowState,
+                links,
+                lastSync: { at: new Date().toISOString(), added: applied.added, updated: applied.updated, blocked: applied.blocked, pending: 0 },
               };
               lib.upsertImportSource(src);
             }
@@ -235,7 +241,17 @@ function SourceStep({ onLoaded }: { onLoaded: (s: SheetData[], skipToMatch?: boo
   const [tabs, setTabs] = useState<TabSpec[]>([{ tab: '' }]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<{ message: string; access?: boolean } | null>(null);
+  const [syncing, setSyncing] = useState<string | null>(null);
   const nav = useNavigate();
+  const [params] = useSearchParams();
+
+  // "Review" from a sync notification: open that sheet straight into matching & review.
+  const reviewId = params.get('source');
+  useEffect(() => {
+    const s = reviewId && useLibrary.getState().importSources.find((x) => x.id === reviewId);
+    if (s) void loadSheets(s.url, [{ tab: s.tab ?? '', status: s.defaultStatus }], s);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reviewId]);
 
   const ref = parseSheetUrl(url.trim());
 
@@ -313,11 +329,29 @@ function SourceStep({ onLoaded }: { onLoaded: (s: SheetData[], skipToMatch?: boo
                   <div className="list-row__title">{s.label}</div>
                   <div className="hint">
                     {s.tab ? `tab “${s.tab}” · ` : ''}
-                    {s.defaultStatus ? `default ${STATUS_LABEL[s.defaultStatus]} · ` : ''}last synced {relTime(s.lastSyncAt)}
+                    {s.defaultStatus ? `default ${STATUS_LABEL[s.defaultStatus]} · ` : ''}last synced {relTime(s.lastSync?.at ?? s.lastSyncAt)}
+                    {s.lastSync?.error ? ` · ⚠ ${s.lastSync.error}` : ''}
+                    {s.lastSync?.pending ? ` · ${s.lastSync.pending} row${s.lastSync.pending > 1 ? 's' : ''} need review` : ''}
                   </div>
                 </div>
-                <button className="btn btn--sm" disabled={busy} onClick={() => void loadSheets(s.url, [{ tab: s.tab ?? '', status: s.defaultStatus }], s)}>
-                  <RefreshCw size={13} /> Re-sync
+                <label className="cluster hint" title="Re-read this sheet automatically when the app opens, when you return to it, and every 15 minutes">
+                  <button
+                    className={`toggle ${s.autoSync !== false ? 'on' : ''}`}
+                    aria-pressed={s.autoSync !== false}
+                    aria-label="Auto-sync"
+                    onClick={() => useLibrary.getState().upsertImportSource({ ...s, autoSync: s.autoSync === false })}
+                  />
+                  Auto-sync
+                </label>
+                <button className="btn btn--sm" disabled={busy || syncing === s.id} onClick={async () => {
+                  setSyncing(s.id);
+                  await syncSource(s.id);
+                  setSyncing(null);
+                }}>
+                  {syncing === s.id ? <div className="spinner" /> : <RefreshCw size={13} />} Sync now
+                </button>
+                <button className="btn btn--sm btn--ghost" disabled={busy} title="Re-read every row and review all matches" onClick={() => void loadSheets(s.url, [{ tab: s.tab ?? '', status: s.defaultStatus }], s)}>
+                  Review all
                 </button>
                 <button className="btn btn--sm btn--icon btn--ghost" onClick={() => removeSource(s.id)} aria-label="Forget this sheet">
                   <Trash2 size={14} />
@@ -577,7 +611,7 @@ function ReviewStep({
   const visible = results.map((r, i) => ({ r, i })).filter(({ r }) => filter === 'all' || (filter === 'auto' ? r.state === 'auto' : r.state !== 'auto'));
 
   const actions = useMemo(() => {
-    const pairs = results.filter((r) => r.choice.kind !== 'skip').map((r) => ({ row: r.row, show: r.choice.kind === 'show' ? r.choice.show : customShow(r.row) }));
+    const pairs = results.filter((r) => r.choice.kind !== 'skip').map((r) => ({ row: r.row, show: r.choice.kind === 'show' ? r.choice.show : customShowFor(r.row) }));
     return planImport(pairs, entries, blocked, policy);
   }, [results, entries, blocked, policy]);
   const tally = { add: 0, update: 0, block: 0, skip: 0 };
