@@ -125,6 +125,26 @@
 .lib-tabs {
   max-width: 100%;
 }
+/* Phones: one swipeable row of tabs instead of three wrapped lines. */
+@media (max-width: 700px) {
+  .lib-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+    margin-inline: calc(var(--gutter) * -1);
+    padding-inline: var(--gutter);
+    border-radius: 0;
+    border-inline: 0;
+  }
+  .lib-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .lib-tabs button {
+    flex: none;
+  }
+}
 
 /* ───────────── Stats ───────────── */
 .completion-panel {

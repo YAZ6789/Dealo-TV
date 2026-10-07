@@ -6,11 +6,12 @@ import { VoiceButton } from '../voice/VoiceButton';
 import { usePalette } from './palette';
 
 const LINKS = [
+  // Your shows first; recommendations (Discover) are the extra.
   { to: '/', label: 'Home', icon: Home, end: true },
-  { to: '/discover', label: 'Discover', icon: Compass },
   { to: '/library', label: 'Library', icon: Library },
   { to: '/upcoming', label: 'Airing', icon: CalendarClock },
   { to: '/stats', label: 'Stats', icon: BarChart3 },
+  { to: '/discover', label: 'Discover', icon: Compass },
   { to: '/taste', label: 'Taste', icon: Sparkles, desktopOnly: true },
 ];
 

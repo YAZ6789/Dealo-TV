@@ -2,7 +2,6 @@ import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, use
 import { useNavigate } from 'react-router-dom';
 import { Bookmark, Check, Maximize2, Minus, Pause, Play, Plus, Sparkles, X, type LucideIcon } from 'lucide-react';
 import type { WatchStatus } from '../types';
-import { STATUS_ORDER } from '../types';
 import { useLibrary } from '../store/library';
 import { useSettings } from '../store/settings';
 import { STATUS_LABEL } from '../lib/labels';
@@ -14,6 +13,7 @@ import {
   airSpan,
   approxTextWidth,
   axisRange,
+  densestWindow,
   ERAS,
   layoutGroups,
   spanLabel,
@@ -36,8 +36,10 @@ type TItem = Item & { id: string; span: AirSpan; group: GroupKey };
 
 const GROUP_LABEL: Record<GroupKey, string> = { ...STATUS_LABEL, rec: 'Recommended for you' };
 const ICON: Record<GroupKey, LucideIcon> = { watching: Play, completed: Check, plan: Bookmark, on_hold: Pause, dropped: X, rec: Sparkles };
-const GROUP_ORDER: GroupKey[] = [...STATUS_ORDER, 'rec'];
-const ALL_STATUSES = new Set<WatchStatus>(STATUS_ORDER);
+/** Library first, in the owner's priority: what you watched, what you're watching, what you want to watch. */
+const LIB_ORDER: WatchStatus[] = ['completed', 'watching', 'plan', 'on_hold', 'dropped'];
+const GROUP_ORDER: GroupKey[] = [...LIB_ORDER, 'rec'];
+const ALL_STATUSES = new Set<WatchStatus>(LIB_ORDER);
 
 /* Geometry — keep in sync with timeline.css. */
 const PAD_L = 28;
@@ -102,6 +104,7 @@ function useMeasure(theme: string) {
 export default function LifeTimeline() {
   const entries = useLibrary((s) => s.entries);
   const theme = useSettings((s) => s.theme);
+  const reduceFx = useSettings((s) => s.reduceFx);
   const { collections, recs } = useCollections();
   const nav = useNavigate();
   const compact = useCompact();
@@ -180,15 +183,22 @@ export default function LifeTimeline() {
     return () => ro.disconnect();
   }, []);
 
-  // Initial view: everything if it's readable, otherwise ~13 years ending today.
+  // Initial view: everything if it's readable; otherwise (phones) frame the run of years
+  // where most of your library aired — ties favour recent years.
   useLayoutEffect(() => {
     if (!viewW || ppy) return;
     if (fitPpy >= 26) setPpy(fitPpy);
     else {
-      setPpy(30);
-      pendingScroll.current = { year: now, ax: viewW, end: true };
+      const p = 30;
+      const spans = (libItems.length ? libItems : recItems).map((i) => i.span);
+      if (!spans.length) return; // wait for the library to hydrate
+      const win = (viewW - PAD_L) / p;
+      setPpy(p);
+      const start = densestWindow(spans, win, axis.from, Math.max(axis.from + win, now + 1));
+      // a window that reaches today scrolls fully right so labels past "now" are readable
+      pendingScroll.current = start + win >= now ? { year: now, ax: viewW, end: true } : { year: start, ax: 4 };
     }
-  }, [viewW, ppy, fitPpy, now]);
+  }, [viewW, ppy, fitPpy, now, libItems, recItems, axis.from]);
 
   // Keep the zoom inside its limits when the viewport changes.
   useEffect(() => {
@@ -203,7 +213,7 @@ export default function LifeTimeline() {
       pxPerYear: effPpy,
       origin: axis.from,
       padLeft: PAD_L,
-      minBarW: thumbW + 10,
+      minBarW: compact ? 44 : thumbW + 10,
       leadW: thumbW + 8,
       innerPad: 6,
       labelGap: LABEL_GAP,
@@ -236,7 +246,7 @@ export default function LifeTimeline() {
     bars.sort((a, b) => order.get(a.group)! - order.get(b.group)! || a.x - b.x || a.row - b.row);
     const width = Math.max(r.right + PAD_R, PAD_L + spanYears * effPpy + PAD_R);
     return { bars, groups: r.groups.map((g) => ({ ...g, y: groupTop.get(g.key)! })), width, height: y + 24, headH };
-  }, [items, effPpy, axis.from, spanYears, thumbW, measure, grouped, laneH, barH]);
+  }, [items, effPpy, axis.from, spanYears, thumbW, measure, grouped, laneH, barH, compact]);
 
   const xOf = useCallback((year: number) => PAD_L + (year - axis.from) * effPpy, [axis.from, effPpy]);
 
@@ -434,11 +444,28 @@ export default function LifeTimeline() {
   const eras = ERAS.filter((e) => (e.to ?? axis.to) >= axis.from && e.from <= axis.to);
   const yearsPerScreen = viewW ? Math.round(viewW / effPpy) : 0;
 
+  const zoomCtl = (
+    <div className="tl-zoom" role="group" aria-label="Zoom">
+      <button className="btn btn--icon btn--sm" onClick={() => zoomTo(effPpy / 1.4)} disabled={effPpy <= fitPpy + 0.01} aria-label="Zoom out" title="Zoom out (−)">
+        <Minus size={15} />
+      </button>
+      <span className="tl-zoom__v" aria-live="polite">
+        {yearsPerScreen ? `${yearsPerScreen} yrs` : ''}
+      </span>
+      <button className="btn btn--icon btn--sm" onClick={() => zoomTo(effPpy * 1.4)} disabled={effPpy >= maxPpy - 0.01} aria-label="Zoom in" title="Zoom in (+)">
+        <Plus size={15} />
+      </button>
+      <button className={`btn btn--sm tl-fit ${compact ? 'btn--icon' : ''}`} onClick={fitAll} title="Fit all (0)" aria-label="Fit all">
+        <Maximize2 size={14} aria-hidden /> <span className="tl-fit-text">Fit all</span>
+      </button>
+    </div>
+  );
+
   const empty = items.length === 0;
   const loadingRecs = source !== 'library' && !recs.output;
 
   return (
-    <div className={`tl ${selected ? 'tl--open' : ''}`} onKeyDown={onRootKey}>
+    <div className={`tl ${selected ? 'tl--open' : ''} ${compact || reduceFx ? 'tl--still' : ''}`} onKeyDown={onRootKey}>
       <header className="tl-head">
         <div className="tl-story">
           <div className="hud-eyebrow">Life timeline<span className="tl-eyebrow-more"> · the years your shows aired</span></div>
@@ -486,26 +513,13 @@ export default function LifeTimeline() {
               </button>
             ))}
           </div>
-          <div className="tl-zoom" role="group" aria-label="Zoom">
-            <button className="btn btn--icon btn--sm" onClick={() => zoomTo(effPpy / 1.4)} disabled={effPpy <= fitPpy + 0.01} aria-label="Zoom out" title="Zoom out (−)">
-              <Minus size={15} />
-            </button>
-            <span className="tl-zoom__v" aria-live="polite">
-              {yearsPerScreen ? `${yearsPerScreen} yrs` : ''}
-            </span>
-            <button className="btn btn--icon btn--sm" onClick={() => zoomTo(effPpy * 1.4)} disabled={effPpy >= maxPpy - 0.01} aria-label="Zoom in" title="Zoom in (+)">
-              <Plus size={15} />
-            </button>
-            <button className="btn btn--sm tl-fit" onClick={fitAll} title="Fit all (0)" aria-label="Fit all">
-              <Maximize2 size={14} aria-hidden /> <span className="tl-fit-text">Fit all</span>
-            </button>
-          </div>
+          {!compact && zoomCtl}
         </div>
 
         <div className="tl-filters">
           {source !== 'recs' && (
             <div className="tl-chips" role="group" aria-label="Filter by status">
-              {STATUS_ORDER.map((s) => {
+              {LIB_ORDER.map((s) => {
                 const Icon = ICON[s];
                 const on = statuses.has(s);
                 return (
@@ -685,6 +699,8 @@ export default function LifeTimeline() {
             </div>
           )}
         </div>
+
+        {compact && !selected && <div className="tl-fab">{zoomCtl}</div>}
 
         {!empty && hint && (
           <div className="tl-hint" aria-hidden>

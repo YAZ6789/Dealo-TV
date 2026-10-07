@@ -328,7 +328,7 @@ export default function Settings() {
         </div>
       </section>
 
-      <section className="section">
+      <section className="section keyboard-only">
         <h2 className="section-title">Shortcuts</h2>
         <div className="panel panel--pad shortcuts">
           {[

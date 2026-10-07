@@ -6,6 +6,7 @@ It's a static site: build it once and host the `dist/` folder anywhere.
 
 ## Highlights
 
+- **Your shows first** — Home, the library and every design lead with **Watched → Currently watching → Watchlist**; recommendations are the extra underneath.
 - **Eight ways to browse** (Home screen "designs"), each usable with any skin:
   - **Holo Ring** — a 3D rotating carousel on a holographic platform, with data panels for the show in front. Drag, scroll, ← → or click to spin; Enter opens.
   - **Constellation** — your taste as a star map. You're the core; your library orbits close (loved = closer), recommendations float in the discovery field (better match = closer) with beams back to the show that inspired them. Pan, zoom, hover.
@@ -22,6 +23,7 @@ It's a static site: build it once and host the `dist/` folder anywhere.
 - **Ask Dealo** — describe a mood ("like Dark but funnier") and Claude picks shows for your taste (bring your own Anthropic API key).
 - **Voice control** — "switch to neon", "add Severance to my watchlist", "go to stats" (Alt+V).
 - **Spoiler-free mode, streaks & badges**, and an **installable app** that works offline.
+- **Built for phones** — thumb-sized controls, swipe gestures, safe-area aware, tested from 360px phones to landscape and tablets.
 - **Lists** — Watching, Watchlist, Watched, On hold, Dropped, and *Not interested* (never recommended again).
 - **Episode tracking** — tick episodes, "watched up to here", whole seasons, "next up S2·E7", upcoming air dates.
 - **Ratings & stats** — 10-segment ratings, hours watched, activity heatmap, streaks, bronze/silver/gold badges, taste by genre, completion rate, hall of fame.

@@ -184,7 +184,9 @@ export default function Upcoming() {
         {followed > 0 && (
           <div className="cluster air-head__actions">
             <button className="btn btn--sm" onClick={downloadIcs} disabled={!upcoming.length} title={upcoming.length ? 'Download an .ics file of upcoming episodes' : 'No upcoming episodes to export yet'}>
-              <CalendarPlus size={15} /> Add to calendar
+              <CalendarPlus size={15} />
+              <span className="air-wide">Add to calendar</span>
+              <span className="air-narrow">Calendar</span>
             </button>
             <button className="btn btn--sm btn--primary" onClick={() => void refreshUpcoming(true)} disabled={loading} aria-busy={loading}>
               <RefreshCw size={15} className={loading ? 'air-spin' : undefined} />
@@ -250,16 +252,14 @@ export default function Upcoming() {
                 ))}
               </div>
               {newItems.length > 0 && recentOther.length > 0 && (
-                <p className="hint air-also">
-                  Also aired recently: {recentOther.slice(0, 4).map((i, n) => (
-                    <span key={itemKey(i)}>
-                      {n > 0 && ', '}
-                      <Link to={showPath(i.entry.id)} onClick={() => remember(i.show)}>
-                        {i.show.title} {epCode(i.episode.season, i.episode.number)}
-                      </Link>
-                    </span>
+                <div className="air-also">
+                  <span className="hint">Also aired recently:</span>
+                  {recentOther.slice(0, 4).map((i) => (
+                    <Link key={itemKey(i)} className="air-also__link" to={showPath(i.entry.id)} onClick={() => remember(i.show)}>
+                      {i.show.title} <span className="air-code">{epCode(i.episode.season, i.episode.number)}</span>
+                    </Link>
                   ))}
-                </p>
+                </div>
               )}
             </section>
           )}
@@ -399,14 +399,14 @@ function NewCard({ item, ctx, isNew }: { item: AiringItem; ctx: ItemCtx; isNew: 
         <p className="air-card__ep">
           <span className="air-code">{code}</span> {title}
         </p>
-        <div className="air-card__actions">
-          <button className={`btn btn--sm${watched ? '' : ' btn--primary'}`} onClick={toggle} disabled={!inLibrary} aria-label={watched ? `Mark ${item.show.title} ${code} unwatched` : `Mark ${item.show.title} ${code} watched`}>
-            {watched ? 'Undo' : (<><Check size={14} /> Watched</>)}
-          </button>
-          <button className="btn btn--sm btn--ghost" onClick={() => open(item)}>
-            Open
-          </button>
-        </div>
+      </div>
+      <div className="air-card__actions">
+        <button className={`btn btn--sm${watched ? '' : ' btn--primary'}`} onClick={toggle} disabled={!inLibrary} aria-label={watched ? `Mark ${item.show.title} ${code} unwatched` : `Mark ${item.show.title} ${code} watched`}>
+          {watched ? 'Undo' : (<><Check size={14} /> Watched</>)}
+        </button>
+        <button className="btn btn--sm btn--ghost" onClick={() => open(item)}>
+          Open
+        </button>
       </div>
     </article>
   );

@@ -22,6 +22,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useLibrary } from '../store/library';
+import { useSettings } from '../store/settings';
 import { computeWrapped, defaultWrappedYear, monthName, wrappedText, wrappedYears, type PersonaId, type WrappedData } from '../stats/wrapped';
 import { GENRE_LABELS } from '../lib/genres';
 import { Poster } from '../components/Poster';
@@ -707,7 +708,7 @@ function Summary({ w, onReplay, years, onYear }: { w: WrappedData; onReplay: () 
   };
   const g = w.topGenres[0];
   return (
-    <div className="wr-summary">
+    <div className="wr-summary" data-no-tap>
       <article className="wr-card" aria-label={`Dealo Wrapped ${w.year} summary`}>
         <header className="wr-card__head">
           <span className="wr-kicker">Dealo Wrapped</span>
@@ -778,7 +779,7 @@ function Summary({ w, onReplay, years, onYear }: { w: WrappedData; onReplay: () 
           <RotateCcw size={16} /> Replay
         </button>
         <Link className="btn btn--ghost" to="/stats">
-          <BarChart3 size={16} /> Back to Stats
+          <BarChart3 size={16} /> <span className="wr-hide-xs">Back to&nbsp;</span>Stats
         </Link>
         {years.length > 1 && (
           <div className="wr-years" role="group" aria-label="Other years">
@@ -1086,6 +1087,7 @@ export default function Wrapped() {
   const entries = useLibrary((s) => s.entries);
   const activity = useLibrary((s) => s.activity);
   const hydrated = useLibrary((s) => s.hydrated);
+  const reduceFx = useSettings((s) => s.reduceFx);
   const { year: yearParam } = useParams();
   const navigate = useNavigate();
 
@@ -1177,16 +1179,25 @@ export default function Wrapped() {
     return () => window.removeEventListener('keydown', h);
   }, [go, exit]);
 
-  // Tap left/right; press-and-hold pauses.
-  const press = useRef<{ x: number; timer: number; held: boolean } | null>(null);
+  // Tap left/right or swipe; press-and-hold pauses. Buttons/links never navigate.
+  const press = useRef<{ x: number; y: number; timer: number; held: boolean; moved: boolean; noTap: boolean } | null>(null);
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.button !== 0 || (e.target as HTMLElement).closest('a,button,select,input,label,[data-no-tap]')) return;
-    const p = { x: e.clientX, timer: 0, held: false };
+    const el = e.target as HTMLElement;
+    if (e.button !== 0 || el.closest('a,button,select,input,label,textarea')) return;
+    const p = { x: e.clientX, y: e.clientY, timer: 0, held: false, moved: false, noTap: !!el.closest('[data-no-tap]') };
     p.timer = window.setTimeout(() => {
       p.held = true;
       setHolding(true);
-    }, 220);
+    }, 240);
     press.current = p;
+  };
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const p = press.current;
+    if (!p || p.moved) return;
+    if (Math.hypot(e.clientX - p.x, e.clientY - p.y) > 10) {
+      p.moved = true;
+      if (!p.held) clearTimeout(p.timer);
+    }
   };
   const release = (nav: boolean, e?: React.PointerEvent<HTMLDivElement>) => {
     const p = press.current;
@@ -1198,6 +1209,14 @@ export default function Wrapped() {
       return;
     }
     if (!nav || !e) return;
+    const dx = e.clientX - p.x;
+    const dy = e.clientY - p.y;
+    if (p.moved) {
+      // Horizontal swipe: left → next, right → previous. Vertical drags are scrolls.
+      if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.4) go(dx < 0 ? 1 : -1);
+      return;
+    }
+    if (p.noTap) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const left = e.clientX - rect.left < rect.width * 0.33;
     if (left) go(-1);
@@ -1238,7 +1257,7 @@ export default function Wrapped() {
 
   const slide = slides[cur];
   return (
-    <div className={`wr${holding ? ' is-holding' : ''}${paused ? ' is-paused' : ''}`} data-tone={slide.tone} role="region" aria-roledescription="story" aria-label={`Dealo Wrapped ${w.year}`}>
+    <div className={`wr${holding ? ' is-holding' : ''}${paused ? ' is-paused' : ''}${reduceFx ? ' is-calm' : ''}`} data-tone={slide.tone} role="region" aria-roledescription="story" aria-label={`Dealo Wrapped ${w.year}`}>
       <div className="wr__bg" aria-hidden>
         <span className="wr__glow wr__glow--a" />
         <span className="wr__glow wr__glow--b" />
@@ -1256,7 +1275,7 @@ export default function Wrapped() {
         </div>
         <div className="wr__bar">
           <span className="wr__brand">
-            <Sparkles size={16} aria-hidden /> Wrapped
+            <Sparkles size={16} aria-hidden /> <span className="wr__brand-text">Wrapped</span>
           </span>
           <label className="wr__year-pick">
             <span className="sr-only">Year</span>
@@ -1288,6 +1307,7 @@ export default function Wrapped() {
       <div
         className="wr__stage"
         onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
         onPointerUp={(e) => release(true, e)}
         onPointerCancel={() => release(false)}
         onPointerLeave={() => release(false)}
@@ -1305,7 +1325,7 @@ export default function Wrapped() {
         <ChevronRight size={22} />
       </button>
 
-      {(paused || holding) && (
+      {(paused || holding) && cur < last && (
         <div className="wr__paused" aria-hidden>
           <Pause size={14} /> Paused
         </div>

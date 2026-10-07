@@ -10,11 +10,6 @@
   height: calc(100vh - var(--topbar-h));
   overflow: hidden;
 }
-@media (max-width: 860px) {
-  .tl {
-    height: calc(100vh - var(--topbar-h) - 70px);
-  }
-}
 
 /* ── header ── */
 .tl-head {
@@ -723,49 +718,73 @@
 
 /* ── phone ── */
 @media (max-width: 860px) {
+  .tl {
+    --tl-tabbar: calc(68px + env(safe-area-inset-bottom, 0px));
+    height: calc(100vh - var(--topbar-h) - 70px);
+    height: calc(100dvh - var(--topbar-h) - var(--tl-tabbar));
+  }
   .tl-head {
     grid-template-columns: 1fr;
     gap: 8px;
-    padding: 10px 16px 10px;
+    padding: 10px 16px 8px;
   }
-  .tl-title {
-    font-size: var(--fs-md);
-  }
+  .tl-head .hud-eyebrow,
   .tl-sub {
     display: none;
   }
+  .tl-title {
+    margin: 0;
+    font-size: var(--fs-md);
+  }
   .tl-controls {
     justify-self: stretch;
-    justify-content: space-between;
     flex-wrap: nowrap;
-    gap: 8px;
   }
   .tl-source {
+    flex: 1;
     flex-wrap: nowrap;
   }
   .tl-source button {
-    padding: 0 9px;
+    flex: 1;
+    height: 40px;
+    padding: 0 6px;
   }
-  .tl-eyebrow-more,
-  .tl-fit-text {
-    display: none;
+  /* zoom lives in a floating stack over the timeline (map-style) */
+  .tl-fab {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    z-index: 6;
   }
-  .tl-fit {
-    width: 32px;
+  .tl-fab .tl-zoom {
+    flex-direction: column-reverse;
+    gap: 0;
+    padding: 2px;
+    background: color-mix(in srgb, var(--panel-solid) 94%, transparent);
+    border: 1px solid var(--panel-border-strong);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+  }
+  .tl-fab .btn {
+    width: 44px;
+    height: 44px;
     padding: 0;
     justify-content: center;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
   }
-  .tl-zoom .btn:not(.btn--icon) {
-    padding: 0 8px;
-  }
+  .tl-fit-text,
   .tl-zoom__v {
     display: none;
   }
   .tl-filters {
     flex-wrap: nowrap;
     overflow-x: auto;
+    overscroll-behavior-x: contain;
     margin: 0 -16px;
-    padding: 2px 16px 4px;
+    padding: 0 16px 2px;
+    gap: 8px;
     scrollbar-width: none;
   }
   .tl-filters::-webkit-scrollbar {
@@ -774,20 +793,39 @@
   .tl-chips {
     flex-wrap: nowrap;
   }
+  .tl-chip,
+  .tl-right .chip,
+  .tl-decades .btn {
+    height: 40px;
+  }
+  .tl-chip,
+  .tl-right .chip {
+    padding: 0 12px;
+  }
+  .tl-decades .btn {
+    padding: 0 10px;
+  }
   .tl-right {
     margin-left: 0;
+  }
+  .tl-legend-rec {
+    white-space: nowrap;
+  }
+  .tl-group__label {
+    font-size: var(--fs-xs);
   }
   .tl-panel {
     position: fixed;
     left: 0;
     right: 0;
-    bottom: 70px;
+    bottom: var(--tl-tabbar);
     width: auto;
-    max-height: min(62vh, calc(100vh - var(--topbar-h) - 140px));
-    padding: 22px 16px 18px;
+    max-height: min(64vh, calc(100dvh - var(--topbar-h) - var(--tl-tabbar) - 48px));
+    padding: 24px 16px 18px;
     border-left: 0;
     border-top: 1px solid var(--panel-border-strong);
     border-radius: 16px 16px 0 0;
+    overscroll-behavior: contain;
     z-index: 65;
     animation-name: tl-sheet-in;
   }
@@ -802,15 +840,59 @@
     border-radius: 2px;
     background: var(--panel-border-strong);
   }
+  .tl-panel__close {
+    width: 40px;
+    height: 40px;
+    top: 6px;
+    right: 6px;
+  }
   .tl-panel__poster {
     width: 84px;
   }
   .tl--open .tl-scroll {
-    scroll-padding-bottom: min(62vh, calc(100vh - var(--topbar-h) - 140px));
+    scroll-padding-bottom: min(64vh, calc(100dvh - var(--topbar-h) - var(--tl-tabbar) - 48px));
   }
   .tl-hover {
     display: none;
   }
+}
+
+/* landscape phone: the header scrolls away, the timeline gets the whole screen,
+   details open as a side sheet instead of covering everything */
+@media (max-width: 860px) and (max-height: 500px) {
+  .tl {
+    height: auto;
+    overflow: visible;
+  }
+  .tl-body {
+    flex: none;
+  }
+  .tl-scroll {
+    height: calc(100dvh - var(--topbar-h) - var(--tl-tabbar));
+    min-height: 220px;
+  }
+  .tl-panel {
+    top: var(--topbar-h);
+    left: auto;
+    width: min(380px, 52vw);
+    max-height: none;
+    border-top: 0;
+    border-left: 1px solid var(--panel-border-strong);
+    border-radius: 0;
+    animation-name: tl-panel-in;
+  }
+  .tl-panel__grip {
+    display: none;
+  }
+  .tl--open .tl-scroll {
+    scroll-padding-bottom: 0;
+    scroll-padding-right: min(380px, 52vw);
+  }
+}
+
+/* phones and "reduce effects": no continuous animation while idle */
+.tl--still .tl-open {
+  animation: none;
 }
 @keyframes tl-sheet-in {
   from {
@@ -847,5 +929,10 @@
 @media (max-width: 860px), (hover: none) {
   .tl-hint {
     display: none;
+  }
+}
+@media (max-width: 860px) {
+  .tl-panel .btn--sm {
+    min-height: 40px;
   }
 }

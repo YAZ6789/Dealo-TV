@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CornerDownLeft, ListVideo, Sparkles, Undo2, Volume2, VolumeX, X } from 'lucide-react';
-import { useCollections, type Collection, type CollectionId, type Item } from './useCollections';
+import { defaultCollection, useCollections, type Collection, type CollectionId, type Item } from './useCollections';
 import { ShowHud } from './ShowHud';
 import { Poster } from '../components/Poster';
 import { remember, showPath } from '../lib/showCache';
@@ -85,7 +85,7 @@ function nowLine(it: Item, entry = it.entry) {
     const p = progressOf(entry);
     if (entry.status === 'watching') return { tag: 'Now', text: p.next ? fmtEp(p.next) : 'Caught up', pct: p.total ? p.pct : undefined, detail: p.total ? `${p.watched}/${p.total} eps` : undefined };
     if (entry.status === 'plan') return { tag: 'Premiere', text: 'S1·E01', detail: 'On your watchlist' };
-    if (entry.status === 'completed') return { tag: 'Rerun', text: entry.rating != null ? `You: ${entry.rating}/10` : 'Watched', pct: 100, detail: p.total ? `All ${p.total} eps` : undefined };
+    if (entry.status === 'completed') return { tag: 'Rerun', text: entry.rating != null ? `★ ${entry.rating}/10` : '', detail: p.total ? `All ${p.total} eps watched` : 'Watched' };
     if (entry.status === 'on_hold') return { tag: 'Paused', text: p.next ? fmtEp(p.next) : STATUS_LABEL.on_hold, pct: p.total ? p.pct : undefined };
     return { tag: STATUS_LABEL[entry.status], text: '' };
   }
@@ -107,25 +107,18 @@ export default function ChannelSurfer() {
   const pad = Math.max(2, String(channels.length).length);
   const fmtCh = (n: number) => String(n).padStart(pad, '0');
 
-  // ── what's tuned ──
-  const touched = useRef(false);
-  const [tuned, setTuned] = useState<{ cid: CollectionId; showId?: string; idx: number }>(() => ({
-    cid: collections.some((c) => c.id === 'continue') ? 'continue' : 'foryou',
-    idx: 0,
-  }));
-  // start on "Continue" once the library has loaded, unless the viewer already surfed
-  useEffect(() => {
-    if (!touched.current && tuned.cid === 'foryou' && collections.some((c) => c.id === 'continue')) setTuned({ cid: 'continue', idx: 0 });
-  }, [collections, tuned.cid]);
+  // ── what's tuned ── (until the viewer tunes, follow the library-first default; the library hydrates async)
+  const [tuned, setTuned] = useState<{ cid?: CollectionId; showId?: string; idx: number }>({ idx: 0 });
+  const cid: CollectionId = tuned.cid ?? defaultCollection(collections);
 
-  const netIdx = Math.max(0, collections.findIndex((c) => c.id === tuned.cid));
+  const netIdx = Math.max(0, collections.findIndex((c) => c.id === cid));
   const net: Collection | undefined = collections[netIdx];
   const current = useMemo(() => {
-    const inNet = channels.filter((c) => c.cid === tuned.cid);
+    const inNet = channels.filter((c) => c.cid === cid);
     if (!inNet.length) return undefined;
     return inNet.find((c) => c.item.show.id === tuned.showId) ?? inNet[Math.min(tuned.idx, inNet.length - 1)];
-  }, [channels, tuned]);
-  const curKey = current ? keyOf(current) : `empty:${tuned.cid}`;
+  }, [channels, tuned, cid]);
+  const curKey = current ? keyOf(current) : `empty:${cid}`;
 
   const lastPerNet = useRef<Partial<Record<CollectionId, string>>>({});
   const prevKey = useRef<string | undefined>(undefined);
@@ -136,7 +129,6 @@ export default function ChannelSurfer() {
 
   const tune = useCallback(
     (ch: Channel, kind: Fx = 'static') => {
-      touched.current = true;
       if (current && keyOf(current) === keyOf(ch)) {
         setOsd({ id: ++osdSeq.current, kind: 'ch', text: `CH ${fmtCh(ch.no)}`, sub: ch.net });
         return;
@@ -164,17 +156,16 @@ export default function ChannelSurfer() {
   const tuneNet = useCallback(
     (i: number) => {
       const c = collections[i];
-      if (!c || c.id === tuned.cid) return;
+      if (!c || c.id === cid) return;
       const inNet = channels.filter((ch) => ch.cid === c.id);
       const target = inNet.find((ch) => ch.item.show.id === lastPerNet.current[c.id]) ?? inNet[0];
       if (target) return tune(target, 'input');
-      touched.current = true;
       if (current) prevKey.current = keyOf(current);
       pendingFx.current = 'input';
       pendingOsd.current = { kind: 'input', text: `INPUT: ${c.label.toUpperCase()}`, sub: 'No signal' };
       setTuned({ cid: c.id, idx: 0 });
     },
-    [collections, channels, tuned.cid, current, tune],
+    [collections, channels, cid, current, tune],
   );
   const netStep = useCallback(
     (d: number) => {
@@ -350,7 +341,18 @@ export default function ChannelSurfer() {
       if (t.closest('input, textarea, select, [contenteditable="true"], [role="menu"], .menu') || document.querySelector('.overlay')) return;
       const key = e.key;
       if (guide) {
-        if (key === 'Escape' || key === 'g' || key === 'G') closeGuide();
+        if (key === 'Tab') {
+          // keep focus inside the guide dialog
+          const panel = document.querySelector<HTMLElement>('.ch-guide__panel');
+          const focusables = panel ? [...panel.querySelectorAll<HTMLElement>('button:not([disabled])')].filter((b) => b.tabIndex >= 0) : [];
+          if (!focusables.length) return;
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+          const inside = panel?.contains(document.activeElement);
+          if (e.shiftKey && (document.activeElement === first || !inside)) last.focus();
+          else if (!e.shiftKey && (document.activeElement === last || !inside)) first.focus();
+          else return;
+        } else if (key === 'Escape' || key === 'g' || key === 'G') closeGuide();
         else if (key === 'ArrowDown') setGuideSel((s) => Math.min(guideChannels.length - 1, s + 1));
         else if (key === 'ArrowUp') setGuideSel((s) => Math.max(0, s - 1));
         else if (key === 'PageDown') setGuideSel((s) => Math.min(guideChannels.length - 1, s + 8));
@@ -424,7 +426,7 @@ export default function ChannelSurfer() {
 
   const curEntry = current ? entries[current.item.show.id] ?? current.item.entry : undefined;
   const item = current ? { ...current.item, entry: curEntry } : undefined;
-  const status = recs.stage !== 'ready' && tuned.cid === 'foryou' ? 'tuning' : 'empty';
+  const status = recs.stage !== 'ready' && cid === 'foryou' ? 'tuning' : 'empty';
 
   const renderPicture = (ch: Channel | undefined, cls: string) =>
     ch ? (
@@ -539,11 +541,11 @@ export default function ChannelSurfer() {
                   </button>
                 </div>
                 <div className="ch-tvbtns">
-                  <button ref={guideBtn} className="ch-tvbtn" onClick={openGuide} aria-haspopup="dialog" title="Programme guide (G)">
-                    <ListVideo size={15} /> Guide
+                  <button ref={guideBtn} className="ch-tvbtn" onClick={openGuide} aria-haspopup="dialog" aria-label="Programme guide" title="Programme guide (G)">
+                    <ListVideo size={15} /> <span>Guide</span>
                   </button>
-                  <button className={`ch-tvbtn ${sound ? 'on' : ''}`} onClick={toggleSound} aria-pressed={sound} title="Static sound (M)">
-                    {sound ? <Volume2 size={15} /> : <VolumeX size={15} />} {sound ? 'Sound on' : 'Muted'}
+                  <button className={`ch-tvbtn ${sound ? 'on' : ''}`} onClick={toggleSound} aria-pressed={sound} aria-label="Static sound" title="Static sound (M)">
+                    {sound ? <Volume2 size={15} /> : <VolumeX size={15} />} <span>{sound ? 'Sound on' : 'Muted'}</span>
                   </button>
                 </div>
                 <div className="ch-grill" aria-hidden />

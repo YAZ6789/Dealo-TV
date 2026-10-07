@@ -19,7 +19,7 @@ import { toast } from '../components/toast';
 
 interface Slide {
   show: ShowSummary;
-  kind: 'continue' | 'rec';
+  kind: 'continue' | 'watched' | 'rec';
   entry?: LibraryEntry;
   rec?: Recommendation;
 }
@@ -47,7 +47,9 @@ function Hero({ slides }: { slides: Slide[] }) {
       </div>
       <div className="hero__shade" />
       <div className="hero__content hero-anim">
-        <div className="hero__eyebrow">{slide.kind === 'continue' ? 'Continue watching' : why ?? 'Recommended for you'}</div>
+        <div className="hero__eyebrow">
+          {slide.kind === 'continue' ? 'Continue watching' : slide.kind === 'watched' ? `Watched${entry?.rating != null ? ` · you rated it ${entry.rating}/10` : ''}` : why ?? 'Recommended for you'}
+        </div>
         <h1 className="hero__title">{show.title}</h1>
         <div className="hero__meta">
           {rec && <span className={matchClass(rec.match)}>{rec.match}% match</span>}
@@ -123,12 +125,14 @@ export function Home() {
     [list],
   );
 
+  // The billboard is about *your* shows: what you're in the middle of, then what you finished last.
+  // Recommendations only fill it while the library is empty.
   const slides = useMemo<Slide[]>(() => {
-    const out: Slide[] = [];
-    if (watching[0]) out.push({ show: watching[0].show, kind: 'continue', entry: watching[0] });
-    for (const r of recs.output?.picks.slice(0, 5 - out.length) ?? []) out.push({ show: r.show, kind: 'rec', rec: r });
+    const out: Slide[] = watching.slice(0, 3).map((e) => ({ show: e.show, kind: 'continue' as const, entry: e }));
+    for (const e of finished.slice(0, 5 - out.length)) out.push({ show: e.show, kind: 'watched', entry: e });
+    if (!out.length) for (const r of recs.output?.picks.slice(0, 5) ?? []) out.push({ show: r.show, kind: 'rec', rec: r });
     return out;
-  }, [watching, recs.output]);
+  }, [watching, finished, recs.output]);
 
   const shelves = recs.shelves;
   const empty = list.length === 0;
@@ -164,27 +168,22 @@ export function Home() {
         </div>
       )}
 
+      {/* Your shows first — Watched, Currently watching, Watchlist. Recommendations are the extra below. */}
+      {finished.length > 0 && (
+        <Row title="Watched" count={finished.length} more="/library/completed">
+          {finished.slice(0, 30).map((e) => (
+            <ShowCard key={e.id} show={e.show} showStatus={false} />
+          ))}
+        </Row>
+      )}
+
       {watching.length > 0 && (
-        <Row title="Continue watching" count={watching.length} more="/library/watching">
+        <Row title="Currently watching" count={watching.length} more="/library/watching">
           {watching.map((e) => (
             <WatchingCard key={e.id} entry={e} />
           ))}
         </Row>
       )}
-
-      {recs.stage !== 'ready' && !recs.output && (
-        <div className="loading-line">
-          <div className="spinner" /> {recs.stage === 'error' ? `Recommendations unavailable: ${recs.error}` : `Computing recommendations · ${recs.stage}…`}
-        </div>
-      )}
-
-      {shelves.slice(0, 2).map((s) => (
-        <Row key={s.id} title={s.title} sub={s.subtitle} more={s.id === 'picks' ? '/discover' : undefined}>
-          {s.items.map((r) => (
-            <ShowCard key={r.show.id} show={r.show} rec={r} />
-          ))}
-        </Row>
-      ))}
 
       {watchlist.length > 0 && (
         <Row title="Your watchlist" count={watchlist.length} more="/library/plan">
@@ -194,29 +193,41 @@ export function Home() {
         </Row>
       )}
 
-      {shelves.slice(2).map((s) => (
-        <Row key={s.id} title={s.title} sub={s.subtitle}>
-          {s.items.map((r) => (
-            <ShowCard key={r.show.id} show={r.show} rec={r} />
-          ))}
-        </Row>
-      ))}
-
       {onHold.length > 0 && (
-        <Row title="On hold — pick back up?" count={onHold.length} more="/library/on_hold">
+        <Row title="On hold" count={onHold.length} more="/library/on_hold">
           {onHold.map((e) => (
             <ShowCard key={e.id} show={e.show} showStatus={false} />
           ))}
         </Row>
       )}
 
-      {finished.length > 0 && (
-        <Row title="Recently finished" count={finished.length} more="/library/completed">
-          {finished.slice(0, 24).map((e) => (
-            <ShowCard key={e.id} show={e.show} showStatus={false} />
+      {(shelves.length > 0 || recs.stage !== 'ready') && (
+        <div className="home-divider">
+          <div>
+            <h2 className="home-divider__title">
+              <Sparkles size={16} /> Discover more
+            </h2>
+            <p className="home-divider__sub">Recommendations based on what you've watched and rated.</p>
+          </div>
+          <Link className="btn btn--sm" to="/discover">
+            All picks
+          </Link>
+        </div>
+      )}
+
+      {recs.stage !== 'ready' && !recs.output && (
+        <div className="loading-line">
+          <div className="spinner" /> {recs.stage === 'error' ? `Recommendations unavailable: ${recs.error}` : `Computing recommendations · ${recs.stage}…`}
+        </div>
+      )}
+
+      {shelves.slice(0, 4).map((s) => (
+        <Row key={s.id} title={s.title} sub={s.subtitle} more={s.id === 'picks' ? '/discover' : undefined}>
+          {s.items.map((r) => (
+            <ShowCard key={r.show.id} show={r.show} rec={r} />
           ))}
         </Row>
-      )}
+      ))}
 
       {!empty && watching.length === 0 && (
         <div className="page">

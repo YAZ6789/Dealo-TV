@@ -87,25 +87,23 @@
   gap: var(--mc-gap);
   align-items: stretch;
 }
+/* Desktop: library panels take the top and the most room. */
+.mc-watched {
+  grid-column: span 4;
+}
 .mc-now {
   grid-column: span 8;
 }
-.mc-tele {
-  grid-column: span 4;
-}
-.mc-queue,
+.mc-watchlist,
 .mc-air,
-.mc-radar {
-  grid-column: span 4;
-}
+.mc-tele,
+.mc-radar,
+.mc-wild,
 .mc-dna {
-  grid-column: span 3;
-}
-.mc-wild {
   grid-column: span 4;
 }
 .mc-log {
-  grid-column: span 5;
+  grid-column: 1 / -1;
 }
 
 @media (max-width: 1180px) {
@@ -115,6 +113,7 @@
   .mc-grid > .mc-panel {
     grid-column: span 1;
   }
+  .mc-grid > .mc-watched,
   .mc-grid > .mc-now,
   .mc-grid > .mc-tele {
     grid-column: span 2;
@@ -125,6 +124,7 @@
     grid-template-columns: minmax(0, 1fr);
   }
   .mc-grid > .mc-panel,
+  .mc-grid > .mc-watched,
   .mc-grid > .mc-now,
   .mc-grid > .mc-tele {
     grid-column: auto;
@@ -190,7 +190,7 @@
   border-radius: 50%;
   background: var(--accent);
   box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 70%, transparent);
-  animation: mc-blink 2.4s ease-in-out infinite;
+  animation: mc-blink 2.4s ease-in-out 3;
 }
 .mc-dot--ok {
   background: var(--ok);
@@ -809,22 +809,36 @@ ul.mc-dna {
   padding: 0;
   font-family: var(--font-mono);
   font-size: var(--fs-sm);
-  max-height: 440px;
-  overflow-y: auto;
+  /* Full-width ticker on desktop: newest first, read down then across. */
+  columns: 2;
+  column-gap: 40px;
+}
+.mc-logl > li {
+  break-inside: avoid;
+  border-bottom: 1px solid var(--mc-line);
+}
+.mc-logl > li.is-new {
+  animation: mc-log-in 1.6s var(--ease);
 }
 .mc-logl__row {
   display: grid;
   grid-template-columns: 7.5ch 6.5ch minmax(0, 1fr);
   gap: 10px;
   align-items: baseline;
-  padding: 7px 0;
-  border-bottom: 1px solid var(--mc-line);
+  min-height: 44px;
+  padding: 10px 8px;
+  margin: 0 -8px;
+  border-radius: var(--radius-sm);
+  color: inherit;
+  transition: background 0.15s;
 }
-.mc-logl__row:last-child {
-  border-bottom: 0;
+a.mc-logl__row:hover,
+a.mc-logl__row:focus-visible {
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
 }
-.mc-logl__row.is-new {
-  animation: mc-log-in 1.6s var(--ease);
+a.mc-logl__row:hover .mc-logl__show {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 @keyframes mc-log-in {
   from {
@@ -859,10 +873,74 @@ ul.mc-dna {
   font-weight: 600;
   color: var(--text);
 }
-a.mc-logl__show:hover {
-  color: var(--accent);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+@media (max-width: 1180px) {
+  .mc-logl {
+    columns: 1;
+  }
+}
+
+/* ───────────── watched / watchlist ───────────── */
+
+.mc-total {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 14px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--mc-line);
+}
+.mc-total__num {
+  font-family: var(--font-body);
+  font-size: clamp(2rem, 3vw, 2.6rem);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text);
+}
+.mc-total__text {
+  display: grid;
+  font-size: var(--fs-md);
+  color: var(--text);
+}
+.mc-total__text span {
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+.mc-rating {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+.mc-rating > span[aria-hidden] {
+  color: var(--warn);
+}
+.mc-rating__of {
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--text-faint);
+}
+.mc-rating--none {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--text-faint);
+}
+
+/* 40px+ touch targets for every compact control */
+.mc .mc-row__tick,
+.mc .mc-btn {
+  min-height: 40px;
+}
+.mc .mc-row__tick {
+  width: 40px;
+  height: 40px;
+}
+.mc-more {
+  min-height: 40px;
+  padding: 0 6px;
+  margin-right: -6px;
 }
 
 /* ───────────── responsive tweaks ───────────── */
@@ -913,9 +991,6 @@ a.mc-logl__show:hover {
   .mc-wildcard {
     grid-template-columns: 96px minmax(0, 1fr);
   }
-  .mc-logl {
-    max-height: none;
-  }
 }
 @media (max-width: 420px) {
   .mc-logl__row {
@@ -929,9 +1004,15 @@ a.mc-logl__show:hover {
 @media (prefers-reduced-motion: reduce) {
   .mc-dot,
   .mc-wildcard,
-  .mc-logl__row.is-new {
+  .mc-logl > li.is-new {
     animation: none;
   }
+}
+/* app setting "Reduce background effects" (or OS reduced motion) */
+.mc--still .mc-dot,
+.mc--still .mc-wildcard,
+.mc--still .mc-logl > li.is-new {
+  animation: none;
 }
 
 /* telemetry sparkline grows to fill the panel when the row is tall */
@@ -946,4 +1027,37 @@ a.mc-logl__show:hover {
 .mc-spark__plot svg {
   position: absolute;
   inset: 0;
+}
+
+/* safe area under the fixed tab bar on phones */
+@media (max-width: 860px) {
+  .mc {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+}
+
+/* title links: comfortable tap height without changing the type */
+.mc-hero__title a,
+.mc-wildcard__title a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+}
+.mc-hero__media .art__kicker {
+  display: none;
+}
+
+/* Watched spans the full width on tablets / landscape phones: list in two columns */
+@media (min-width: 681px) and (max-width: 1180px) {
+  .mc-watched .mc-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2px 32px;
+  }
+}
+/* Phones: keep the first screen moving — four recent finishes, then Now Watching */
+@media (max-width: 680px) {
+  .mc-watched .mc-row:nth-child(n + 5) {
+    display: none;
+  }
 }

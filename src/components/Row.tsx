@@ -27,11 +27,11 @@ export function Row({ title, count, sub, more, children }: { title: ReactNode; c
     <section className="row">
       <div className="row__head">
         <h2 className="section-title">
-          {title}
+          <span className="row__title">{title}</span>
           {count != null && <span className="count">{count}</span>}
         </h2>
         {more && (
-          <Link className="more" to={more}>
+          <Link className="more" to={more} aria-label={typeof title === 'string' ? `See all: ${title}` : undefined}>
             See all →
           </Link>
         )}

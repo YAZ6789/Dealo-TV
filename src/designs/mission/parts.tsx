@@ -2,11 +2,18 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { ShowSummary } from '../../types';
 import { remember, showPath } from '../../lib/showCache';
+import { useSettings } from '../../store/settings';
 import { Poster } from '../../components/Poster';
 
 /* ───────────── hooks ───────────── */
 
+/** OS reduced-motion preference or the app's "reduce effects" setting. */
 export function useReducedMotion(): boolean {
+  const reduceFx = useSettings((s) => s.reduceFx);
+  return usePrefersReducedMotion() || reduceFx;
+}
+
+function usePrefersReducedMotion(): boolean {
   const query = '(prefers-reduced-motion: reduce)';
   const [reduced, setReduced] = useState(() => typeof matchMedia === 'function' && matchMedia(query).matches);
   useEffect(() => {

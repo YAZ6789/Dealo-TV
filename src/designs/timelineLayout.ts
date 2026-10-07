@@ -239,3 +239,25 @@ export function summarize(items: { id: string; span: AirSpan }[]): Summary {
   }
   return { count: items.length, from, to, ongoing: items.filter((i) => i.span.ongoing).length, busiestDecade, busiestCount, longest };
 }
+
+/**
+ * The `width`-year window (within [from, to]) where the most shows are on air,
+ * scored by on-air years inside the window. Ties go to the later window, so a
+ * phone opens on recent TV when it's just as busy. Returns the window start.
+ */
+export function densestWindow(spans: Pick<AirSpan, 'start' | 'end'>[], width: number, from: number, to: number): number {
+  const last = Math.max(from, to - width);
+  if (!spans.length) return last;
+  let best = last;
+  let bestScore = -1;
+  for (let s = Math.floor(from); s <= last + 1e-9; s += 0.5) {
+    const e = s + width;
+    let score = 0;
+    for (const sp of spans) score += Math.max(0, Math.min(e, sp.end) - Math.max(s, sp.start));
+    if (score >= bestScore - 1e-9) {
+      best = s;
+      bestScore = score;
+    }
+  }
+  return best;
+}

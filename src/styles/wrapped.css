@@ -11,6 +11,7 @@
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   overflow: hidden;
+  overscroll-behavior: none;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-body);
@@ -80,7 +81,7 @@
 .wr__top {
   position: relative;
   z-index: 3;
-  padding: 12px var(--gutter) 0;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) max(var(--gutter), env(safe-area-inset-right, 0px)) 0 max(var(--gutter), env(safe-area-inset-left, 0px));
   transition: opacity 0.3s;
 }
 .wr.is-holding .wr__top {
@@ -123,8 +124,13 @@
   text-transform: uppercase;
   color: var(--accent);
 }
+.wr__bar .btn {
+  min-width: 40px;
+  height: 40px;
+}
 .wr__year-pick select {
   appearance: auto;
+  min-height: 40px;
   padding: 5px 8px;
   font: 600 var(--fs-sm) var(--font-mono);
   color: var(--text);
@@ -164,7 +170,7 @@
 .wr__paused {
   position: absolute;
   left: 50%;
-  bottom: 22px;
+  bottom: calc(22px + env(safe-area-inset-bottom, 0px));
   z-index: 5;
   transform: translateX(-50%);
   display: inline-flex;
@@ -188,10 +194,12 @@
   display: grid;
   user-select: none;
   -webkit-user-select: none;
-  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  touch-action: pan-y; /* vertical scroll stays native; horizontal swipes come to us */
   -webkit-tap-highlight-color: transparent;
 }
 .wr-slide {
+  touch-action: pan-y; /* slides can scroll, which resets touch-action inheritance: repeat it here */
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
   align-items: center;
@@ -766,6 +774,8 @@
 }
 .wr-ends__item figcaption {
   display: flex;
+  flex-wrap: wrap;
+  white-space: nowrap;
   align-items: center;
   gap: 8px;
   margin-top: 12px;
@@ -871,7 +881,6 @@
   grid-template-columns: minmax(0, 1fr) !important;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-gutter: stable both-edges;
   align-items: start;
   align-content: safe center;
 }
@@ -1051,6 +1060,21 @@
   gap: 6px;
   margin-top: 6px;
 }
+.wr-years .chip {
+  min-height: 40px;
+  min-width: 56px;
+  justify-content: center;
+}
+/* Battery: continuous decorations stop while paused and with Settings → Reduce effects. */
+.wr.is-paused .wr-emblem__ring,
+.wr.is-paused .wr-ends__line span,
+.wr.is-holding .wr-emblem__ring {
+  animation-play-state: paused;
+}
+.wr.is-calm .wr-emblem__ring,
+.wr.is-calm .wr-ends__line span {
+  animation: none;
+}
 
 /* ───────────── keyframes ───────────── */
 @keyframes wr-rise {
@@ -1136,21 +1160,53 @@
   .wr__top {
     padding: 10px 16px 0;
   }
-  .wr__stats span {
+  .wr__top {
+    padding: calc(8px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px));
+  }
+  .wr__bar {
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .wr__stats span,
+  .wr-hide-xs {
     display: none;
+  }
+  .wr-poster .art__kicker {
+    display: none;
+  }
+  .wr-clock__tick {
+    font-size: 16px;
+  }
+  .wr-clock__cap {
+    font-size: 15px;
   }
   .wr__nav {
     display: none;
   }
   .wr-slide {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto;
-    align-content: center;
+    grid-template-rows: max-content max-content;
+    align-content: safe center;
     gap: 22px;
-    padding: 8px 16px 28px;
+    padding: 8px max(16px, env(safe-area-inset-right, 0px)) calc(28px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+    overflow-y: auto; /* never clip: if a slide is taller than the screen it scrolls */
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+  .wr-slide::-webkit-scrollbar {
+    display: none;
   }
   .wr-copy {
     gap: 10px;
+  }
+  .wr-visual {
+    min-height: auto;
+  }
+  /* Small posters: wrap at spaces only; a word that can't fit is ellipsized, never split. */
+  .wr-poster .art__title {
+    overflow: hidden;
+    overflow-wrap: normal;
+    text-overflow: ellipsis;
   }
   .wr-slide--intro .wr-visual,
   .wr-slide--top .wr-visual,
@@ -1201,7 +1257,7 @@
     width: min(100%, 360px);
   }
   .wr-shelf .art__title {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
   }
   .wr-shelf .art__kicker {
     display: none;
@@ -1218,6 +1274,7 @@
   .wr-slide--summary {
     align-content: start;
     padding-top: 12px;
+    scrollbar-width: none;
   }
   .wr-summary {
     grid-template-columns: minmax(0, 1fr);
@@ -1252,5 +1309,219 @@
   .wr *::before,
   .wr *::after {
     animation-delay: 0s !important;
+  }
+}
+@media (max-width: 420px) {
+  .wr__brand-text {
+    display: none;
+  }
+}
+
+/* Short screens in portrait (small Androids): tighten the summary card so the actions show. */
+@media (max-width: 860px) and (max-height: 780px) and (orientation: portrait) {
+  .wr-card {
+    gap: 10px;
+    padding: 16px 16px 12px;
+  }
+  .wr-card__year {
+    font-size: 2.6rem;
+  }
+  .wr-card__persona {
+    padding: 8px 10px;
+  }
+  .wr-card__icon {
+    width: 40px;
+    height: 40px;
+  }
+  .wr-card__thumb {
+    width: 24px;
+  }
+  .wr-card__top ol {
+    gap: 4px;
+  }
+  .wr-card__foot {
+    padding-top: 8px;
+  }
+}
+
+/* Landscape phones: back to two columns, everything sized by the (short) height; slides scroll if needed. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .wr__top {
+    padding-top: calc(6px + env(safe-area-inset-top, 0px));
+  }
+  .wr__bar {
+    min-height: 40px;
+    margin-top: 2px;
+  }
+  .wr__nav,
+  .wr__paused {
+    display: none;
+  }
+  .wr-slide {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: none;
+    align-items: center;
+    align-content: safe center;
+    gap: 24px;
+    padding: 6px max(24px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(24px, env(safe-area-inset-left, 0px));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+  .wr-slide .wr-visual {
+    order: 0 !important;
+  }
+  .wr-slide:not(:has(.wr-visual)) {
+    grid-template-columns: minmax(0, 640px);
+  }
+  .wr-copy {
+    gap: 6px;
+  }
+  .wr-year {
+    font-size: clamp(3rem, 19vh, 5rem);
+  }
+  .wr-title {
+    font-size: 1.3rem;
+  }
+  .wr-sub,
+  .wr-line {
+    font-size: var(--fs-md);
+  }
+  .wr-big {
+    font-size: clamp(3rem, 20vh, 5rem);
+  }
+  .wr-big__unit {
+    margin-top: 4px;
+    font-size: var(--fs-lg);
+  }
+  .wr-headline {
+    font-size: clamp(1.6rem, 9vh, 2.5rem);
+  }
+  .wr-statement {
+    font-size: clamp(1.2rem, 6.5vh, 1.7rem);
+  }
+  .wr-duo__n {
+    font-size: clamp(2.6rem, 17vh, 4rem);
+  }
+  .wr-youre {
+    font-size: var(--fs-lg);
+  }
+  .wr-hint {
+    margin-top: 2px !important;
+  }
+  .wr-chip {
+    padding: 5px 11px;
+  }
+  .wr-cloud {
+    width: min(100%, 420px);
+    height: 74vh;
+    aspect-ratio: auto;
+    max-height: none;
+  }
+  .wr-cloud .wr-poster {
+    width: auto;
+    height: 46%;
+  }
+  .wr-hero-poster {
+    height: 66vh;
+  }
+  .wr-bars {
+    gap: 6px;
+  }
+  .wr-bars__head {
+    margin-bottom: 3px;
+  }
+  .wr-slide--genres .wr-bars {
+    gap: 8px;
+  }
+  .wr-slide--genres .wr-bars__track {
+    height: 10px;
+  }
+  .wr-clock {
+    width: min(100%, 60vh);
+  }
+  .wr-clock figcaption {
+    margin-top: 4px;
+  }
+  .wr-visual--stack {
+    gap: 10px;
+  }
+  .wr-cols__cap {
+    margin-bottom: 4px;
+  }
+  .wr-cols__plot {
+    height: 26vh;
+    padding-top: 18px;
+  }
+  .wr-cols--sm .wr-cols__plot {
+    height: 15vh;
+  }
+  .wr-binge__poster {
+    height: 58vh;
+  }
+  .wr-tiles {
+    width: min(100%, 220px);
+  }
+  .wr-shelf {
+    grid-template-columns: repeat(4, 17vh);
+    gap: 8px;
+    width: auto;
+  }
+  .wr-shelf .art {
+    padding: 8%;
+  }
+  .wr-ends__item {
+    width: 24vh;
+  }
+  .wr-emblem {
+    width: min(62vh, 100%);
+  }
+  .wr-summary {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 260px);
+    align-items: start;
+  }
+  .wr-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .wr-actions .btn:nth-child(-n + 2) {
+    grid-column: auto;
+  }
+}
+
+/* Portrait tablets: same stacked layout as phones, with bigger visuals. */
+@media (min-width: 600px) and (max-width: 860px) and (orientation: portrait) {
+  .wr-slide {
+    padding-left: 48px;
+    padding-right: 48px;
+    gap: 32px;
+  }
+  .wr-cloud {
+    width: min(100%, 520px);
+    height: min(40vh, 440px);
+  }
+  .wr-hero-poster {
+    height: min(34vh, 380px);
+  }
+  .wr-clock {
+    width: min(100%, 420px);
+  }
+  .wr-binge__poster {
+    height: min(32vh, 340px);
+  }
+  .wr-tiles {
+    width: min(100%, 360px);
+  }
+  .wr-shelf {
+    width: min(100%, 560px);
+  }
+  .wr-ends__item {
+    width: 220px;
+  }
+  .wr-emblem {
+    width: 320px;
+  }
+  .wr-summary {
+    width: min(100%, 520px);
+    justify-self: center;
   }
 }

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Check, CheckCheck, Info, Plus, Shuffle } from 'lucide-react';
+import { ArrowRight, Check, CheckCheck, Info, Play, Plus, Shuffle } from 'lucide-react';
 import type { ActivityEvent, LibraryEntry, Recommendation, ShowSummary } from '../../types';
 import type { Item } from '../useCollections';
 import type { Stats } from '../../stats/compute';
@@ -52,10 +52,10 @@ export function NowWatching({ items }: { items: Item[] }) {
   const list = items.map((i) => entries[i.show.id]).filter((e): e is LibraryEntry => !!e);
   const [first, ...rest] = list;
   return (
-    <Panel id="now" label="Now watching" className="mc-now" meta={list.length ? `${list.length} in progress` : undefined}>
+    <Panel id="now" label="Now watching" className="mc-now" meta={list.length ? `${list.length} in progress` : undefined} action={<MoreLink to="/library/watching">See all</MoreLink>}>
       {!first ? (
         <Empty title="Nothing in progress" hint="Start a show and it will be tracked here, with one-tap episode ticks.">
-          <Link to="/discover" className="btn btn--sm">
+          <Link to="/discover" className="btn btn--sm mc-btn">
             Find something to watch
           </Link>
         </Empty>
@@ -151,36 +151,104 @@ function NowHero({ entry }: { entry: LibraryEntry }) {
   );
 }
 
-/* ───────────── 2 · UP NEXT QUEUE ───────────── */
+/* ───────────── WATCHED (library) ───────────── */
 
-export function Queue({ watching, watchlist }: { watching: Item[]; watchlist: Item[] }) {
+export function Watched({ items }: { items: Item[] }) {
   const entries = useLibrary((s) => s.entries);
-  const rows = [...watching.slice(1), ...watchlist].slice(0, 7);
-  const total = Math.max(0, watching.length - 1) + watchlist.length;
+  const rows = items.slice(0, 6);
+  const rated = items.filter((i) => (entries[i.show.id] ?? i.entry)?.rating != null).length;
   return (
-    <Panel id="queue" label="Up next queue" className="mc-queue" meta={total ? `${total} queued` : undefined} action={<MoreLink to="/library">Library</MoreLink>}>
+    <Panel
+      id="watched"
+      label="Watched"
+      className="mc-watched"
+      meta={items.length ? `${items.length} show${items.length === 1 ? '' : 's'}` : undefined}
+      action={<MoreLink to="/library/completed">See all</MoreLink>}
+    >
       {!rows.length ? (
-        <Empty title="Queue is empty" hint="Add shows to your watchlist and they line up here." />
+        <Empty title="Nothing finished yet" hint="Shows you finish land here, with your rating.">
+          <Link to="/library" className="btn btn--sm mc-btn">
+            Open library
+          </Link>
+        </Empty>
       ) : (
-        <ol className="mc-list mc-list--numbered">
-          {rows.map((it, i) => {
-            const e = entries[it.show.id] ?? it.entry;
-            const p = e && e.status === 'watching' ? progressOf(e) : undefined;
-            return (
-              <li key={it.show.id} className="mc-row">
-                <span className="mc-row__num" aria-hidden>
-                  {String(i + 1).padStart(2, '0')}
+        <>
+          <div className="mc-total">
+            <span className="mc-total__num">{items.length}</span>
+            <span className="mc-total__text">
+              shows finished
+              <span>{rated ? `${rated} rated by you` : 'none rated yet'}</span>
+            </span>
+          </div>
+          <ul className="mc-list">
+            {rows.map((it) => {
+              const e = entries[it.show.id] ?? it.entry;
+              const when = e?.completedAt ?? e?.lastWatchedAt;
+              return (
+                <li key={it.show.id} className="mc-row">
+                  <ShowLink show={it.show} className="mc-row__link">
+                    <Thumb show={it.show} />
+                    <span className="mc-row__text">
+                      <span className="mc-row__title">{it.show.title}</span>
+                      <span className="mc-row__sub">{[when ? `Finished ${relTime(when)}` : '', yearRange(it.show)].filter(Boolean).join(' · ')}</span>
+                    </span>
+                    {e?.rating != null ? (
+                      <span className="mc-rating" aria-label={`Your rating ${e.rating} out of 10`}>
+                        <span aria-hidden>★</span> {e.rating}
+                        <span className="mc-rating__of">/10</span>
+                      </span>
+                    ) : (
+                      <span className="mc-rating mc-rating--none">Not rated</span>
+                    )}
+                  </ShowLink>
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
+    </Panel>
+  );
+}
+
+/* ───────────── WATCHLIST (library) ───────────── */
+
+export function Watchlist({ items }: { items: Item[] }) {
+  const actions = useShowActions();
+  const rows = items.slice(0, 6);
+  return (
+    <Panel
+      id="watchlist"
+      label="Watchlist"
+      className="mc-watchlist"
+      meta={items.length ? `${items.length} to watch` : undefined}
+      action={<MoreLink to="/library/plan">See all</MoreLink>}
+    >
+      {!rows.length ? (
+        <Empty title="Watchlist is empty" hint="Save shows you want to watch and they line up here.">
+          <Link to="/discover" className="btn btn--sm mc-btn">
+            Find shows
+          </Link>
+        </Empty>
+      ) : (
+        <ol className="mc-list">
+          {rows.map((it, i) => (
+            <li key={it.show.id} className="mc-row">
+              <span className="mc-row__num" aria-hidden>
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <ShowLink show={it.show} className="mc-row__link">
+                <Thumb show={it.show} />
+                <span className="mc-row__text">
+                  <span className="mc-row__title">{it.show.title}</span>
+                  <span className="mc-row__sub">{showMeta(it.show)}</span>
                 </span>
-                <ShowLink show={it.show} className="mc-row__link">
-                  <Thumb show={it.show} />
-                  <span className="mc-row__text">
-                    <span className="mc-row__title">{it.show.title}</span>
-                    <span className="mc-row__sub">{p ? (p.next ? `Continue · ${fmtEp(p.next)}` : 'Continue') : `Watchlist${showMeta(it.show) ? ` · ${showMeta(it.show)}` : ''}`}</span>
-                  </span>
-                </ShowLink>
-              </li>
-            );
-          })}
+              </ShowLink>
+              <button className="btn btn--sm btn--icon mc-row__tick" onClick={() => actions.setStatus(it.show, 'watching')} title="Start watching" aria-label={`Start watching ${it.show.title}`}>
+                <Play size={16} aria-hidden />
+              </button>
+            </li>
+          ))}
         </ol>
       )}
     </Panel>
@@ -363,7 +431,7 @@ export function Wildcard({ ranked, picks }: { ranked?: Recommendation[]; picks?:
       label="Wildcard"
       className="mc-wild"
       action={
-        <button className="btn btn--sm" onClick={shuffle} disabled={pool.length < 2}>
+        <button className="btn btn--sm mc-btn" onClick={shuffle} disabled={pool.length < 2}>
           <Shuffle size={15} aria-hidden /> Shuffle
         </button>
       }
@@ -392,10 +460,10 @@ export function Wildcard({ ranked, picks }: { ranked?: Recommendation[]; picks?:
             <p className="mc-wildcard__why">{reasonOf(rec)}</p>
             {rec.show.overview && <p className="mc-wildcard__overview">{rec.show.overview}</p>}
             <div className="mc-wildcard__actions">
-              <button className="btn btn--sm" onClick={() => actions.watchlist(rec.show)}>
+              <button className="btn btn--sm mc-btn" onClick={() => actions.watchlist(rec.show)}>
                 <Plus size={15} aria-hidden /> Watchlist
               </button>
-              <ShowLink show={rec.show} className="btn btn--sm btn--ghost">
+              <ShowLink show={rec.show} className="btn btn--sm btn--ghost mc-btn">
                 Details
               </ShowLink>
             </div>
@@ -422,7 +490,7 @@ interface LogLine {
 
 const TAG: Record<ActivityEvent['kind'], string> = { episode: 'EP', unepisode: 'UNDO', status: 'STATUS', rating: 'RATE', add: 'ADD' };
 
-function buildLog(activity: ActivityEvent[], limit = 14): LogLine[] {
+function buildLog(activity: ActivityEvent[], limit = 10): LogLine[] {
   const out: LogLine[] = [];
   for (let i = activity.length - 1; i >= 0 && out.length <= limit; i--) {
     const a = activity[i];
@@ -459,6 +527,17 @@ export function SystemLog({ mountedAt }: { mountedAt: string }) {
         return `added${l.status ? ` to ${STATUS_LABEL[l.status]}` : ''}`;
     }
   };
+  const inner = (l: LogLine, title: string) => (
+    <>
+      <time className="mc-logl__time" dateTime={l.at} title={new Date(l.at).toLocaleString()}>
+        {relTime(l.at)}
+      </time>
+      <span className={`mc-logl__tag mc-logl__tag--${l.kind}`}>{TAG[l.kind]}</span>
+      <span className="mc-logl__msg">
+        <span className="mc-logl__show">{title}</span> {msg(l)}
+      </span>
+    </>
+  );
   return (
     <Panel id="log" label="System log" className="mc-log" meta={activity.length ? `${activity.length.toLocaleString()} events` : undefined}>
       {!lines.length ? (
@@ -468,21 +547,14 @@ export function SystemLog({ mountedAt }: { mountedAt: string }) {
           {lines.map((l) => {
             const show = titleOf(l.id);
             return (
-              <li key={l.key} className={`mc-logl__row${l.at > mountedAt ? ' is-new' : ''}`}>
-                <time className="mc-logl__time" dateTime={l.at} title={new Date(l.at).toLocaleString()}>
-                  {relTime(l.at)}
-                </time>
-                <span className={`mc-logl__tag mc-logl__tag--${l.kind}`}>{TAG[l.kind]}</span>
-                <span className="mc-logl__msg">
-                  {show ? (
-                    <ShowLink show={show} className="mc-logl__show">
-                      {show.title}
-                    </ShowLink>
-                  ) : (
-                    <span className="mc-logl__show">Removed show</span>
-                  )}{' '}
-                  {msg(l)}
-                </span>
+              <li key={l.key} className={l.at > mountedAt ? 'is-new' : undefined}>
+                {show ? (
+                  <ShowLink show={show} className="mc-logl__row">
+                    {inner(l, show.title)}
+                  </ShowLink>
+                ) : (
+                  <div className="mc-logl__row">{inner(l, 'Removed show')}</div>
+                )}
               </li>
             );
           })}

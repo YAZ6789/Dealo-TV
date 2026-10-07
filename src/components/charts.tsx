@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 /**
@@ -134,6 +134,11 @@ function niceStep(max: number) {
 /** GitHub-style calendar of episodes per day (single-hue ramp). */
 export function Heatmap({ days, caption }: { days: { day: string; count: number }[]; caption: string }) {
   const { node, bind } = useTip();
+  const scroller = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = scroller.current;
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, []);
   const max = Math.max(1, ...days.map((d) => d.count));
   const level = (c: number) => (c === 0 ? 0 : Math.min(4, 1 + Math.floor(((c - 1) / Math.max(1, max - 1)) * 3.999)));
   const cell = 11;
@@ -154,7 +159,8 @@ export function Heatmap({ days, caption }: { days: { day: string; count: number 
     }
   });
   return (
-    <div className="heatmap-scroll">
+    // On narrow screens the year scrolls sideways — start at the most recent weeks.
+    <div className="heatmap-scroll" ref={scroller}>
       <svg className="chart-svg heatmap" viewBox={`0 0 ${W} ${H}`} style={{ minWidth: 640 }} role="img" aria-label={caption}>
         {months.map((m) => (
           <text key={m.x} x={m.x} y={9}>

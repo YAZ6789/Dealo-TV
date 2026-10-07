@@ -17,7 +17,8 @@ import { usePalette } from '../components/palette';
 type Tab = WatchStatus | 'all' | 'blocked';
 type Sort = 'recent' | 'title' | 'rating' | 'progress' | 'year' | 'added';
 
-const TABS: Tab[] = ['watching', 'plan', 'completed', 'on_hold', 'dropped', 'all', 'blocked'];
+// Watched → Watching → Watchlist first, matching Home.
+const TABS: Tab[] = ['completed', 'watching', 'plan', 'on_hold', 'dropped', 'all', 'blocked'];
 const TAB_LABEL: Record<Tab, string> = { ...STATUS_LABEL, all: 'All', blocked: 'Not interested' };
 
 const recentKey = (e: LibraryEntry) => e.lastWatchedAt ?? e.completedAt ?? e.updatedAt;
@@ -25,7 +26,7 @@ const recentKey = (e: LibraryEntry) => e.lastWatchedAt ?? e.completedAt ?? e.upd
 export default function Library() {
   const { tab: tabParam } = useParams();
   const nav = useNavigate();
-  const tab = (TABS.includes(tabParam as Tab) ? tabParam : 'watching') as Tab;
+  const tab = (TABS.includes(tabParam as Tab) ? tabParam : 'completed') as Tab;
   const entries = useLibrary((s) => s.entries);
   const blocked = useLibrary((s) => s.blocked);
   const { rate, unblock } = useLibrary.getState();

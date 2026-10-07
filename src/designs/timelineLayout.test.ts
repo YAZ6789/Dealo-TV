@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { airSpan, approxTextWidth, axisRange, barGeometry, layoutGroups, packLanes, spanLabel, summarize, tickStep, yearFrac, type LayoutItem, type LayoutOptions } from './timelineLayout';
+import { airSpan, approxTextWidth, densestWindow, axisRange, barGeometry, layoutGroups, packLanes, spanLabel, summarize, tickStep, yearFrac, type LayoutItem, type LayoutOptions } from './timelineLayout';
 
 const NOW = 2026.75;
 const O: LayoutOptions = { pxPerYear: 40, origin: 1990, padLeft: 20, minBarW: 30, leadW: 30, innerPad: 8, labelGap: 6, gap: 8 };
@@ -158,5 +158,16 @@ describe('axis & summary', () => {
   it('approximates text width proportionally', () => {
     expect(approxTextWidth('Breaking Bad', 14)).toBeGreaterThan(approxTextWidth('Lost', 14));
     expect(approxTextWidth('', 14)).toBe(0);
+  });
+  it('finds the busiest window of years', () => {
+    const sp = (a: number, b: number) => ({ start: a, end: b });
+    // most shows in the 2000s, one recent one
+    const spans = [sp(2001, 2008), sp(2002, 2007), sp(2003, 2010), sp(2000, 2006), sp(2024, 2026.7)];
+    const s = densestWindow(spans, 10, 1990, 2028);
+    expect(s).toBeGreaterThanOrEqual(1999);
+    expect(s).toBeLessThanOrEqual(2001);
+    // ties favour the latest window; empty data → the end of the range
+    expect(densestWindow([], 10, 1990, 2028)).toBe(2018);
+    expect(densestWindow([sp(2000, 2030)], 10, 1990, 2028)).toBe(2018);
   });
 });

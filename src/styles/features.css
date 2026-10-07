@@ -230,3 +230,37 @@
 .home-banner:empty {
   display: none;
 }
+
+/* ───────────── Home: library first, then "Discover more" ───────────── */
+.home-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 18px var(--gutter) 22px;
+  padding: 16px 0 0;
+  border-top: 1px solid var(--panel-border);
+}
+.home-divider > div {
+  flex: 1;
+  min-width: 0;
+}
+.home-divider__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: var(--title-weight);
+  letter-spacing: var(--title-spacing);
+  text-transform: var(--title-transform);
+  color: var(--text-dim);
+}
+.home-divider__title svg {
+  color: var(--accent);
+}
+.home-divider__sub {
+  margin: 4px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--text-faint);
+}
