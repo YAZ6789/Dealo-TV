@@ -220,7 +220,7 @@ export const useLibrary = create<LibraryState>()((set, get) => ({
       set,
       id,
       (e) => {
-        if (e.status === status) return null;
+        if (e.status === status && status !== 'completed') return null;
         const p: Partial<LibraryEntry> = { status };
         if (status === 'watching' && !e.startedAt) p.startedAt = now();
         if (status === 'completed') {
@@ -339,7 +339,13 @@ export const useLibrary = create<LibraryState>()((set, get) => ({
       const entries = { ...s.entries };
       delete entries[oldId];
       const existing = entries[show.id];
-      entries[show.id] = { ...(existing ?? e), ...e, id: show.id, show: snapshot({ ...e.show, ...show }), updatedAt: now() };
+      entries[show.id] = {
+        ...(existing ?? e),
+        ...e,
+        id: show.id,
+        show: snapshot({ ...e.show, ...show, externalIds: { ...e.show.externalIds, ...show.externalIds } }),
+        updatedAt: now(),
+      };
       const activity = s.activity.map((a) => (a.id === oldId ? { ...a, id: show.id } : a));
       return { entries, activity, updatedAt: now() };
     });
@@ -532,6 +538,13 @@ export async function initLibrary(adapter: StorageAdapter = localAdapter): Promi
     useLibrary.setState({ ...doc, adapter, hydrated: true });
   } catch (err) {
     console.error('[dealo] failed to load library', err);
+    // Keep the unreadable copy before autosave can overwrite it.
+    try {
+      const raw = await adapter.load();
+      if (raw) localStorage.setItem(`dealo:library:unreadable:${Date.now()}`, JSON.stringify(raw));
+    } catch {
+      /* nothing more we can do */
+    }
     useLibrary.setState({ adapter, hydrated: true });
   }
 

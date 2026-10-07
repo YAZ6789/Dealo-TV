@@ -99,6 +99,14 @@ export default function HoloRing() {
     return () => removeEventListener('keydown', k);
   }, [move, current, nav]);
 
+  /** Nearest slot that actually holds a show (the ring has empty slots when n < MIN_SLOTS). */
+  const snap = (r: number) => {
+    let idx = Math.round(r / step);
+    const m = ((idx % slots) + slots) % slots;
+    if (m >= n && n) idx += m - n < slots - m ? -(m - n + 1) : slots - m;
+    return idx * step;
+  };
+
   const onWheel = (e: React.WheelEvent) => {
     const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
     setDragging(true);
@@ -106,12 +114,7 @@ export default function HoloRing() {
     clearTimeout(wheelTimer.current);
     wheelTimer.current = setTimeout(() => {
       setDragging(false);
-      setRot((r) => {
-        let idx = Math.round(r / step);
-        const m = ((idx % slots) + slots) % slots;
-        if (m >= n && n) idx += m - n < slots - m ? -(m - n + 1) : slots - m; // snap off empty slots
-        return idx * step;
-      });
+      setRot(snap);
     }, 140);
   };
 
@@ -133,7 +136,7 @@ export default function HoloRing() {
     drag.current = null;
     setDragging(false);
     if (moved) {
-      setRot((r) => Math.round(r / step) * step);
+      setRot(snap);
       return;
     }
     // a click: find the poster under the pointer

@@ -1,31 +1,39 @@
 import { useEffect, useState } from 'react';
 import { Check, ChevronDown, ChevronRight } from 'lucide-react';
 import type { EpisodeInfo, ShowDetail } from '../types';
-import { airedSeasonSizes, getSeasonEpisodes } from '../providers';
+import { airedSeasonSizes, getSeasonEpisodes, hasAired } from '../providers';
 import { snapshot, useLibrary } from '../store/library';
 import { nextUp } from '../lib/progress';
 import { daysUntil, fmtDate } from '../lib/labels';
 
-const today = () => new Date().toISOString().slice(0, 10);
-
 export function EpisodeTracker({ detail }: { detail: ShowDetail }) {
   const entry = useLibrary((s) => s.entries[detail.id]);
-  const { add, toggleEpisode, markUpTo, setSeasonWatched } = useLibrary.getState();
+  const { add, toggleEpisode, markUpTo, setSeasonWatched, refresh } = useLibrary.getState();
   const sizes = airedSeasonSizes(detail);
+  const hasSizes = !!entry?.seasonSizes?.length;
+
+  // A show added after this page loaded (status menu, hero button…) has no
+  // episode counts yet — store them so "up to here", completion and progress work.
+  useEffect(() => {
+    if (entry && !hasSizes && sizes.length) refresh(detail.id, snapshot(detail), sizes);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!entry, hasSizes, detail]);
   const next = entry ? nextUp({ ...entry, seasonSizes: entry.seasonSizes ?? sizes }) : { season: 1, episode: 1 };
   const [open, setOpen] = useState<number | null>(next?.season ?? detail.seasons[0]?.number ?? null);
 
   /** Make sure the show is in the library before ticking anything. */
   const ensure = () => {
-    if (!useLibrary.getState().entries[detail.id]) add(snapshot(detail), 'watching', { seasonSizes: sizes });
+    const cur = useLibrary.getState().entries[detail.id];
+    if (!cur) add(snapshot(detail), 'watching', { seasonSizes: sizes });
+    else if (!cur.seasonSizes?.length) refresh(detail.id, snapshot(detail), sizes);
   };
 
   if (!detail.seasons.length) return <p className="dim">No episode information available for this show yet.</p>;
 
   return (
     <div className="seasons">
-      {detail.seasons.map((s, idx) => {
-        const aired = sizes[idx] ?? s.episodeCount;
+      {detail.seasons.map((s) => {
+        const aired = sizes[s.number - 1] ?? s.episodeCount;
         const watched = entry?.watched[s.number]?.length ?? 0;
         const pct = aired ? Math.round((Math.min(watched, aired) / aired) * 100) : 0;
         const isOpen = open === s.number;
@@ -96,7 +104,6 @@ function SeasonBody(props: {
 
   const watched = new Set(watchedList);
   const all = aired > 0 && watchedList.length >= aired;
-  const t = today();
 
   return (
     <div className="season__body">
@@ -112,7 +119,7 @@ function SeasonBody(props: {
         <div className="eps">
           {eps.map((ep) => {
             const on = watched.has(ep.number);
-            const future = !!ep.airDate && ep.airDate > t;
+            const future = !hasAired(ep, detail);
             const isNext = next?.season === season && next.episode === ep.number;
             const d = future ? daysUntil(ep.airDate) : undefined;
             return (

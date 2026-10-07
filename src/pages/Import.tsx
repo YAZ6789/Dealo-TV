@@ -148,8 +148,9 @@ export default function Import() {
             // Remember Google Sheet sources for one-click re-sync.
             const lib = useLibrary.getState();
             for (const s of sheets.filter((x) => x.include && x.gsheet)) {
+              const same = lib.importSources.find((x) => x.url === s.gsheet!.url && (x.tab ?? '') === (s.gsheet!.tab ?? ''));
               const src: ImportSource = {
-                id: s.gsheet!.sourceId ?? `gs-${Date.now()}-${s.name}`,
+                id: s.gsheet!.sourceId ?? same?.id ?? `gs-${Date.now()}-${s.name}`,
                 kind: 'gsheet',
                 label: s.name,
                 url: s.gsheet!.url,
@@ -559,7 +560,7 @@ function ReviewStep({
   onApply,
 }: {
   results: Reviewed[];
-  setResults: (r: Reviewed[]) => void;
+  setResults: React.Dispatch<React.SetStateAction<Reviewed[]>>;
   onBack: () => void;
   onApply: (r: { added: number; updated: number; blocked: number }) => void;
 }) {
@@ -582,7 +583,7 @@ function ReviewStep({
   const tally = { add: 0, update: 0, block: 0, skip: 0 };
   for (const a of actions) tally[a.kind]++;
 
-  const set = (i: number, choice: Choice) => setResults(results.map((r, j) => (j === i ? { ...r, choice } : r)));
+  const set = (i: number, choice: Choice) => setResults((prev) => prev.map((r, j) => (j === i ? { ...r, choice } : r)));
 
   return (
     <div className="stack" style={{ gap: 18 }}>
@@ -704,6 +705,9 @@ function ReviewRow({ r, onChoose }: { r: Reviewed; onChoose: (c: Choice) => void
                 const res = await searchShows(q.trim());
                 setExtra(res);
                 if (res[0]) onChoose({ kind: 'show', show: res[0] });
+                else toast(`No results for “${q.trim()}”`);
+              } catch (err) {
+                toast(`Search failed: ${(err as Error).message}`);
               } finally {
                 setSearching(false);
               }

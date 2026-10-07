@@ -138,22 +138,35 @@ export async function getSeasonEpisodes(detail: ShowDetail, season: number): Pro
   return Array.from({ length: s?.episodeCount ?? 0 }, (_, i) => ({ season, number: i + 1 }));
 }
 
-/** Episode counts per season that have actually aired (for progress %). */
+/** Has this episode aired? Undated episodes only count for shows that have ended. */
+export function hasAired(e: { airDate?: string }, d: Pick<ShowDetail, 'airStatus' | 'synthetic'>): boolean {
+  if (d.synthetic) return true;
+  if (!e.airDate) return d.airStatus === 'ended';
+  return e.airDate <= new Date().toISOString().slice(0, 10);
+}
+
+/**
+ * Aired episode counts, indexed by season number − 1 (sizes[0] = season 1).
+ * Gaps in numbering (missing seasons, year-numbered seasons) are zero-filled
+ * so progress maths can always use `sizes[season - 1]`.
+ */
 export function airedSeasonSizes(d: ShowDetail): number[] {
+  const max = d.seasons.reduce((m, s) => Math.max(m, s.number), 0);
+  const out = new Array<number>(max).fill(0);
+  for (const s of d.seasons) out[s.number - 1] = airedInSeason(d, s);
+  return out;
+}
+
+function airedInSeason(d: ShowDetail, s: ShowDetail['seasons'][number]): number {
   const today = new Date().toISOString().slice(0, 10);
   const last = d.lastEpisode;
-  return d.seasons.map((s) => {
-    if (s.episodes?.length && !d.synthetic) {
-      const aired = s.episodes.filter((e) => !e.airDate || e.airDate <= today).length;
-      return aired;
-    }
-    if (last && d.airStatus !== 'ended') {
-      if (s.number < last.season) return s.episodeCount;
-      if (s.number === last.season) return Math.min(s.episodeCount, last.number);
-      return s.airDate && s.airDate <= today ? s.episodeCount : 0;
-    }
-    return s.episodeCount;
-  });
+  if (s.episodes?.length && !d.synthetic) return s.episodes.filter((e) => hasAired(e, d)).length;
+  if (last && d.airStatus !== 'ended') {
+    if (s.number < last.season) return s.episodeCount;
+    if (s.number === last.season) return Math.min(s.episodeCount, last.number);
+    return s.airDate && s.airDate <= today ? s.episodeCount : 0;
+  }
+  return s.episodeCount;
 }
 
 export function catalogPool(): ShowSummary[] {

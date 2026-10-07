@@ -29,6 +29,8 @@ export default function Constellation() {
   const [selected, setSelected] = useState<StarNode | null>(null);
   const [view, setView] = useState<View>(HOME);
   const svg = useRef<SVGSVGElement>(null);
+  const viewRef = useRef(view);
+  viewRef.current = view;
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const gesture = useRef<{ view: View; dist?: number; x: number; y: number; moved: boolean } | null>(null);
 
@@ -113,8 +115,15 @@ export default function Constellation() {
     pointers.current.delete(e.pointerId);
     const g = gesture.current;
     if (!pointers.current.size) gesture.current = null;
+    else {
+      // one finger lifted mid-pinch: continue as a pan from the current view
+      const [rest] = [...pointers.current.values()];
+      gesture.current = { view: viewRef.current, x: rest.x, y: rest.y, moved: true };
+      return;
+    }
     if (g && !g.moved) {
-      const target = (e.target as Element).closest('[data-star]');
+      // pointer capture retargets pointerup to the <svg>, so hit-test by position
+      const target = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-star]');
       if (target) {
         const n = byId.get(target.getAttribute('data-star')!);
         if (n) setSelected(n);
