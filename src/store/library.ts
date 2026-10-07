@@ -327,6 +327,7 @@ export const useLibrary = create<LibraryState>()((set, get) => ({
         if (!same) out.entries = { ...s.entries, [id]: { ...e, show: merged, seasonSizes: sizes, watched } };
       }
       if (b) out.blocked = { ...s.blocked, [id]: { ...b, show: snapshot({ ...b.show, ...show }) } };
+      if (out.entries || out.blocked) out.updatedAt = new Date().toISOString(); // persist the refresh
       return out;
     });
   },

@@ -127,13 +127,13 @@
 }
 
 /* ───────────── Stats ───────────── */
-.ring-panel {
+.completion-panel {
   display: grid;
   justify-items: center;
   align-content: start;
   gap: 12px;
 }
-.ring-panel .chart-title {
+.completion-panel .chart-title {
   justify-self: stretch;
 }
 .binge__body {
@@ -443,4 +443,191 @@
   .review-row__arrow {
     display: none;
   }
+}
+
+/* ───────────── Settings ───────────── */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+.key-row {
+  display: flex;
+  gap: 8px;
+}
+@media (max-width: 600px) {
+  .key-row {
+    flex-direction: column;
+  }
+}
+.shortcuts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px 24px;
+  font-size: var(--fs-sm);
+}
+
+/* ───────────── Welcome ───────────── */
+.welcome {
+  min-height: 100vh;
+  padding: 22px var(--gutter) 60px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.welcome__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 30px;
+}
+.welcome__step {
+  animation: hero-in 0.6s var(--ease) both;
+}
+.welcome__title {
+  font-size: clamp(2rem, 5vw, 3.6rem);
+  margin-bottom: 10px;
+}
+.welcome__lead {
+  max-width: 64ch;
+  margin-bottom: 30px;
+  font-size: var(--fs-lg);
+}
+.boot {
+  display: grid;
+  gap: 2px;
+  margin-bottom: 22px;
+  font-size: var(--fs-xs);
+  color: var(--accent);
+  opacity: 0.8;
+}
+.boot span {
+  overflow: hidden;
+  white-space: nowrap;
+  width: 0;
+  animation: type 0.9s steps(40) forwards;
+}
+.boot span:nth-child(2) {
+  animation-delay: 0.6s;
+}
+.boot span:nth-child(3) {
+  animation-delay: 1.2s;
+}
+@keyframes type {
+  to {
+    width: 100%;
+  }
+}
+.welcome__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 30px;
+}
+.welcome__foot.sticky {
+  position: sticky;
+  bottom: 12px;
+  padding: 12px 16px;
+  background: color-mix(in srgb, var(--panel-solid) 90%, transparent);
+  border: 1px solid var(--panel-border-strong);
+  border-radius: var(--radius);
+  backdrop-filter: blur(10px);
+}
+.welcome__choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+.choice {
+  display: grid;
+  gap: 10px;
+  text-align: left;
+  transition: transform 0.25s var(--ease), box-shadow 0.25s, border-color 0.25s;
+}
+.choice:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+  box-shadow: var(--glow);
+}
+.choice strong {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  letter-spacing: 0.03em;
+}
+.choice span {
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+}
+.calib-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+}
+.calib {
+  display: grid;
+  gap: 6px;
+  transition: opacity 0.3s;
+}
+.calib__poster {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border-radius: var(--radius);
+  border: 1px solid var(--panel-border);
+  transition: border-color 0.2s, box-shadow 0.2s, filter 0.3s;
+}
+.calib__poster img,
+.calib__poster .art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.calib--love .calib__poster,
+.calib--like .calib__poster {
+  border-color: var(--accent);
+  box-shadow: var(--glow);
+}
+.calib--no .calib__poster,
+.calib--skip .calib__poster {
+  filter: grayscale(1) brightness(0.5);
+}
+.calib__title {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.calib__btns {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 3px;
+}
+.calib__btns button {
+  display: grid;
+  place-items: center;
+  height: 28px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-faint);
+  transition: all 0.15s;
+}
+.calib__btns button:hover {
+  color: var(--text);
+  border-color: var(--panel-border-strong);
+}
+.calib__btns button.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.heatmap text {
+  font-size: 8px;
 }

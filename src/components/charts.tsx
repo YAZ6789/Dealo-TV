@@ -56,7 +56,7 @@ function SrTable({ caption, rows }: { caption: string; rows: [string, string | n
 /** Horizontal bars with value at the tip — for ranked categories. */
 export function BarList({ items, caption, format = (v) => String(v), tip }: { items: { label: string; value: number; key?: string }[]; caption: string; format?: (v: number) => string; tip?: (i: { label: string; value: number }) => string }) {
   const { node, bind } = useTip();
-  const max = Math.max(1, ...items.map((i) => i.value));
+  const max = Math.max(1e-9, ...items.map((i) => i.value));
   return (
     <div className="barlist" role="img" aria-label={caption}>
       {items.map((i) => (
@@ -137,6 +137,7 @@ export function Heatmap({ days, caption }: { days: { day: string; count: number 
   const max = Math.max(1, ...days.map((d) => d.count));
   const level = (c: number) => (c === 0 ? 0 : Math.min(4, 1 + Math.floor(((c - 1) / Math.max(1, max - 1)) * 3.999)));
   const cell = 11;
+  // (axis text is sized in CSS: .heatmap text)
   const gap = 3;
   const firstDow = new Date(`${days[0]?.day}T12:00:00`).getDay();
   const weeks = Math.ceil((days.length + firstDow) / 7);

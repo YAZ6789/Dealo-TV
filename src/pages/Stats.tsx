@@ -102,7 +102,7 @@ export default function Stats() {
           />
         </section>
 
-        <section className="panel panel--pad span-4 ring-panel">
+        <section className="panel panel--pad span-4 completion-panel">
           <h2 className="chart-title">Completion rate</h2>
           {s.completionRate != null ? (
             <>

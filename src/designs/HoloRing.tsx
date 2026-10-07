@@ -85,7 +85,8 @@ export default function HoloRing() {
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement;
-      if (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || document.querySelector('.overlay')) return;
+      if (t.closest('input, textarea, select, [role="menu"], .menu') || document.querySelector('.overlay')) return;
+      if (e.key === 'Enter' && t.closest('button, a')) return; // let focused controls handle Enter
       if (e.key === 'ArrowRight') move(1);
       else if (e.key === 'ArrowLeft') move(-1);
       else if (e.key === 'Enter' && current) {

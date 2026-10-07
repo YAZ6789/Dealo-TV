@@ -2126,3 +2126,8 @@ input[type='range'].slider::-moz-range-thumb {
     opacity: 0;
   }
 }
+.card__corner--wild {
+  background: var(--accent-2);
+  color: #fff;
+  letter-spacing: 0.06em;
+}

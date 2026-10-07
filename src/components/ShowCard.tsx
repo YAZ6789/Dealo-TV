@@ -26,7 +26,7 @@ export function ShowCard({ show, rec, showStatus = true }: { show: ShowSummary; 
       <div className="card__poster">
         <Poster show={show} />
         <Link to={showPath(show.id)} onClick={() => remember(show)} className="card__link" aria-label={show.title} />
-        {rec && <span className="card__corner">{rec.match}%</span>}
+        {rec && (rec.exploratory ? <span className="card__corner card__corner--wild" title="Wildcard: outside your usual taste, but highly rated">✦ WILD</span> : <span className="card__corner">{rec.match}%</span>)}
         {!rec && entry?.rating != null && <span className="card__corner">{entry.rating}</span>}
         {showStatus && StatusIcon && (
           <span className="card__badge tag tag--accent" title={STATUS_LABEL[entry!.status]}>
@@ -67,7 +67,7 @@ export function ShowCard({ show, rec, showStatus = true }: { show: ShowSummary; 
           {show.title}
         </div>
         <div className="card__meta">
-          {rec ? <span className={matchClass(rec.match)}>{rec.match}% match</span> : show.year ? <span>{show.year}</span> : null}
+          {rec ? rec.exploratory ? <span className="accent">wildcard</span> : <span className={matchClass(rec.match)}>{rec.match}% match</span> : show.year ? <span>{show.year}</span> : null}
           {p?.next ? <span>next S{p.next.season}E{p.next.episode}</span> : show.rating ? <span>★ {show.rating.toFixed(1)}</span> : null}
         </div>
       </div>

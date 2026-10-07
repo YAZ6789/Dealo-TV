@@ -971,3 +971,34 @@
     display: none;
   }
 }
+
+@media (max-width: 860px) {
+  .ring-dial {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 0 calc(-1 * var(--gutter));
+    padding: 0 var(--gutter) 6px;
+  }
+  .ring-dial::-webkit-scrollbar {
+    display: none;
+  }
+  .ring-dial button {
+    flex: none;
+    transform: none !important;
+  }
+  .sky-top {
+    flex-direction: column;
+  }
+}
+@media (max-width: 860px) {
+  .tunnel-tracks {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tunnel-tracks button {
+    flex: none;
+  }
+}

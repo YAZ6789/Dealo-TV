@@ -37,7 +37,17 @@ export default function Show() {
   if (!show) {
     return (
       <div className="page">
-        {loading ? <div className="spinner" /> : <p className="dim">{error ?? 'Show not found.'}</p>}
+        {loading ? (
+          <div className="spinner" />
+        ) : (
+          <div className="empty">
+            <h3>Signal lost</h3>
+            <p>{error ?? 'Show not found.'}</p>
+            <button className="btn" onClick={() => history.back()}>
+              <ArrowLeft size={15} /> Go back
+            </button>
+          </div>
+        )}
       </div>
     );
   }

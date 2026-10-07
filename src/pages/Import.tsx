@@ -88,7 +88,7 @@ export default function Import() {
       setResults(
         res.map((r) => ({
           ...r,
-          choice: r.best ? { kind: 'show', show: r.best } : r.row.blocked ? { kind: 'skip' } : { kind: 'custom' },
+          choice: r.best ? { kind: 'show', show: r.best } : { kind: 'custom' },
         })),
       );
       setStep('review');

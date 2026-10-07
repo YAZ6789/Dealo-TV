@@ -68,7 +68,11 @@ export default function Taste() {
             Taste DNA <span>learned from your library</span>
           </h2>
           {traits.length ? (
-            <BarList caption="Strongest taste traits" items={traits.map((t) => ({ label: t.label, value: Math.round(t.weight * 100) / 100, key: t.key }))} format={(v) => v.toFixed(2)} />
+            <BarList
+              caption="Strongest taste traits (relative strength)"
+              items={traits.map((t) => ({ label: t.label, value: Math.round((t.weight / traits[0].weight) * 100), key: t.key }))}
+              format={(v) => `${v}`}
+            />
           ) : (
             <p className="dim">Rate or finish a few shows and your strongest traits appear here.</p>
           )}
@@ -95,8 +99,8 @@ export default function Taste() {
           {seeds.length ? (
             <BarList
               caption="Top influence shows"
-              items={seeds.map((s) => ({ label: s.show.title, value: Math.round(s.weight * 100) / 100, key: s.id }))}
-              format={(v) => v.toFixed(2)}
+              items={seeds.map((s) => ({ label: s.show.title, value: Math.round((s.weight / seeds[0].weight) * 100), key: s.id }))}
+              format={(v) => `${v}`}
               tip={(i) => `${i.label} — influence ${i.value}`}
             />
           ) : (
