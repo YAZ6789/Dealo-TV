@@ -6,15 +6,25 @@ It's a static site: build it once and host the `dist/` folder anywhere.
 
 ## Highlights
 
-- **Four ways to browse** (Home screen "designs"), each usable with any skin:
+- **Eight ways to browse** (Home screen "designs"), each usable with any skin:
   - **Holo Ring** — a 3D rotating carousel on a holographic platform, with data panels for the show in front. Drag, scroll, ← → or click to spin; Enter opens.
   - **Constellation** — your taste as a star map. You're the core; your library orbits close (loved = closer), recommendations float in the discovery field (better match = closer) with beams back to the show that inspired them. Pan, zoom, hover.
   - **Warp Tunnel** — fly down a neon corridor through your history (with glowing year gates) or into your recommendations. Scroll / ↑ ↓.
+  - **Swipe Deck** — Tinder-style cards: → want to watch, ← not for me, ↑ seen it (then rate), ↓ skip; Z undoes. Decks for *For you*, *Quick binges*, *Hidden gems* and a fast *Rate my watched* mode.
+  - **Channel Surfer** — a retro TV: every list is a network, every show a channel. Static-burst channel changes, number-pad tuning, an on-screen guide (G).
+  - **Life Timeline** — every show drawn as a bar across the years it aired (still-running shows glow into today), packed into lanes, with TV-era bands, zoom & pan.
+  - **Mission Control** — a live dashboard: now watching, up-next queue, airing radar, recommendation radar, telemetry, taste DNA, wildcard and a system log.
   - **Stream** — classic streaming rows with a hero billboard and "Because you watched …" shelves.
-- **Four skins** — Cyan HUD, Neon, Aurora, Phosphor (terminal). Each has its own switch-over effect (scan sweep, glitch cut, light bloom, CRT power cycle).
+- **Seven skins** — Cyan HUD, Neon, Aurora, Phosphor (terminal), **Surveillance** (Person-of-Interest-style camera feeds with tracking brackets and a camera-cut transition), **Daylight** (light mode, sunrise wipe) and **High Contrast** (hard cut, no effects). Each has its own switch-over effect.
+- **Show-coloured background** — the page glows in the colours of the poster you're looking at.
+- **Airing** — new episodes since your last visit, a week calendar, "add to calendar" (.ics) and optional new-episode alerts.
+- **Wrapped** — your year in TV, story-style.
+- **Ask Dealo** — describe a mood ("like Dark but funnier") and Claude picks shows for your taste (bring your own Anthropic API key).
+- **Voice control** — "switch to neon", "add Severance to my watchlist", "go to stats" (Alt+V).
+- **Spoiler-free mode, streaks & badges**, and an **installable app** that works offline.
 - **Lists** — Watching, Watchlist, Watched, On hold, Dropped, and *Not interested* (never recommended again).
 - **Episode tracking** — tick episodes, "watched up to here", whole seasons, "next up S2·E7", upcoming air dates.
-- **Ratings & stats** — 10-segment ratings, hours watched, activity heatmap, streaks, taste by genre, completion rate, hall of fame.
+- **Ratings & stats** — 10-segment ratings, hours watched, activity heatmap, streaks, bronze/silver/gold badges, taste by genre, completion rate, hall of fame.
 - **Smart recommendations** — explained ("Because you loved Dark · From Vince Gilligan · Dystopia"), tunable (adventurousness, hidden gems vs mainstream, moods, languages, era, max seasons), with 👍 / ⊘ feedback.
 - **Google Sheets / Excel / CSV import** — paste a sheet link; columns, statuses, ratings (any scale) and "S2E5"-style progress are auto-detected; every match is reviewable; re-sync any time.
 - **Search & commands** — `Ctrl/⌘ K` or `/`.
@@ -52,7 +62,22 @@ Excel (`.xlsx`) and CSV files work the same way (every sheet in a workbook is of
 
 - **Without any key** Dealo uses a built-in catalog of 309 shows (hand-tagged with themes so recommendations work offline) plus [TVmaze](https://www.tvmaze.com/api) for search, posters and episode lists.
 - **With a free TMDB key** (Settings → Show data) you get every show ever made, backdrops, trailers, where-to-stream, and TMDB's "people also liked" data feeding the recommender. Get one at <https://www.themoviedb.org/settings/api> (the "API Read Access Token" works best). The key is stored only in your browser. "Re-link now" moves catalog/TVmaze/sheet entries onto TMDB ids.
-- Deploying your own copy for yourself? You can bake a key in at build time with `VITE_TMDB_KEY=… npm run build` — note it will be visible in the published JavaScript.
+- **One key for every device (GitHub Pages):** add it once as a repository secret and the deploy bakes it in, so phones/laptops don't need to paste anything:
+  1. Create a free account at <https://www.themoviedb.org/signup>, then go to <https://www.themoviedb.org/settings/api>, request an API key (type: *Developer*, personal/non-commercial use) and copy the **API Read Access Token** (the long `eyJ…` one).
+  2. In GitHub: **repo → Settings → Secrets and variables → Actions → New repository secret**, name `TMDB_API_KEY`, paste the token.
+  3. Re-run the **Deploy to GitHub Pages** workflow (Actions tab → *Run workflow*) or push to `main`.
+
+  On startup the app checks the key once; a rejected key quietly falls back to the catalog + TVmaze. A key pasted in Settings always wins over the site key. Note: a baked-in key is readable in the published JavaScript — TMDB keys are free and read-only, but if it ever gets abused just regenerate it on TMDB and update the secret.
+
+## Custom domain
+
+GitHub Pages serves custom domains for free (HTTPS included):
+
+- **Subdomain you already own** (e.g. `tv.dealo.online`) — at your DNS provider add a `CNAME` record `tv` → `yaz6789.github.io`. Then **repo → Settings → Pages → Custom domain** → `tv.dealo.online` → Save, wait for the DNS check, tick **Enforce HTTPS**.
+- **Apex domain** (e.g. `dealo.tv`) — four `A` records for `@` → `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153` (optionally `AAAA` → `2606:50c0:8000::153` … `2606:50c0:8003::153`) plus `CNAME www` → `yaz6789.github.io`; then the same Pages setting.
+- Also verify the domain under **your GitHub profile → Settings → Pages** so nobody else can claim it.
+- No `CNAME` file is needed — the site is deployed by GitHub Actions, so the Pages setting is the source of truth.
+- ⚠️ Your library lives in the browser *per web address*: before switching, **Settings → Export backup** on the old address and **Import / restore** it on the new one (or keep using the connected Google Sheet, which re-imports automatically).
 
 ## How the recommendations work
 
@@ -78,7 +103,11 @@ Everything is stored in your browser (`localStorage`; metadata cache in IndexedD
 | `Ctrl/⌘ K`, `/` | Search & commands |
 | `Alt D` / `Alt T` | Next design / next skin |
 | `← →` | Spin the Holo Ring |
-| `↑ ↓` | Fly the Warp Tunnel |
+| `↑ ↓` | Fly the Warp Tunnel · change channel (Channel Surfer) |
+| `← → ↑ ↓`, `Z` | Swipe / undo (Swipe Deck) |
+| `0–9`, `G` | Tune a channel / open the guide (Channel Surfer) |
+| `+ − 0` | Zoom / fit the Life Timeline |
+| `Alt V` | Voice command |
 | `Enter` | Open the focused show |
 | `Shift Enter` | Add a search result to your watchlist |
 

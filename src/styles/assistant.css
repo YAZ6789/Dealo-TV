@@ -1,1 +1,157 @@
-/* assistant */
+/* ───────────── Ask Dealo (AI assistant) ───────────── */
+.assistant {
+  max-width: 980px;
+}
+.assistant-setup {
+  max-width: 680px;
+}
+.setup-steps {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 8px;
+  color: var(--text-dim);
+}
+.chat {
+  display: grid;
+  gap: 18px;
+  min-height: 40vh;
+  padding-bottom: 12px;
+}
+.chat-empty {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 40px 0;
+  text-align: center;
+  color: var(--text-dim);
+}
+.msg {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  animation: hud-in 0.35s var(--ease) both;
+}
+.msg--user {
+  justify-content: flex-end;
+}
+.msg--user .msg__body {
+  max-width: min(560px, 85%);
+  padding: 10px 14px;
+  background: color-mix(in srgb, var(--accent) 16%, var(--panel-solid));
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  border-radius: var(--radius);
+}
+.msg__icon {
+  flex: none;
+  margin-top: 4px;
+  color: var(--accent);
+}
+.msg--assistant .msg__body {
+  flex: 1;
+  min-width: 0;
+}
+.msg__text {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+.msg--error .msg__text {
+  color: var(--danger);
+}
+.picks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+.pick {
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+}
+.pick__poster {
+  position: relative;
+  width: 70px;
+  aspect-ratio: 2 / 3;
+  flex: none;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--bg-2);
+  display: grid;
+  place-items: center;
+}
+.pick__poster img,
+.pick__poster .art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  padding: 0;
+}
+.pick__poster .art__kicker {
+  display: none;
+}
+.pick__poster .art__title {
+  font-size: 0.6rem;
+  padding: 4px;
+}
+.pick__main {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  min-width: 0;
+}
+.pick__title {
+  font-weight: 700;
+}
+.pick__why {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+.chat-input {
+  position: sticky;
+  bottom: 12px;
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  z-index: 10;
+  background: color-mix(in srgb, var(--panel-solid) 95%, transparent);
+}
+@media (max-width: 860px) {
+  .chat-input {
+    bottom: 80px;
+  }
+}
+.typing {
+  display: inline-flex;
+  gap: 5px;
+  padding: 10px 0;
+}
+.typing i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: typing 1.2s infinite ease-in-out;
+}
+.typing i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.typing i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes typing {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
+}

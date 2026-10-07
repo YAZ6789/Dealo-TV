@@ -1,1 +1,232 @@
-/* features */
+/* ───────────── Voice control ───────────── */
+.voice-btn.listening {
+  color: var(--accent-ink);
+  background: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 30%, transparent);
+  animation: voice-pulse 1.2s ease-in-out infinite;
+}
+@keyframes voice-pulse {
+  50% {
+    box-shadow: 0 0 0 9px color-mix(in srgb, var(--accent) 0%, transparent);
+  }
+}
+.voice-hud {
+  position: fixed;
+  left: 50%;
+  top: calc(var(--topbar-h) + 14px);
+  transform: translateX(-50%);
+  z-index: 250;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(640px, calc(100vw - 24px));
+  padding: 12px 18px;
+  font-size: var(--fs-md);
+  background: color-mix(in srgb, var(--panel-solid) 96%, transparent);
+  border: 1px solid var(--panel-border-strong);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow), var(--glow-soft);
+  animation: pop-in 0.2s var(--ease) both;
+}
+.voice-hud__dot {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--text-faint);
+}
+.voice-hud__dot.on {
+  background: var(--danger);
+  animation: term-blink 1s steps(1) infinite;
+}
+.voice-hud__text {
+  color: var(--text);
+}
+
+/* ───────────── Show-coloured background ───────────── */
+@property --amb-a {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: transparent;
+}
+@property --amb-b {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: transparent;
+}
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    radial-gradient(ellipse 75% 65% at 12% -5%, color-mix(in srgb, var(--amb-a) 60%, transparent), transparent 70%),
+    radial-gradient(ellipse 65% 60% at 105% 105%, color-mix(in srgb, var(--amb-b) 50%, transparent), transparent 70%);
+  mix-blend-mode: screen;
+  transition:
+    opacity 0.9s var(--ease),
+    --amb-a 1.4s ease,
+    --amb-b 1.4s ease;
+}
+.ambient.on {
+  opacity: var(--amb-strength, 0.5);
+}
+[data-theme='terminal'] .ambient {
+  --amb-strength: 0.3;
+}
+[data-theme='daylight'] .ambient {
+  mix-blend-mode: multiply;
+  --amb-strength: 0.22;
+}
+[data-theme='contrast'] .ambient {
+  display: none; /* high contrast stays pure */
+}
+@media (prefers-reduced-motion: reduce) {
+  .ambient {
+    transition: opacity 0.3s;
+  }
+}
+
+/* ───────────── Spoiler-free mode ───────────── */
+.spoiler {
+  all: unset;
+  cursor: pointer;
+  position: relative;
+  border-radius: 4px;
+}
+.spoiler > span[aria-hidden] {
+  filter: blur(6px);
+  opacity: 0.7;
+  user-select: none;
+  transition: filter 0.25s var(--ease);
+}
+.spoiler::after {
+  content: 'tap to reveal';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  translate: 0 -50%;
+  font-size: var(--fs-xs);
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.spoiler:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ───────────── Badges ───────────── */
+.badges {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+  gap: 10px;
+}
+.badge {
+  --medal: var(--text-faint);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--medal) 6%, transparent);
+}
+.badge--t1 {
+  --medal: #d08a4c;
+}
+.badge--t2 {
+  --medal: #b9c6d6;
+}
+.badge--t3 {
+  --medal: #f2c14e;
+}
+[data-theme='daylight'] .badge--t1 {
+  --medal: #a35f22;
+}
+[data-theme='daylight'] .badge--t2 {
+  --medal: #5d6b7c;
+}
+[data-theme='daylight'] .badge--t3 {
+  --medal: #a87800;
+}
+.badge__medal {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--medal);
+  border: 2px solid color-mix(in srgb, var(--medal) 70%, transparent);
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--medal) 28%, transparent), transparent 70%);
+}
+.badge--t3 .badge__medal {
+  box-shadow: 0 0 18px color-mix(in srgb, var(--medal) 45%, transparent);
+}
+.badge--t0 .badge__medal {
+  border-style: dashed;
+  opacity: 0.6;
+}
+.badge__main {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+.badge__name {
+  font-weight: 700;
+}
+.badge__tier {
+  margin-left: 4px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--medal);
+}
+.badge--t0 .badge__tier {
+  color: var(--text-faint);
+}
+.badge__sub {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+.badge__bar {
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+  overflow: hidden;
+}
+.badge__bar i {
+  display: block;
+  height: 100%;
+  background: var(--medal);
+  border-radius: inherit;
+}
+.badge--t0 .badge__bar i {
+  background: var(--accent);
+}
+.streak-risk {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  color: var(--warn, #f5a524);
+}
+
+.home-banner {
+  padding: 0 var(--gutter);
+  margin: -8px 0 18px;
+  position: relative;
+  z-index: 2;
+}
+.home-banner:empty {
+  display: none;
+}

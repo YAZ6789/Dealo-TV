@@ -43,8 +43,12 @@ export interface SettingsState {
   setOnboarded: (v: boolean) => void;
 }
 
-/** Build-time default key (optional): set VITE_TMDB_KEY when deploying your own copy. */
-const ENV_KEY = (import.meta.env?.VITE_TMDB_KEY as string | undefined) ?? '';
+/**
+ * Build-time default key (optional). The GitHub Pages workflow fills it from the
+ * TMDB_API_KEY repository secret, so every device gets TMDB without pasting a key.
+ */
+const ENV_KEY = ((import.meta.env?.VITE_TMDB_KEY as string | undefined) ?? '').trim();
+export const SITE_TMDB_KEY = ENV_KEY;
 
 export const useSettings = create<SettingsState>()(
   persist(
@@ -76,6 +80,13 @@ export const useSettings = create<SettingsState>()(
       name: 'dealo:settings',
       version: 1,
       storage: createJSONStorage(() => safeLocalStorage()),
+      // An empty saved key means "use the site's key" — so adding the secret later
+      // reaches browsers that already saved settings.
+      partialize: (s) => ({ ...s, tmdbKey: s.tmdbKey === ENV_KEY ? '' : s.tmdbKey }),
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<SettingsState>;
+        return p.tmdbKey ? { ...current, ...p } : { ...current, ...p, tmdbKey: ENV_KEY, tmdbValid: undefined };
+      },
     },
   ),
 );

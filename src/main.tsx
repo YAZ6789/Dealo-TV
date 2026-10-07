@@ -32,8 +32,10 @@ import './styles/assistant.css';
 import './styles/features.css';
 import { applyInitialTheme } from './theme/switch';
 import App from './App';
+import { setupPwa } from './pwa';
 
 applyInitialTheme();
+setupPwa();
 
 // Debug/automation hook: `__dealoDemo()` in the console loads the sample library.
 (window as unknown as { __dealoDemo: () => Promise<void> }).__dealoDemo = async () => {

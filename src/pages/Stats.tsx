@@ -1,8 +1,10 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { BarChart3, Flame, Trophy } from 'lucide-react';
+import { Award, BarChart3, Flame, Gift, Trophy } from 'lucide-react';
 import { useLibrary } from '../store/library';
 import { computeStats } from '../stats/compute';
+import { computeBadges, streakStatus } from '../stats/badges';
+import { Badges } from '../components/Badges';
 import { GENRE_LABELS } from '../lib/genres';
 import { STATUS_LABEL, fmtDate } from '../lib/labels';
 import { STATUS_ORDER } from '../types';
@@ -16,7 +18,9 @@ const compact = (n: number) => (n >= 10_000 ? `${(n / 1000).toFixed(1)}K` : n.to
 export default function Stats() {
   const entries = useLibrary((s) => s.entries);
   const activity = useLibrary((s) => s.activity);
+  const blocked = useLibrary((s) => s.blocked);
   const s = useMemo(() => computeStats({ entries, activity }), [entries, activity]);
+  const badges = useMemo(() => computeBadges({ entries, activity, blocked }, s), [entries, activity, blocked, s]);
 
   if (!s.total)
     return (
@@ -38,6 +42,10 @@ export default function Stats() {
           <h1 className="page-title">Stats</h1>
           <p className="page-sub">Your viewing telemetry — computed live from your library and episode log.</p>
         </div>
+        <div className="spacer" />
+        <Link className="btn btn--primary" to="/wrapped">
+          <Gift size={16} /> Your Wrapped
+        </Link>
       </div>
 
       <div className="kpis">
@@ -71,7 +79,15 @@ export default function Stats() {
             <small>day{s.streak.current === 1 ? '' : 's'}</small>
           </span>
           <span className="kpi__sub">
-            Longest {s.streak.longest} · {s.activeDays} active days
+            {streakStatus(s) === 'at-risk' ? (
+              <span className="streak-risk">
+                <Flame size={12} /> Watch an episode today to keep it alive
+              </span>
+            ) : (
+              <>
+                Longest {s.streak.longest} · {s.activeDays} active days
+              </>
+            )}
           </span>
         </div>
       </div>
@@ -177,6 +193,13 @@ export default function Stats() {
             </div>
           </section>
         )}
+
+        <section className="panel panel--pad span-12">
+          <h2 className="chart-title">
+            <Award size={15} /> Badges <span>{badges.filter((b) => b.tier > 0).length} of {badges.length} earned · {badges.filter((b) => b.tier === 3).length} gold</span>
+          </h2>
+          <Badges badges={badges} />
+        </section>
 
         {s.topRated.length > 0 && (
           <section className="panel panel--pad span-12">

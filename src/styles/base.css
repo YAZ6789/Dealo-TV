@@ -1446,8 +1446,13 @@ input[type='range'].slider::-moz-range-thumb {
   width: min(380px, calc(100vw - 32px));
 }
 @media (max-width: 860px) {
+  /* Phones: toasts drop from the top so they never cover a design's bottom controls or the tab bar. */
   .toasts {
-    bottom: 84px;
+    top: calc(var(--topbar-h) + 10px + env(safe-area-inset-top, 0px));
+    bottom: auto;
+    right: 16px;
+    left: 16px;
+    width: auto;
   }
 }
 .toast {
@@ -2135,4 +2140,10 @@ input[type='range'].slider::-moz-range-thumb {
   background: var(--accent-2);
   color: #fff;
   letter-spacing: 0.06em;
+}
+
+/* Landscape cards print the title in .wcard__info — hide the procedural art's own copy so they don't double up. */
+.wcard__media .art__title,
+.wcard__media .art__kicker {
+  display: none;
 }

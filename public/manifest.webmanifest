@@ -1,0 +1,24 @@
+{
+  "name": "Dealo TV",
+  "short_name": "Dealo TV",
+  "description": "Your futuristic personal TV tracker with smart recommendations.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "any",
+  "background_color": "#03060d",
+  "theme_color": "#03060d",
+  "categories": ["entertainment", "lifestyle"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Airing this week", "url": "./#/upcoming", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "Recommendations", "url": "./#/discover", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "Ask Dealo", "url": "./#/assistant", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] }
+  ]
+}

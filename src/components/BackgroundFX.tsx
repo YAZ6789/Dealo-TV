@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useSettings } from '../store/settings';
 
-/** Per-theme ambient background. Pure CSS layers, plus a tiny canvas glyph-rain for Terminal. */
+/** Per-theme ambient background. Pure CSS layers, plus a tiny canvas glyph-rain for Terminal. High Contrast renders nothing. */
 export function BackgroundFX() {
   const theme = useSettings((s) => s.theme);
   const reduceFx = useSettings((s) => s.reduceFx);
@@ -32,6 +32,26 @@ export function BackgroundFX() {
           <div className="fx-grain" />
         </>
       )}
+      {theme === 'surveillance' && (
+        <>
+          <div className="fx-feeds">
+            {Array.from({ length: 9 }, (_, i) => (
+              <i key={i} />
+            ))}
+          </div>
+          <div className="fx-sweep" />
+          <div className="fx-grain" />
+          <div className="fx-vignette" />
+        </>
+      )}
+      {theme === 'daylight' && (
+        <>
+          <div className="fx-sky" />
+          <div className="fx-sun" />
+          <div className="fx-haze" />
+        </>
+      )}
+      {/* contrast: deliberately nothing — a flat black background, no motion */}
       {theme === 'terminal' && (
         <>
           <GlyphRain />

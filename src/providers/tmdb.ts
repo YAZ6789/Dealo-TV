@@ -1,7 +1,7 @@
 import type { AirStatus, CastMember, EpisodeInfo, GenreKey, SeasonInfo, ShowDetail, ShowSummary } from '../types';
 import { TMDB_TV_GENRES, normalizeKeyword } from '../lib/genres';
 import { cached, DAY, HOUR } from './cache';
-import { clamp, fetchJson } from './http';
+import { clamp, fetchJson, HttpError } from './http';
 
 /**
  * The Movie Database (TMDB) v3 client. Accepts either a v3 API key or a v4
@@ -227,11 +227,16 @@ export function createTmdb({ key, region = 'US', language = 'en-US' }: TmdbOptio
     kind: 'tmdb' as const,
 
     async validate(): Promise<boolean> {
+      return (await this.check()) === 'ok';
+    },
+
+    /** Distinguishes a bad key (401/403) from TMDB simply being unreachable (offline, blocked). */
+    async check(): Promise<'ok' | 'rejected' | 'unreachable'> {
       try {
         await get('/configuration');
-        return true;
-      } catch {
-        return false;
+        return 'ok';
+      } catch (err) {
+        return err instanceof HttpError && (err.status === 401 || err.status === 403) ? 'rejected' : 'unreachable';
       }
     },
 

@@ -10,6 +10,7 @@ import { remember, showPath } from '../lib/showCache';
 import { StatusMenu } from '../components/StatusMenu';
 import { Ring } from '../components/charts';
 import { toast } from '../components/toast';
+import { useAmbientShow } from '../lib/ambient';
 
 /** Holographic data readout for the focused show (used by the immersive designs). */
 export function ShowHud({ item, side = 'full' }: { item: Item; side?: 'full' | 'info' | 'actions' }) {
@@ -17,6 +18,7 @@ export function ShowHud({ item, side = 'full' }: { item: Item; side?: 'full' | '
   const toggleEpisode = useLibrary((s) => s.toggleEpisode);
   const actions = useShowActions();
   const { show, rec } = item;
+  useAmbientShow(show);
   const p = entry ? progressOf(entry) : undefined;
   const because = rec?.reasons.find((r) => r.kind === 'because');
   const traits = rec?.reasons.filter((r) => r.kind !== 'because').slice(0, 4) ?? [];

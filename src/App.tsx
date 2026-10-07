@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react';
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { TopBar } from './components/TopBar';
 import { BackgroundFX } from './components/BackgroundFX';
+import { AmbientLayer } from './components/AmbientLayer';
 import { CommandPalette } from './components/CommandPalette';
 import { Toasts } from './components/Toasts';
 import { usePalette } from './components/palette';
@@ -14,6 +15,8 @@ import { scheduleRecommendations } from './recommend/pipeline';
 import { enrichLibrary } from './store/enrich';
 import { startSheetAutoSync } from './store/sheetSync';
 import { HomeRouter } from './designs/HomeRouter';
+import { notifyPref, useAiringNotifications } from './components/NewEpisodesBanner';
+import { useUpcoming } from './hooks/useUpcoming';
 
 const Discover = lazy(() => import('./pages/Discover'));
 const Library = lazy(() => import('./pages/Library'));
@@ -30,6 +33,13 @@ const Assistant = lazy(() => import('./pages/Assistant'));
 function ScrollReset() {
   const { pathname } = useLocation();
   useEffect(() => window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }), [pathname]);
+  return null;
+}
+
+/** With airing alerts switched on, check for new episodes from any page (hourly, cached). */
+function AiringWatcher() {
+  useUpcoming();
+  useAiringNotifications();
   return null;
 }
 
@@ -55,6 +65,8 @@ function Shell() {
   return (
     <div className="app">
       <BackgroundFX />
+      <AmbientLayer />
+      {notifyPref() && <AiringWatcher />}
       <div className="vt-scanbar" aria-hidden />
       {pathname !== '/welcome' && <TopBar />}
       <main className="main">
@@ -84,8 +96,18 @@ function Shell() {
   );
 }
 
+/** Check an unverified key once (e.g. the site key from the deploy secret); offline leaves it unverified. */
+async function verifyTmdbKey() {
+  const { tmdbKey, tmdbValid, region, setTmdbKey } = useSettings.getState();
+  if (!tmdbKey || tmdbValid !== undefined) return;
+  const { createTmdb } = await import('./providers/tmdb');
+  const result = await createTmdb({ key: tmdbKey, region }).check();
+  if (result !== 'unreachable' && useSettings.getState().tmdbKey === tmdbKey) setTmdbKey(tmdbKey, result === 'ok');
+}
+
 export default function App() {
   useEffect(() => {
+    void verifyTmdbKey();
     void initLibrary().then(() => {
       setTimeout(() => void enrichLibrary(), 4000);
       startSheetAutoSync();

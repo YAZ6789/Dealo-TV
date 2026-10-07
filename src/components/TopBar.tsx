@@ -2,6 +2,7 @@ import { NavLink, Link } from 'react-router-dom';
 import { BarChart3, CalendarClock, Compass, Home, Library, Search, Settings, Sparkles } from 'lucide-react';
 import { Logo } from './Logo';
 import { ThemeSwitcher } from './ThemeSwitcher';
+import { VoiceButton } from '../voice/VoiceButton';
 import { usePalette } from './palette';
 
 const LINKS = [
@@ -37,6 +38,7 @@ export function TopBar() {
               <span className="label">Search shows…</span>
               <kbd>{isMac ? '⌘' : 'Ctrl'} K</kbd>
             </button>
+            <VoiceButton />
             <ThemeSwitcher />
             <NavLink to="/settings" className={({ isActive }) => `icon-btn ${isActive ? 'on' : ''}`} aria-label="Settings">
               <Settings size={19} />

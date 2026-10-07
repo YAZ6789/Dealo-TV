@@ -5,6 +5,7 @@ import { airedSeasonSizes, getSeasonEpisodes, hasAired } from '../providers';
 import { snapshot, useLibrary } from '../store/library';
 import { nextUp } from '../lib/progress';
 import { daysUntil, fmtDate } from '../lib/labels';
+import { useSettings } from '../store/settings';
 
 export function EpisodeTracker({ detail }: { detail: ShowDetail }) {
   const entry = useLibrary((s) => s.entries[detail.id]);
@@ -91,6 +92,8 @@ function SeasonBody(props: {
   const { detail, season, aired, watchedList, next } = props;
   const [eps, setEps] = useState<EpisodeInfo[] | null>(null);
   const [err, setErr] = useState<string>();
+  const spoilerFree = useSettings((s) => s.spoilerFree);
+  const [revealed, setRevealed] = useState<Set<number>>(() => new Set());
 
   useEffect(() => {
     let alive = true;
@@ -129,9 +132,16 @@ function SeasonBody(props: {
                 </button>
                 <span className="ep__num">E{String(ep.number).padStart(2, '0')}</span>
                 <span className="ep__main">
-                  <span className="ep__name" title={ep.overview}>
-                    {ep.name ?? `Episode ${ep.number}`}
-                  </span>
+                  {spoilerFree && !on && ep.name && !revealed.has(ep.number) ? (
+                    <button className="ep__name spoiler" onClick={() => setRevealed((r) => new Set(r).add(ep.number))} title="Spoiler-free mode — click to reveal the title">
+                      <span aria-hidden>{ep.name}</span>
+                      <span className="sr-only">Hidden title — reveal</span>
+                    </button>
+                  ) : (
+                    <span className="ep__name" title={spoilerFree && !on ? undefined : ep.overview}>
+                      {ep.name ?? `Episode ${ep.number}`}
+                    </span>
+                  )}
                   {ep.airDate && <span className="ep__date">{future ? `airs in ${d} day${d === 1 ? '' : 's'} · ${fmtDate(ep.airDate)}` : fmtDate(ep.airDate)}</span>}
                 </span>
                 {!future && !on && (

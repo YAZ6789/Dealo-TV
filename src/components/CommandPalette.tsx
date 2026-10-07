@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BarChart3, Compass, Cpu, Home, Library, Palette, Plus, Search, Settings, Sparkles, Upload } from 'lucide-react';
+import { BarChart3, Bot, CalendarClock, Compass, Cpu, Gift, Home, LayoutGrid, Library, Palette, Plus, Search, Settings, Sparkles, Upload } from 'lucide-react';
 import type { ShowSummary } from '../types';
 import { searchLocal, searchShows } from '../providers';
 import { useLibrary } from '../store/library';
-import { THEME_IDS } from '../store/settings';
-import { THEMES } from '../theme/themes';
-import { switchTheme } from '../theme/switch';
+import { DESIGN_IDS, THEME_IDS } from '../store/settings';
+import { DESIGNS, THEMES } from '../theme/themes';
+import { switchDesign, switchTheme } from '../theme/switch';
 import { remember, showPath } from '../lib/showCache';
 import { STATUS_LABEL } from '../lib/labels';
 import { usePalette } from './palette';
@@ -105,7 +105,10 @@ function PaletteInner({ initial, close }: { initial: string; close: () => void }
       { key: 'go:home', group: 'Navigate', title: 'Home', icon: <Home size={16} />, run: go('/') },
       { key: 'go:discover', group: 'Navigate', title: 'Discover — recommendations', icon: <Compass size={16} />, run: go('/discover') },
       { key: 'go:library', group: 'Navigate', title: 'Library', icon: <Library size={16} />, run: go('/library') },
+      { key: 'go:upcoming', group: 'Navigate', title: 'Airing — new episodes & calendar', icon: <CalendarClock size={16} />, run: go('/upcoming') },
       { key: 'go:stats', group: 'Navigate', title: 'Stats', icon: <BarChart3 size={16} />, run: go('/stats') },
+      { key: 'go:wrapped', group: 'Navigate', title: 'Wrapped — your year in TV', icon: <Gift size={16} />, run: go('/wrapped') },
+      { key: 'go:assistant', group: 'Navigate', title: 'Ask Dealo — AI assistant', icon: <Bot size={16} />, run: go('/assistant') },
       { key: 'go:taste', group: 'Navigate', title: 'Taste profile', icon: <Sparkles size={16} />, run: go('/taste') },
       { key: 'go:import', group: 'Navigate', title: 'Import from Google Sheets / Excel', icon: <Upload size={16} />, run: go('/settings/import') },
       { key: 'go:settings', group: 'Navigate', title: 'Settings', icon: <Settings size={16} />, run: go('/settings') },
@@ -120,9 +123,24 @@ function PaletteInner({ initial, close }: { initial: string; close: () => void }
           setTimeout(() => switchTheme(id), 30);
         },
       })),
+      ...DESIGN_IDS.map((id) => ({
+        key: `design:${id}`,
+        group: 'Design',
+        title: `Design: ${DESIGNS[id].name}`,
+        sub: DESIGNS[id].tagline,
+        icon: <LayoutGrid size={16} />,
+        run: () => {
+          close();
+          nav('/');
+          setTimeout(() => switchDesign(id), 30);
+        },
+      })),
     ];
     const cmdHits = term ? commands.filter((c) => c.title.toLowerCase().includes(term) || c.group.toLowerCase().includes(term)) : commands;
     out.push(...cmdHits);
+    // Free text that isn't a show title: offer it to the assistant ("like Dark but funnier").
+    if (term.length >= 3 && term.includes(' '))
+      out.push({ key: 'ask', group: 'Ask Dealo', title: `Ask Dealo: “${q.trim()}”`, sub: 'AI picks based on your taste', icon: <Bot size={16} />, run: go(`/assistant?q=${encodeURIComponent(q.trim())}`) });
     return out;
   }, [q, remote, entries, nav, close]);
 

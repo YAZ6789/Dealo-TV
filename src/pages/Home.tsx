@@ -12,6 +12,8 @@ import { Row } from '../components/Row';
 import { ShowCard, matchClass } from '../components/ShowCard';
 import { WatchingCard } from '../components/WatchingCard';
 import { Poster } from '../components/Poster';
+import { useAmbientShow } from '../lib/ambient';
+import { NewEpisodesBanner } from '../components/NewEpisodesBanner';
 import { StatusMenu } from '../components/StatusMenu';
 import { toast } from '../components/toast';
 
@@ -32,6 +34,7 @@ function Hero({ slides }: { slides: Slide[] }) {
     return () => clearInterval(t);
   }, [slides.length]);
   const slide = slides[Math.min(i, slides.length - 1)];
+  useAmbientShow(slide?.show);
   if (!slide) return null;
   const { show, entry, rec } = slide;
   const p = entry ? progressOf(entry) : undefined;
@@ -133,6 +136,9 @@ export function Home() {
   return (
     <div className="home">
       {slides.length ? <Hero slides={slides} /> : <div style={{ height: 40 }} />}
+      <div className="home-banner">
+        <NewEpisodesBanner />
+      </div>
 
       {empty && (
         <div className="page" style={{ paddingTop: 0 }}>
