@@ -20,13 +20,24 @@ self.addEventListener('message', (event) => {
   if (event.data === 'skipWaiting') self.skipWaiting();
 });
 
+// Keep the previous version's files for one more deploy: a tab or installed app that is still
+// running the old code (e.g. resumed from the background) can then finish loading its pages
+// instead of asking the server for files a new deploy has already removed.
+const KEEP_VERSIONS = 2;
+const META = 'dealo-meta';
+
+async function pruneOldVersions() {
+  const meta = await caches.open(META);
+  const prev = await meta.match('versions').then((r) => (r ? r.json() : [])).catch(() => []);
+  const versions = [VERSION, ...prev.filter((v) => v !== VERSION)].slice(0, KEEP_VERSIONS);
+  await meta.put('versions', new Response(JSON.stringify(versions)));
+  const keep = new Set([META, ...versions.flatMap((v) => [`dealo-shell-${v}`, `dealo-runtime-${v}`])]);
+  const keys = await caches.keys();
+  await Promise.all(keys.filter((k) => k.startsWith('dealo-') && !keep.has(k)).map((k) => caches.delete(k)));
+}
+
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches
-      .keys()
-      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('dealo-') && k !== SHELL && k !== RUNTIME).map((k) => caches.delete(k))))
-      .then(() => self.clients.claim()),
-  );
+  event.waitUntil(pruneOldVersions().then(() => self.clients.claim()));
 });
 
 async function networkFirst(request) {

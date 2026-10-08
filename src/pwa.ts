@@ -72,11 +72,19 @@ export function setupPwa() {
   navigator.serviceWorker.addEventListener('message', (e: MessageEvent<{ type?: string; hash?: string }>) => {
     if (e.data?.type === 'dealo:navigate' && e.data.hash) location.hash = e.data.hash;
   });
-  const offerUpdate = (worker: ServiceWorker) =>
+  // A new version waits for "Reload" — or is applied quietly the next time the app goes to the
+  // background (switching apps, locking the phone), so you come back to it already up to date.
+  let waiting: ServiceWorker | null = null;
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden' && waiting) waiting.postMessage('skipWaiting');
+  });
+  const offerUpdate = (worker: ServiceWorker) => {
+    waiting = worker;
     toast('A new version of Dealo TV is ready', {
       label: 'Reload',
       run: () => worker.postMessage('skipWaiting'),
     });
+  };
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('./sw.js', { scope: './' })
