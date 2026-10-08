@@ -75,7 +75,7 @@
 [data-theme='terminal'] .ambient {
   --amb-strength: 0.3;
 }
-[data-theme='daylight'] .ambient {
+[data-mode='light'] .ambient {
   mix-blend-mode: multiply;
   --amb-strength: 0.22;
 }
@@ -147,13 +147,13 @@
 .badge--t3 {
   --medal: #f2c14e;
 }
-[data-theme='daylight'] .badge--t1 {
+[data-mode='light'] .badge--t1 {
   --medal: #a35f22;
 }
-[data-theme='daylight'] .badge--t2 {
+[data-mode='light'] .badge--t2 {
   --medal: #5d6b7c;
 }
-[data-theme='daylight'] .badge--t3 {
+[data-mode='light'] .badge--t3 {
   --medal: #a87800;
 }
 .badge__medal {

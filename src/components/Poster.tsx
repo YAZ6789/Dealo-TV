@@ -34,7 +34,7 @@ export function Art({ show, variant = 'poster' }: { show: Pick<ShowSummary, 'tit
 
 export function Poster({ show, variant = 'poster', eager }: { show: ShowSummary; variant?: 'poster' | 'wide' | 'hero'; eager?: boolean }) {
   const anchor = useRef<HTMLSpanElement>(null);
-  const art = useArtwork(show, anchor);
+  const art = useArtwork(show, anchor, eager);
   const src = variant === 'poster' ? art.poster : art.backdrop ?? art.poster;
   const [failed, setFailed] = useState<string | undefined>();
   return (
@@ -43,7 +43,7 @@ export function Poster({ show, variant = 'poster', eager }: { show: ShowSummary;
       {!src || failed === src ? (
         <Art show={show} variant={variant} />
       ) : (
-        <img key={src} className="fade-img" src={src} alt="" loading={eager ? 'eager' : 'lazy'} decoding="async" onError={() => setFailed(src)} />
+        <img key={src} className="fade-img" src={src} alt="" loading={eager ? 'eager' : 'lazy'} fetchPriority={eager ? 'high' : 'auto'} decoding="async" onError={() => setFailed(src)} />
       )}
     </>
   );

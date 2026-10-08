@@ -9,7 +9,7 @@ import { titleSimilarity } from '../lib/text';
 import { remember, showPath } from '../lib/showCache';
 import { STATUS_LABEL } from '../lib/labels';
 import { THEMES, DESIGNS } from '../theme/themes';
-import { switchDesign, switchTheme } from '../theme/switch';
+import { switchDesign, switchMode, switchTheme } from '../theme/switch';
 import { usePalette } from '../components/palette';
 import { toast } from '../components/toast';
 import { useHotkeys } from '../hooks/useHotkeys';
@@ -73,13 +73,17 @@ export function VoiceButton() {
         // "next" means different keys in different designs.
         const onHome = location.hash === '#/' || location.hash === '';
         const d = s.design;
-        const key = !onHome ? (cmd.dir > 0 ? 'ArrowRight' : 'ArrowLeft') : d === 'channel' ? (cmd.dir > 0 ? 'ArrowUp' : 'ArrowDown') : d === 'swipe' ? (cmd.dir > 0 ? 'ArrowDown' : 'z') : d === 'tunnel' ? (cmd.dir > 0 ? 'ArrowDown' : 'ArrowUp') : cmd.dir > 0 ? 'ArrowRight' : 'ArrowLeft';
+        const key = !onHome ? (cmd.dir > 0 ? 'ArrowRight' : 'ArrowLeft') : d === 'channel' ? (cmd.dir > 0 ? 'ArrowUp' : 'ArrowDown') : d === 'tunnel' ? (cmd.dir > 0 ? 'ArrowDown' : 'ArrowUp') : cmd.dir > 0 ? 'ArrowRight' : 'ArrowLeft';
         press(key);
         return;
       }
       case 'skin':
         switchTheme(cmd.id);
         toast(`🎙 Skin: ${THEMES[cmd.id].name}`);
+        return;
+      case 'mode':
+        switchMode(cmd.mode);
+        toast(cmd.mode === 'light' ? '🎙 Light mode' : '🎙 Dark mode');
         return;
       case 'design':
         if (location.hash !== '#/') nav('/');

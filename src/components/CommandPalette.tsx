@@ -6,7 +6,7 @@ import { searchLocal, searchShows } from '../providers';
 import { useLibrary } from '../store/library';
 import { DESIGN_IDS, THEME_IDS } from '../store/settings';
 import { DESIGNS, THEMES } from '../theme/themes';
-import { switchDesign, switchTheme } from '../theme/switch';
+import { switchDesign, switchMode, switchTheme } from '../theme/switch';
 import { remember, showPath } from '../lib/showCache';
 import { STATUS_LABEL } from '../lib/labels';
 import { usePalette } from './palette';
@@ -115,12 +115,22 @@ function PaletteInner({ initial, close }: { initial: string; close: () => void }
       ...THEME_IDS.map((id) => ({
         key: `theme:${id}`,
         group: 'Theme',
-        title: `Theme: ${THEMES[id].name}`,
+        title: `Skin: ${THEMES[id].name}`,
         sub: THEMES[id].transition,
         icon: id === 'terminal' ? <Cpu size={16} /> : <Palette size={16} />,
         run: () => {
           close();
           setTimeout(() => switchTheme(id), 30);
+        },
+      })),
+      ...(['light', 'dark', 'auto'] as const).map((m) => ({
+        key: `mode:${m}`,
+        group: 'Theme',
+        title: m === 'auto' ? 'Light/dark: follow my device' : `${m === 'light' ? 'Light' : 'Dark'} mode`,
+        icon: <Palette size={16} />,
+        run: () => {
+          close();
+          setTimeout(() => switchMode(m), 30);
         },
       })),
       ...DESIGN_IDS.map((id) => ({

@@ -8,7 +8,7 @@ import { clearCache } from '../providers/cache';
 import { relinkToTmdb } from '../store/relink';
 import { buildDemoDoc } from '../lib/demo';
 import { relTime } from '../lib/labels';
-import { DesignPicker, SkinPicker, TextSizePicker } from '../components/ThemeSwitcher';
+import { DesignPicker, ModePicker, SkinPicker, TextSizePicker } from '../components/ThemeSwitcher';
 import { toast } from '../components/toast';
 import { voiceSupported } from '../voice/VoiceButton';
 import { ASSISTANT_MODEL } from '../ai/assistant';
@@ -85,8 +85,19 @@ export default function Settings() {
 
       <section className="section">
         <h2 className="section-title">Skin</h2>
-        <p className="section-sub">Colours and typography. Each skin has its own switch-over effect.</p>
-        <SkinPicker />
+        <p className="section-sub">Colours and typography for the whole app. Every skin works in light and dark.</p>
+        <div className="toggle-row">
+          <span className="label" style={{ minWidth: 90 }}>
+            Skin
+          </span>
+          <SkinPicker />
+        </div>
+        <div className="toggle-row">
+          <span className="label" style={{ minWidth: 90 }}>
+            Mode
+          </span>
+          <ModePicker />
+        </div>
         <div className="toggle-row">
           <span className="label" style={{ minWidth: 90 }}>
             Text size
@@ -338,9 +349,7 @@ export default function Settings() {
             ['Alt + V', 'Voice command'],
             ['← →', 'Spin the Holo Ring'],
             ['↑ ↓', 'Fly through the Warp Tunnel · change channel'],
-            ['Z', 'Undo the last swipe (Swipe Deck)'],
             ['0–9 · G', 'Tune a channel · open the guide (Channel Surfer)'],
-            ['+ − 0', 'Zoom · fit the Life Timeline'],
             ['Enter', 'Open the focused show'],
             ['Shift + Enter', 'Add search result to watchlist'],
           ].map(([k, v]) => (

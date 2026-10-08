@@ -1,15 +1,14 @@
-import { lazy, Suspense, type ComponentType, type LazyExoticComponent } from 'react';
+import { Suspense, type ComponentType, type LazyExoticComponent } from 'react';
 import { useSettings, type DesignId } from '../store/settings';
 import { Home } from '../pages/Home';
+import { lazyRoute } from '../lib/lazyRoute';
 
 const DESIGNS: Record<Exclude<DesignId, 'stream'>, LazyExoticComponent<ComponentType>> = {
-  ring: lazy(() => import('./HoloRing')),
-  constellation: lazy(() => import('./Constellation')),
-  tunnel: lazy(() => import('./WarpTunnel')),
-  swipe: lazy(() => import('./SwipeDeck')),
-  channel: lazy(() => import('./ChannelSurfer')),
-  timeline: lazy(() => import('./LifeTimeline')),
-  mission: lazy(() => import('./MissionControl')),
+  poi: lazyRoute(() => import('./PersonOfInterest')),
+  ring: lazyRoute(() => import('./HoloRing')),
+  constellation: lazyRoute(() => import('./Constellation')),
+  tunnel: lazyRoute(() => import('./WarpTunnel')),
+  channel: lazyRoute(() => import('./ChannelSurfer')),
 };
 
 export function HomeRouter() {

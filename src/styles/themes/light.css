@@ -1,10 +1,11 @@
 /* ==========================================================================
-   DAYLIGHT — a polished light skin for bright rooms. Off-white canvas,
-   white panels, ink text, indigo + pink accents, soft shadows instead of
-   glows. Overrides below fix the few places that assume a dark backdrop.
+   LIGHT MODE — works with every skin. Sets the light surfaces (off-white canvas,
+   white panels, ink text, soft shadows instead of glows) and fixes the places
+   that assume a dark backdrop. Each skin keeps its fonts and personality; its
+   accent colours are re-tuned for contrast on light at the bottom of this file.
    ========================================================================== */
 
-[data-theme='daylight'] {
+[data-mode='light'] {
   --bg: #f6f7fb;
   --bg-2: #eff1f7;
   --bg-3: #e1e4ee;
@@ -22,51 +23,38 @@
   --ok: #0f7653;
   --warn: #a34a07;
   --danger: #c41f3a;
-  --glow: 0 0 0 1px rgba(54, 81, 232, 0.35), 0 6px 18px rgba(54, 81, 232, 0.16);
+  --glow: 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent), 0 6px 18px color-mix(in srgb, var(--accent) 16%, transparent);
   --glow-soft: 0 4px 14px rgba(18, 19, 26, 0.08);
   --shadow: 0 12px 32px rgba(18, 19, 26, 0.12), 0 2px 6px rgba(18, 19, 26, 0.06);
-  --radius: 14px;
-  --radius-sm: 8px;
-  --radius-pill: 999px;
-  --font-display: 'Space Grotesk Variable', 'Inter Variable', sans-serif;
-  --font-body: 'Inter Variable', system-ui, sans-serif;
-  --title-transform: none;
-  --title-spacing: -0.005em;
-  --title-weight: 700;
-  --title-prefix: '';
-  --hero-weight: 700;
   --blur: 18px;
   color-scheme: light;
 }
 
 /* ── chrome ── */
-[data-theme='daylight'] .topbar {
+[data-mode='light'] .topbar {
   background: color-mix(in srgb, #ffffff 80%, transparent);
   border-bottom-color: var(--panel-border);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8), 0 6px 20px rgba(18, 19, 26, 0.04);
 }
-[data-theme='daylight'] .section-title::before {
-  display: none;
-}
-[data-theme='daylight'] .nav a {
+[data-mode='light'] .nav a {
   letter-spacing: 0;
   font-weight: 600;
   border-radius: 999px;
 }
-[data-theme='daylight'] .nav a.active {
+[data-mode='light'] .nav a.active {
   color: var(--accent);
   background: color-mix(in srgb, var(--accent) 9%, transparent);
 }
-[data-theme='daylight'] .nav a.active::after {
+[data-mode='light'] .nav a.active::after {
   display: none;
 }
-[data-theme='daylight'] .logo__text b {
+[data-mode='light'] .logo__text b {
   background: linear-gradient(90deg, var(--accent), var(--accent-2));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
-[data-theme='daylight'] .btn {
+[data-mode='light'] .btn {
   font-family: var(--font-body);
   font-weight: 600;
   letter-spacing: 0;
@@ -74,55 +62,55 @@
   border-color: var(--panel-border-strong);
   background: #fff;
 }
-[data-theme='daylight'] .btn:hover {
+[data-mode='light'] .btn:hover {
   border-color: var(--accent);
   box-shadow: 0 4px 14px rgba(54, 81, 232, 0.16);
 }
-[data-theme='daylight'] .btn--primary {
+[data-mode='light'] .btn--primary {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
   box-shadow: 0 6px 16px rgba(54, 81, 232, 0.28);
 }
-[data-theme='daylight'] .btn--primary:hover {
+[data-mode='light'] .btn--primary:hover {
   background: #2a41c8;
   border-color: #2a41c8;
   box-shadow: 0 8px 22px rgba(54, 81, 232, 0.34);
 }
-[data-theme='daylight'] .btn--ghost {
+[data-mode='light'] .btn--ghost {
   background: transparent;
   border-color: transparent;
 }
-[data-theme='daylight'] .btn--danger:hover {
+[data-mode='light'] .btn--danger:hover {
   box-shadow: 0 4px 14px color-mix(in srgb, var(--danger) 22%, transparent);
 }
-[data-theme='daylight'] .search-trigger {
+[data-mode='light'] .search-trigger {
   background: #fff;
   border-radius: 999px;
 }
-[data-theme='daylight'] .input,
-[data-theme='daylight'] .select,
-[data-theme='daylight'] .textarea {
+[data-mode='light'] .input,
+[data-mode='light'] .select,
+[data-mode='light'] .textarea {
   background-color: #fff;
 }
-[data-theme='daylight'] .input:focus,
-[data-theme='daylight'] .select:focus,
-[data-theme='daylight'] .textarea:focus {
+[data-mode='light'] .input:focus,
+[data-mode='light'] .select:focus,
+[data-mode='light'] .textarea:focus {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
-[data-theme='daylight'] .panel {
+[data-mode='light'] .panel {
   box-shadow: 0 1px 2px rgba(18, 19, 26, 0.04), 0 8px 24px rgba(18, 19, 26, 0.05);
 }
-[data-theme='daylight'] .label,
-[data-theme='daylight'] .kpi__label,
-[data-theme='daylight'] .kv dt,
-[data-theme='daylight'] .palette__group,
-[data-theme='daylight'] .chart-title span {
+[data-mode='light'] .label,
+[data-mode='light'] .kpi__label,
+[data-mode='light'] .kv dt,
+[data-mode='light'] .palette__group,
+[data-mode='light'] .chart-title span {
   font-family: var(--font-body);
   font-weight: 600;
   letter-spacing: 0.05em;
 }
-[data-theme='daylight'] .tag {
+[data-mode='light'] .tag {
   font-family: var(--font-body);
   text-transform: none;
   letter-spacing: 0;
@@ -130,218 +118,218 @@
   padding: 2px 9px;
   background: #fff;
 }
-[data-theme='daylight'] .chip {
+[data-mode='light'] .chip {
   background: #fff;
 }
-[data-theme='daylight'] .chip--on {
+[data-mode='light'] .chip--on {
   color: #fff;
   background: var(--accent);
   box-shadow: 0 3px 10px rgba(54, 81, 232, 0.25);
 }
-[data-theme='daylight'] .seg {
+[data-mode='light'] .seg {
   background: var(--bg-2);
 }
-[data-theme='daylight'] .seg button.on {
+[data-mode='light'] .seg button.on {
   box-shadow: 0 2px 8px rgba(54, 81, 232, 0.25);
 }
-[data-theme='daylight'] .bar {
+[data-mode='light'] .bar {
   background: color-mix(in srgb, var(--text) 10%, transparent);
 }
-[data-theme='daylight'] .bar__fill {
+[data-mode='light'] .bar__fill {
   background: linear-gradient(90deg, var(--accent), #6a5cf0);
   box-shadow: none;
 }
-[data-theme='daylight'] .rating__seg.on {
+[data-mode='light'] .rating__seg.on {
   background: var(--accent);
   box-shadow: none;
 }
-[data-theme='daylight'] .rating__seg {
+[data-mode='light'] .rating__seg {
   border-radius: 4px;
 }
-[data-theme='daylight'] .toggle {
+[data-mode='light'] .toggle {
   background: var(--bg-3);
   border-color: transparent;
 }
-[data-theme='daylight'] .toggle::after {
+[data-mode='light'] .toggle::after {
   background: #fff;
   box-shadow: 0 1px 3px rgba(18, 19, 26, 0.25);
 }
-[data-theme='daylight'] .toggle.on {
+[data-mode='light'] .toggle.on {
   background: var(--accent);
 }
-[data-theme='daylight'] .toggle.on::after {
+[data-mode='light'] .toggle.on::after {
   background: #fff;
   box-shadow: 0 1px 3px rgba(18, 19, 26, 0.25);
 }
-[data-theme='daylight'] input[type='range'].slider::-webkit-slider-thumb {
+[data-mode='light'] input[type='range'].slider::-webkit-slider-thumb {
   background: #fff;
   box-shadow: 0 1px 4px rgba(18, 19, 26, 0.25);
 }
-[data-theme='daylight'] .match {
+[data-mode='light'] .match {
   font-family: var(--font-body);
 }
-[data-theme='daylight'] .ep--on .ep__check,
-[data-theme='daylight'] .hero__dots button.on,
-[data-theme='daylight'] .ring-dial button.on::after,
-[data-theme='daylight'] .tunnel-gauge__track i,
-[data-theme='daylight'] .ring-card__bar span {
+[data-mode='light'] .ep--on .ep__check,
+[data-mode='light'] .hero__dots button.on,
+[data-mode='light'] .ring-dial button.on::after,
+[data-mode='light'] .tunnel-gauge__track i,
+[data-mode='light'] .ring-card__bar span {
   box-shadow: none;
 }
-[data-theme='daylight'] .ring-dial button.on,
-[data-theme='daylight'] .hud-title {
+[data-mode='light'] .ring-dial button.on,
+[data-mode='light'] .hud-title {
   text-shadow: none;
 }
-[data-theme='daylight'] .toast {
+[data-mode='light'] .toast {
   box-shadow: 0 12px 32px rgba(18, 19, 26, 0.16);
 }
-[data-theme='daylight'] .overlay {
+[data-mode='light'] .overlay {
   background: color-mix(in srgb, #1b1e2c 28%, transparent);
 }
-[data-theme='daylight'] ::-webkit-scrollbar-thumb {
+[data-mode='light'] ::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--text) 22%, transparent);
 }
 
 /* ── hero: the image fades into the light canvas; text gets a light halo, not a dark one ── */
-[data-theme='daylight'] .hero__meta,
-[data-theme='daylight'] .hero__overview,
-[data-theme='daylight'] .hero__eyebrow {
+[data-mode='light'] .hero__meta,
+[data-mode='light'] .hero__overview,
+[data-mode='light'] .hero__eyebrow {
   text-shadow: 0 0 12px rgba(246, 247, 251, 0.9), 0 0 2px rgba(246, 247, 251, 0.9);
 }
-[data-theme='daylight'] .hero__eyebrow::before {
+[data-mode='light'] .hero__eyebrow::before {
   box-shadow: none;
 }
-[data-theme='daylight'] .hero__shade {
+[data-mode='light'] .hero__shade {
   background:
     linear-gradient(to top, var(--bg) 0%, color-mix(in srgb, var(--bg) 80%, transparent) 32%, transparent 70%),
     linear-gradient(to right, color-mix(in srgb, var(--bg) 97%, transparent) 0%, color-mix(in srgb, var(--bg) 82%, transparent) 42%, transparent 82%);
 }
-[data-theme='daylight'] .hero__title,
-[data-theme='daylight'] .page-title {
+[data-mode='light'] .hero__title,
+[data-mode='light'] .page-title {
   letter-spacing: -0.02em;
 }
 
 /* ── posters: soft shadows instead of glows ── */
-[data-theme='daylight'] .card__poster,
-[data-theme='daylight'] .wcard__media,
-[data-theme='daylight'] .detail-hero__poster {
+[data-mode='light'] .card__poster,
+[data-mode='light'] .wcard__media,
+[data-mode='light'] .detail-hero__poster {
   border-color: rgba(18, 19, 26, 0.06);
   box-shadow: 0 6px 18px rgba(18, 19, 26, 0.12);
 }
-[data-theme='daylight'] .card:hover .card__poster,
-[data-theme='daylight'] .card:focus-within .card__poster {
+[data-mode='light'] .card:hover .card__poster,
+[data-mode='light'] .card:focus-within .card__poster {
   border-color: rgba(54, 81, 232, 0.45);
   box-shadow: 0 14px 30px rgba(18, 19, 26, 0.2);
 }
-[data-theme='daylight'] .wcard:hover .wcard__media {
+[data-mode='light'] .wcard:hover .wcard__media {
   box-shadow: 0 14px 30px rgba(18, 19, 26, 0.2);
 }
-[data-theme='daylight'] .card__overlay {
+[data-mode='light'] .card__overlay {
   background: linear-gradient(to top, rgba(255, 255, 255, 0.97) 0%, rgba(255, 255, 255, 0.8) 45%, transparent 78%);
 }
-[data-theme='daylight'] .card__actions .btn {
+[data-mode='light'] .card__actions .btn {
   background: #fff;
 }
-[data-theme='daylight'] .card__badge {
+[data-mode='light'] .card__badge {
   background: rgba(255, 255, 255, 0.94);
   border-color: transparent;
   box-shadow: 0 2px 6px rgba(18, 19, 26, 0.15);
 }
-[data-theme='daylight'] .card__corner {
+[data-mode='light'] .card__corner {
   border-radius: 999px;
   box-shadow: 0 2px 6px rgba(18, 19, 26, 0.2);
 }
 /* landscape cards: white info plate instead of a fade into dark */
-[data-theme='daylight'] .wcard__shade {
+[data-mode='light'] .wcard__shade {
   background: linear-gradient(to top, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.82) 34%, transparent 66%);
 }
 
 /* ── designs ── */
-[data-theme='daylight'] .ring-panel,
-[data-theme='daylight'] .sky-panel,
-[data-theme='daylight'] .tunnel-hud,
-[data-theme='daylight'] .sky-legend,
-[data-theme='daylight'] .sky-hover {
+[data-mode='light'] .ring-panel,
+[data-mode='light'] .sky-panel,
+[data-mode='light'] .tunnel-hud,
+[data-mode='light'] .sky-legend,
+[data-mode='light'] .sky-hover {
   box-shadow: 0 12px 34px rgba(18, 19, 26, 0.1);
 }
-[data-theme='daylight'] .ring-panel::before {
+[data-mode='light'] .ring-panel::before {
   box-shadow: none;
   border-radius: 0 0 3px 3px;
 }
-[data-theme='daylight'] .ring-item.active .ring-card {
+[data-mode='light'] .ring-item.active .ring-card {
   box-shadow: 0 0 0 2px var(--accent), 0 18px 40px rgba(54, 81, 232, 0.28);
 }
-[data-theme='daylight'] .ring-item.active .ring-card::after {
+[data-mode='light'] .ring-item.active .ring-card::after {
   mix-blend-mode: soft-light;
 }
-[data-theme='daylight'] .ring-card {
+[data-mode='light'] .ring-card {
   box-shadow: 0 8px 20px rgba(18, 19, 26, 0.14);
 }
-[data-theme='daylight'] .ring-beam {
+[data-mode='light'] .ring-beam {
   background: radial-gradient(60% 50% at 50% 100%, rgba(54, 81, 232, 0.16), transparent 70%);
 }
-[data-theme='daylight'] .ring-floor__disc {
+[data-mode='light'] .ring-floor__disc {
   background:
     radial-gradient(circle, rgba(54, 81, 232, 0.14) 0%, transparent 42%),
     repeating-radial-gradient(circle, rgba(54, 81, 232, 0.16) 0 1px, transparent 1px 34px);
 }
-[data-theme='daylight'] .ring-floor__ring {
+[data-mode='light'] .ring-floor__ring {
   border-color: rgba(196, 42, 96, 0.45);
   box-shadow: 0 0 30px rgba(196, 42, 96, 0.15), inset 0 0 30px rgba(54, 81, 232, 0.1);
 }
-[data-theme='daylight'] .tunnel-plane {
+[data-mode='light'] .tunnel-plane {
   opacity: 0.35;
 }
-[data-theme='daylight'] .tunnel-wall {
+[data-mode='light'] .tunnel-wall {
   opacity: 0.22;
 }
-[data-theme='daylight'] .tunnel-ceil {
+[data-mode='light'] .tunnel-ceil {
   opacity: 0.14;
 }
-[data-theme='daylight'] .tunnel-card {
+[data-mode='light'] .tunnel-card {
   box-shadow: 0 10px 30px rgba(18, 19, 26, 0.18);
 }
-[data-theme='daylight'] .tunnel-item.active .tunnel-card {
+[data-mode='light'] .tunnel-item.active .tunnel-card {
   box-shadow: 0 0 0 2px var(--accent), 0 20px 50px rgba(54, 81, 232, 0.3);
 }
-[data-theme='daylight'] .tunnel-gate {
+[data-mode='light'] .tunnel-gate {
   border-color: rgba(196, 42, 96, 0.4);
   box-shadow: 0 0 30px rgba(196, 42, 96, 0.12), inset 0 0 40px rgba(196, 42, 96, 0.08);
 }
-[data-theme='daylight'] .tunnel-gate span {
+[data-mode='light'] .tunnel-gate span {
   color: var(--accent-2);
   text-shadow: none;
 }
-[data-theme='daylight'] .tunnel-caption {
+[data-mode='light'] .tunnel-caption {
   text-shadow: none;
   box-shadow: 0 4px 12px rgba(18, 19, 26, 0.1);
 }
-[data-theme='daylight'] .tunnel-streaks {
+[data-mode='light'] .tunnel-streaks {
   opacity: 0.05;
 }
-[data-theme='daylight'] .sky-orbit {
+[data-mode='light'] .sky-orbit {
   stroke: rgba(54, 81, 232, 0.28);
 }
-[data-theme='daylight'] .star--library .star-dot {
+[data-mode='light'] .star--library .star-dot {
   stroke: #fff;
 }
-[data-theme='daylight'] .sky-link.on {
+[data-mode='light'] .sky-link.on {
   filter: none;
 }
-[data-theme='daylight'] .hm-0 {
+[data-mode='light'] .hm-0 {
   fill: var(--bg-3);
   background: var(--bg-3);
 }
-[data-theme='daylight'] .reality__card.on::after {
+[data-mode='light'] .reality__card.on::after {
   color: #fff;
 }
 
 /* ── background FX: soft morning sky ── */
-.fx-daylight .fx-sky {
+.fx-light .fx-sky {
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg, #eef1fb 0%, #f6f7fb 45%, #f8f6f6 100%);
 }
-.fx-daylight .fx-sun {
+.fx-light .fx-sun {
   position: absolute;
   width: 70vmax;
   height: 70vmax;
@@ -351,7 +339,7 @@
   background: radial-gradient(circle, rgba(255, 214, 170, 0.5) 0%, rgba(255, 190, 210, 0.22) 38%, transparent 66%);
   animation: day-sun 40s ease-in-out infinite alternate;
 }
-.fx-daylight .fx-haze {
+.fx-light .fx-haze {
   position: absolute;
   width: 80vmax;
   height: 60vmax;
@@ -376,13 +364,13 @@
    Transition TO daylight — "sunrise wipe": the light rises from the bottom
    with a soft gradient edge while the old (dark) view brightens & warms.
    ========================================================================== */
-html[data-transition='daylight']::view-transition {
+html[data-transition='mode']::view-transition {
   background: #f6f7fb;
 }
-html[data-transition='daylight']::view-transition-old(root) {
+html[data-transition='mode']::view-transition-old(root) {
   animation: vt-dawn 0.95s ease-in both;
 }
-html[data-transition='daylight']::view-transition-new(root) {
+html[data-transition='mode']::view-transition-new(root) {
   -webkit-mask-image: linear-gradient(to top, #000 calc(var(--vt-p) - 28%), transparent var(--vt-p));
   mask-image: linear-gradient(to top, #000 calc(var(--vt-p) - 28%), transparent var(--vt-p));
   animation: vt-sunrise 0.95s cubic-bezier(0.3, 0.6, 0.2, 1) both;
@@ -406,8 +394,8 @@ html[data-transition='daylight']::view-transition-new(root) {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  html[data-transition='daylight']::view-transition-old(root),
-  html[data-transition='daylight']::view-transition-new(root) {
+  html[data-transition='mode']::view-transition-old(root),
+  html[data-transition='mode']::view-transition-new(root) {
     animation: none !important;
     -webkit-mask-image: none;
     mask-image: none;
@@ -415,7 +403,102 @@ html[data-transition='daylight']::view-transition-new(root) {
 }
 
 /* landscape cards already print the title on the white plate — hide the art's own title */
-[data-theme='daylight'] .wcard__media .art__title,
-[data-theme='daylight'] .wcard__media .art__kicker {
+[data-mode='light'] .wcard__media .art__title,
+[data-mode='light'] .wcard__media .art__kicker {
   visibility: hidden;
+}
+
+/* ── each skin's accents, re-tuned for a light background (≥4.5:1 on white) ── */
+[data-mode='light'][data-theme='hud'] {
+  --accent: #006d99;
+  --accent-2: #6d28d9;
+  --accent-3: #0e7490;
+}
+[data-mode='light'][data-theme='neon'] {
+  --accent: #c2124f;
+  --accent-2: #6d28d9;
+  --accent-3: #8a5a00;
+}
+[data-mode='light'][data-theme='aurora'] {
+  --accent: #3651e8;
+  --accent-2: #c42a60;
+  --accent-3: #c2410c;
+}
+[data-mode='light'][data-theme='terminal'] {
+  --bg: #f4f8f3;
+  --bg-2: #eaf2e8;
+  --bg-3: #dbe8d8;
+  --text: #0c1f12;
+  --accent: #04683f;
+  --accent-2: #9a4b00;
+  --accent-3: #04683f;
+}
+[data-mode='light'][data-theme='contrast'] {
+  --bg: #ffffff;
+  --bg-2: #ffffff;
+  --bg-3: #f0f0f0;
+  --panel: #ffffff;
+  --panel-solid: #ffffff;
+  --panel-border: #000000;
+  --panel-border-strong: #000000;
+  --text: #000000;
+  --text-dim: #111111;
+  --text-faint: #222222;
+  --accent: #0019c4;
+  --accent-2: #a1004a;
+  --accent-ink: #ffffff;
+  --glow: none;
+  --glow-soft: none;
+}
+
+/* ── skin effects that were made for the dark, toned for light ── */
+[data-mode='light'] .hero__title,
+[data-mode='light'] .page-title {
+  background: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  color: var(--text);
+  -webkit-text-fill-color: currentColor;
+  filter: none;
+  text-shadow: none;
+}
+[data-mode='light'][data-theme='neon'] .hero__title,
+[data-mode='light'][data-theme='neon'] .page-title {
+  text-shadow: 1px 0 0 rgba(194, 18, 79, 0.35), -1px 0 0 rgba(0, 150, 170, 0.35);
+}
+[data-mode='light'] .logo__text,
+[data-mode='light'] .logo__text b {
+  text-shadow: none;
+}
+[data-mode='light'] .btn--primary {
+  box-shadow: var(--glow-soft);
+}
+[data-mode='light'] .hero__bg,
+[data-mode='light'] .detail-hero__bg {
+  filter: none;
+}
+[data-mode='light'][data-theme='terminal'] .card__poster::after,
+[data-mode='light'][data-theme='terminal'] .wcard__media::after,
+[data-mode='light'][data-theme='terminal'] .hero__bg::after,
+[data-mode='light'][data-theme='terminal'] .detail-hero__bg::after {
+  opacity: 0.25;
+}
+[data-mode='light'] .logo__text {
+  color: var(--text);
+}
+[data-mode='light'] .logo__text b {
+  color: var(--accent);
+}
+/* Phosphor keeps its green-tinted pictures, but bright enough for a light page */
+[data-mode='light'][data-theme='terminal'] .card__poster,
+[data-mode='light'][data-theme='terminal'] .wcard__media,
+[data-mode='light'][data-theme='terminal'] .detail-hero__poster,
+[data-mode='light'][data-theme='terminal'] .list-row__poster,
+[data-mode='light'][data-theme='terminal'] .palette__thumb {
+  filter: grayscale(1) sepia(0.7) hue-rotate(78deg) saturate(1.6) brightness(1.05);
+}
+[data-mode='light'][data-theme='terminal'] .art {
+  --art-bg: linear-gradient(160deg, #e3efe0, #cfe2cb) !important;
+  --art-pattern: repeating-linear-gradient(0deg, rgba(4, 104, 63, 0.12) 0 1px, transparent 1px 4px) !important;
+  color: #04683f;
 }

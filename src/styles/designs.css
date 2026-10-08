@@ -13,8 +13,7 @@
 @keyframes hud-in {
   from {
     opacity: 0;
-    transform: translateY(10px);
-    filter: blur(3px);
+    transform: translateY(8px);
   }
 }
 .hud-eyebrow {
@@ -332,7 +331,8 @@ div.hud-compact__text {
   transform-style: preserve-3d;
   transition: transform 0.85s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.ring-viewport.dragging .ring-carousel {
+.ring-viewport.dragging .ring-carousel,
+.ring-viewport.dragging .ring-floor > div {
   transition: none;
 }
 .ring-item {
@@ -342,7 +342,7 @@ div.hud-compact__text {
   left: calc(var(--card-w) / -2);
   top: calc(var(--card-w) * -0.75);
   transform-style: preserve-3d;
-  transition: transform 0.5s var(--ease), opacity 0.4s, filter 0.4s;
+  transition: transform 0.5s var(--ease), opacity 0.4s;
 }
 .ring-card {
   position: absolute;
@@ -375,6 +375,17 @@ div.hud-compact__text {
   pointer-events: none;
   -webkit-user-drag: none;
 }
+/* distance dimming (set per card as --dim) */
+.ring-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--bg);
+  opacity: var(--dim, 0);
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
 .ring-item.active .ring-card {
   border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent), 0 0 40px color-mix(in srgb, var(--accent) 45%, transparent);
@@ -386,7 +397,7 @@ div.hud-compact__text {
   pointer-events: none;
   background: linear-gradient(to bottom, transparent 0%, color-mix(in srgb, var(--accent) 22%, transparent) 49%, color-mix(in srgb, var(--accent) 55%, transparent) 50%, transparent 51%);
   background-size: 100% 300%;
-  animation: ring-scan 3.2s linear infinite;
+  animation: ring-scan 3.2s linear 2; /* sweeps when a card comes to the front, then rests (nothing runs while idle) */
   mix-blend-mode: screen;
 }
 @keyframes ring-scan {
@@ -470,14 +481,16 @@ div.hud-compact__text {
   background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--accent) 55%, transparent) 0deg 0.6deg, transparent 0.6deg 6deg);
   -webkit-mask-image: radial-gradient(circle, transparent 66%, black 67%, black 70%, transparent 71%);
   mask-image: radial-gradient(circle, transparent 66%, black 67%, black 70%, transparent 71%);
-  animation: ring-spin 60s linear infinite;
+  transform: rotate(var(--floor-turn, 0deg));
+  transition: transform 0.85s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .ring-floor__ring {
   inset: 14% !important;
   border: 2px solid color-mix(in srgb, var(--accent-2) 60%, transparent);
   box-shadow: 0 0 40px color-mix(in srgb, var(--accent-2) 40%, transparent), inset 0 0 40px color-mix(in srgb, var(--accent) 25%, transparent);
   border-style: dashed;
-  animation: ring-spin 90s linear infinite reverse;
+  transform: rotate(calc(var(--floor-turn, 0deg) * -0.5));
+  transition: transform 0.85s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 @keyframes ring-spin {
   to {
@@ -546,6 +559,15 @@ div.hud-compact__text {
 .tunnel-card .art__kicker {
   font-size: clamp(0.5rem, 6.4cqi, 0.68rem);
   overflow-wrap: anywhere;
+}
+
+/* Wide screens: the stages already fill the window, so cancel the page's bottom padding (no stray 80px scroll). */
+@media (min-width: 861px) {
+  .ring-stage,
+  .sky-stage,
+  .tunnel-stage {
+    margin-bottom: -80px;
+  }
 }
 
 /* Holo Ring — phones (JS adds .ring-stage--compact at the tab-bar breakpoint) */
@@ -655,6 +677,17 @@ div.hud-compact__text {
   }
 }
 
+/* phones / calm: the platform is drawn flat (a squashed 2D ellipse) instead of a huge
+   3D-rotated layer — half the frame cost while spinning, nearly the same look */
+.ring-stage--compact .ring-floor,
+.fx-calm .ring-floor {
+  top: calc(45% + var(--card-w) * 0.75 + 10px);
+  transform: translate(-50%, -50%) scaleY(0.14);
+}
+.ring-stage--compact .ring-carousel ~ .ring-floor {
+  top: calc(41% + var(--card-w) * 0.75 + 10px);
+}
+
 /* calm: reduceFx, reduced motion or touch devices — no idle animation */
 .fx-calm .ring-item.active .ring-card::after,
 .fx-calm .ring-floor__ticks,
@@ -742,10 +775,10 @@ div.hud-compact__text {
   stroke-width: 2;
   stroke-dasharray: 6 8;
   transform-origin: 0 0;
-  animation: ring-spin 30s linear infinite;
+  animation: ring-spin 8s cubic-bezier(0.2, 0.7, 0.3, 1) 1;
 }
 .sky-core-glow {
-  animation: sky-breathe 4s ease-in-out infinite;
+  animation: sky-breathe 4s ease-in-out 2;
   transform-origin: 0 0;
 }
 @keyframes sky-breathe {
@@ -802,7 +835,7 @@ div.hud-compact__text {
   stroke: var(--accent-2);
   stroke-width: 2;
   transform-origin: 0 0;
-  animation: star-pulse 2s ease-out infinite;
+  animation: star-pulse 2s ease-out 3; /* then rests as a still ring */
 }
 @keyframes star-pulse {
   from {
@@ -989,6 +1022,8 @@ div.hud-compact__text {
 }
 .sky-panel__poster {
   position: relative;
+  padding: 0;
+  background: var(--bg-2);
   width: 120px;
   aspect-ratio: 2 / 3;
   overflow: hidden;
@@ -1002,8 +1037,18 @@ div.hud-compact__text {
   display: grid;
   place-items: center;
   align-content: center;
-  gap: 10px;
+  gap: 14px;
+  padding: 0 var(--gutter);
+  text-align: center;
   color: var(--text-dim);
+  pointer-events: none;
+}
+.sky-empty > * {
+  pointer-events: auto;
+}
+.sky-empty p {
+  max-width: 34ch;
+  margin: 0;
 }
 
 /* map moves from buttons / fly-to glide; gestures follow the finger */
@@ -1284,6 +1329,17 @@ div.hud-compact__text {
   pointer-events: none;
   -webkit-user-drag: none;
 }
+.tunnel-card__blank {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 10%, var(--bg-2)), var(--bg-2));
+}
+/* pictures are pre-loaded, so they only need the briefest fade */
+.tunnel-card .fade-img,
+.ring-card .fade-img,
+.ring-reflect .fade-img {
+  animation-duration: 0.15s;
+}
 .tunnel-item.active .tunnel-card {
   border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent), 0 0 60px color-mix(in srgb, var(--accent) 55%, transparent);
@@ -1319,6 +1375,27 @@ div.hud-compact__text {
   mask-image: radial-gradient(circle at 50% 42%, transparent 18%, black 60%);
   opacity: 0.08;
   transition: opacity 0.4s, transform 0.6s var(--ease);
+}
+/* flat side walls + ceiling for phones / calm mode: one static layer instead of three huge 3D ones */
+.tunnel-sides,
+.tunnel-sides::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.tunnel-sides {
+  --vy: 42%;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 16%, transparent), transparent 34%, transparent 66%, color-mix(in srgb, var(--accent) 16%, transparent)),
+    repeating-linear-gradient(90deg, color-mix(in srgb, var(--accent) 22%, transparent) 0 1px, transparent 1px 46px);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 64% calc(var(--vy) + 14%), 36% calc(var(--vy) + 14%), 0 100%, 0 0, 36% calc(var(--vy) - 14%), 64% calc(var(--vy) - 14%), 100% 0);
+  -webkit-mask-image: radial-gradient(ellipse 60% 55% at 50% var(--vy), transparent 30%, #000 75%);
+  mask-image: radial-gradient(ellipse 60% 55% at 50% var(--vy), transparent 30%, #000 75%);
+  opacity: 0.5;
+}
+.tunnel-stage--land .tunnel-sides {
+  --vy: 60%;
+  right: 42%;
 }
 .tunnel-stage.warping .tunnel-streaks {
   opacity: 0.55;

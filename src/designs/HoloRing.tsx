@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { defaultCollection, useCollections, type CollectionId, type Item } from './useCollections';
 import { HudSheet, ShowHud, useCalmFx, useCompact, useFitArtTitles } from './ShowHud';
 import { Poster } from '../components/Poster';
+import { prefetchArtwork } from '../providers/artwork';
 import { remember, showPath } from '../lib/showCache';
 import { progressOf } from '../lib/progress';
 
@@ -76,19 +77,32 @@ export default function HoloRing() {
 
   const [rot, setRot] = useState(0); // degrees, continuous
   const [dragging, setDragging] = useState(false);
-  const drag = useRef<{ x: number; rot: number; moved: boolean; id: number; t: number; v: number; lx: number } | null>(null);
+  const drag = useRef<{ x: number; y: number; rot: number; moved: boolean; id: number; t: number; v: number; lx: number } | null>(null);
   const wheelTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const stage = useRef<HTMLDivElement>(null);
 
   const active = n ? ((Math.round(rot / step) % slots) + slots) % slots : 0;
   const activeIdx = active < n ? active : -1;
+
+  // Pictures: the front card first, then its neighbours either side (layout effect, so this
+  // order reaches the artwork queue before the cards' own requests).
+  useLayoutEffect(() => {
+    if (!n) return;
+    const at = Math.max(0, activeIdx);
+    const order = [0, 1, -1, 2, -2, 3, -3, 4, -4].map((k) => (((at + k) % n) + n) % n);
+    prefetchArtwork([...new Set(order)].map((i) => items[i].show));
+  }, [activeIdx, items, n]);
   const current = activeIdx >= 0 ? items[activeIdx] : undefined;
 
   // reset when switching collections
   useEffect(() => {
     setRot(0);
     setSheet(false);
+    setDragging(false);
+    drag.current = null;
+    clearTimeout(wheelTimer.current);
   }, [cid]);
+  useEffect(() => () => clearTimeout(wheelTimer.current), []);
 
   // Keep the chosen tab visible in the scrolling tab row (phones).
   useEffect(() => {
@@ -127,7 +141,7 @@ export default function HoloRing() {
 
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement;
+      const t = e.target instanceof Element ? e.target : document.body;
       if (t.closest('input, textarea, select, [role="menu"], .menu') || document.querySelector('.overlay, .hud-sheet-wrap')) return;
       if (e.key === 'Enter' && t.closest('button, a')) return; // let focused controls handle Enter
       if (e.key === 'ArrowRight') move(1);
@@ -143,28 +157,49 @@ export default function HoloRing() {
   }, [move, current, nav]);
 
   /** Nearest slot that actually holds a show (the ring has empty slots when n < MIN_SLOTS). */
-  const snap = (r: number) => {
-    let idx = Math.round(r / step);
+  /** Nearest slot that holds a show; with `dir`, the next one that way (so one wheel notch always moves on). */
+  const snap = (r: number, dir = 0) => {
+    const t = r / step;
+    let idx = dir > 0 ? Math.ceil(t - 0.12) : dir < 0 ? Math.floor(t + 0.12) : Math.round(t);
     const m = ((idx % slots) + slots) % slots;
-    if (m >= n && n) idx += m - n < slots - m ? -(m - n + 1) : slots - m;
+    if (m >= n && n) {
+      const back = -(m - n + 1);
+      const fwd = slots - m;
+      idx += dir > 0 ? fwd : dir < 0 ? back : m - n < slots - m ? back : fwd;
+    }
     return idx * step;
   };
 
-  const onWheel = (e: React.WheelEvent) => {
-    const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+  // Wheel / trackpad spins the ring (a native listener, so it can stop the page scrolling underneath when the page fits).
+  const wheel = useRef<(e: WheelEvent) => void>(() => {});
+  wheel.current = (e) => {
+    const horizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY);
+    const pageScrolls = document.documentElement.scrollHeight - innerHeight > 120;
+    if (!horizontal && pageScrolls) return; // let the page scroll to the panels
+    e.preventDefault();
+    const raw = horizontal ? e.deltaX : e.deltaY;
+    const d = e.deltaMode === 1 ? raw * 40 : raw;
+    if (!d) return;
     setDragging(true);
-    setRot((r) => r + d * 0.12);
+    setRot((r) => r + Math.max(-90, Math.min(90, d * 0.12)));
     clearTimeout(wheelTimer.current);
     wheelTimer.current = setTimeout(() => {
       setDragging(false);
-      setRot(snap);
+      setRot((r) => snap(r, Math.sign(d)));
     }, 140);
   };
+  useEffect(() => {
+    const el = viewport.current;
+    if (!el) return;
+    const h = (e: WheelEvent) => wheel.current(e);
+    el.addEventListener('wheel', h, { passive: false });
+    return () => el.removeEventListener('wheel', h);
+  }, [n]);
 
   const onPointerDown = (e: React.PointerEvent) => {
     if ((e.target as HTMLElement).closest('button, a')) return;
-    if (drag.current) return; // second finger: ignore
-    drag.current = { x: e.clientX, rot, moved: false, id: e.pointerId, t: performance.now(), v: 0, lx: e.clientX };
+    if (drag.current && !e.isPrimary) return; // second finger: ignore (a new primary pointer replaces a drag whose "up" never came)
+    drag.current = { x: e.clientX, y: e.clientY, rot, moved: false, id: e.pointerId, t: performance.now(), v: 0, lx: e.clientX };
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     setDragging(true);
   };
@@ -173,7 +208,8 @@ export default function HoloRing() {
     const d = drag.current;
     if (!d || e.pointerId !== d.id) return;
     const dx = e.clientX - d.x;
-    if (Math.abs(dx) > 6) d.moved = true;
+    // any real movement (a vertical swipe too) means this is not a tap on a poster
+    if (Math.abs(dx) > 6 || Math.abs(e.clientY - d.y) > 10) d.moved = true;
     const now = performance.now();
     if (now > d.t) d.v = 0.7 * ((e.clientX - d.lx) / (now - d.t)) + 0.3 * d.v; // px per ms, smoothed
     d.t = now;
@@ -195,9 +231,12 @@ export default function HoloRing() {
     if (d.moved) {
       // a flick carries on for up to ~3 cards
       const fling = performance.now() - d.t < 80 ? Math.max(-3, Math.min(3, -d.v * 0.9)) * step : 0;
-      setRot((r) => snap(r + fling));
+      // a deliberate drag always moves on at least one card in its direction
+      const dx = e.clientX - d.x;
+      setRot((r) => snap(r + fling, Math.abs(dx) > 30 ? -Math.sign(dx) : 0));
       return;
     }
+    if (Math.abs(rot / step - Math.round(rot / step)) > 0.001) setRot((r) => snap(r)); // settle anything a replaced drag left mid-way
     // A tap: the front-most poster whose projected box holds the point. (3D hit-testing
     // misses the angled side cards, so this compares boxes and angles instead.)
     const angleFromFront = (i: number) => Math.abs(((((i * step - rot) % 360) + 540) % 360) - 180);
@@ -248,11 +287,11 @@ export default function HoloRing() {
           ref={viewport}
           className={`ring-viewport ${dragging ? 'dragging' : ''}`}
           style={{ '--card-w': `${cardW}px`, '--ring-r': `${radius}px` } as React.CSSProperties}
-          onWheel={onWheel}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerCancel}
+          onLostPointerCapture={onPointerCancel}
           role="listbox"
           aria-label={col?.label}
           aria-activedescendant={current ? `ring-${activeIdx}` : undefined}
@@ -290,13 +329,15 @@ export default function HoloRing() {
                         {
                           transform: `rotateY(${ang}deg) translateZ(${radius}px) ${isActive ? 'translateZ(90px) scale(1.16)' : ''}`,
                           opacity: Math.max(0.12, 1 - d / 165),
-                          filter: `brightness(${Math.max(0.35, 1 - d / 140)})`,
+                          // a dimming overlay instead of filter: brightness() — filters re-rasterise 3D layers every frame
+                          '--dim': Math.min(0.65, d / 140).toFixed(2),
                           '--i': i,
                         } as React.CSSProperties
                       }
                     >
                       <div className="ring-card">
-                        <Poster show={it.show} />
+                        {/* eager: lazy-loading never fires inside 3D transforms (the ring holds at most 20; the front ones are queued first above) */}
+                        <Poster show={it.show} eager />
                         {it.rec && <span className="ring-card__match">{it.rec.match}%</span>}
                         {p && p.total > 0 && (
                           <span className="ring-card__bar">
@@ -306,7 +347,7 @@ export default function HoloRing() {
                       </div>
                       {(!calm || d < 60) && (
                         <div className="ring-reflect" aria-hidden>
-                          <Poster show={it.show} />
+                          <Poster show={it.show} eager />
                         </div>
                       )}
                     </div>
@@ -314,7 +355,7 @@ export default function HoloRing() {
                 })}
               </div>
               <div className="ring-beam" aria-hidden />
-              <div className="ring-floor" aria-hidden>
+              <div className="ring-floor" aria-hidden style={{ '--floor-turn': `${-rot}deg` } as React.CSSProperties}>
                 <div className="ring-floor__disc" />
                 <div className="ring-floor__ticks" />
                 <div className="ring-floor__ring" />

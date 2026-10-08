@@ -353,3 +353,41 @@
   font-size: var(--fs-xs);
   opacity: 0.8;
 }
+
+/* ───────────── Skin dropdown + mode ───────────── */
+.skin-pick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+.skin-pick .select {
+  flex: 1;
+  min-width: 0;
+  text-overflow: ellipsis;
+}
+.skin-pick__swatch {
+  display: inline-flex;
+  flex: none;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--panel-border-strong);
+}
+.skin-pick__swatch i {
+  width: 12px;
+  height: 22px;
+}
+.reality__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.reality__row > .label {
+  min-width: 70px;
+}
+.seg button svg {
+  vertical-align: -2px;
+}

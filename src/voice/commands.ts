@@ -12,6 +12,7 @@ export type VoiceCommand =
   | { kind: 'key'; key: 'ArrowLeft' | 'ArrowRight' | 'ArrowUp' | 'ArrowDown' | 'Enter' | 'Escape'; label: string }
   | { kind: 'step'; dir: 1 | -1 }
   | { kind: 'skin'; id: ThemeId }
+  | { kind: 'mode'; mode: 'light' | 'dark' }
   | { kind: 'design'; id: DesignId }
   | { kind: 'search'; query: string }
   | { kind: 'openShow'; query: string }
@@ -38,19 +39,15 @@ const SKINS: [RegExp, ThemeId][] = [
   [/\bneon\b|\bcyberpunk\b/, 'neon'],
   [/\baurora\b/, 'aurora'],
   [/\b(phosphor|terminal|matrix|green)\b/, 'terminal'],
-  [/\b(surveillance|machine|person of interest|cctv)\b/, 'surveillance'],
-  [/\b(daylight|light( mode)?|bright)\b/, 'daylight'],
   [/\b(high contrast|contrast)\b/, 'contrast'],
 ];
 
 const DESIGNS: [RegExp, DesignId][] = [
+  [/\b(person of interest|the machine|machine|surveillance|cctv|poi)\b/, 'poi'],
   [/\b(holo ?ring|ring|carousel)\b/, 'ring'],
   [/\b(constellation|star ?map|stars)\b/, 'constellation'],
   [/\b(warp|tunnel)\b/, 'tunnel'],
-  [/\b(swipe|deck|cards)\b/, 'swipe'],
   [/\b(channel|surfer|tv|television)\b/, 'channel'],
-  [/\b(timeline|life timeline)\b/, 'timeline'],
-  [/\b(mission|control|dashboard)\b/, 'mission'],
   [/\b(stream|classic|rows)\b/, 'stream'],
 ];
 
@@ -89,7 +86,11 @@ export function parseVoice(raw: string): VoiceCommand {
   ] as const)
     if (re.test(t)) return { kind: 'key', key, label };
 
-  // skins & designs: "switch to neon", "neon skin", "use the timeline design"
+  // light / dark: "light mode", "turn on dark mode", "make it brighter"
+  if (/\b(light|daylight|bright(er)?)( mode| theme)?\b/.test(t) && /\b(mode|theme|switch|turn|use|make|go)\b/.test(t) && !/\bdark\b/.test(t)) return { kind: 'mode', mode: 'light' };
+  if (/\bdark( mode| theme)?\b/.test(t) && /\b(mode|theme|switch|turn|use|make|go)\b/.test(t)) return { kind: 'mode', mode: 'dark' };
+
+  // skins & designs: "switch to neon", "neon skin", "use the tunnel design"
   const themeLike = /\b(skin|theme|colou?rs?|mode)\b/.test(t);
   const designLike = /\b(design|layout|view)\b/.test(t);
   const switchLike = /^(switch|change|use|go|set|turn)( it)?( (to|on))?\b/.test(t) || themeLike || designLike;

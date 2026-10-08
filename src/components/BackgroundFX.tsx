@@ -1,11 +1,26 @@
 import { useEffect, useRef } from 'react';
 import { useSettings } from '../store/settings';
+import { useResolvedMode } from '../theme/mode';
 
-/** Per-theme ambient background. Pure CSS layers, plus a tiny canvas glyph-rain for Terminal. High Contrast renders nothing. */
+/** Per-skin ambient background (dark mode), or a soft daylight sky in light mode. Pure CSS layers, plus a tiny canvas glyph-rain for Terminal. High Contrast renders nothing. */
 export function BackgroundFX() {
   const theme = useSettings((s) => s.theme);
   const reduceFx = useSettings((s) => s.reduceFx);
+  const mode = useResolvedMode();
   if (reduceFx) return <div className="fx-layer" aria-hidden />;
+  // Light mode: one soft daylight backdrop for every skin (the skins' effects are made for the dark).
+  if (mode === 'light')
+    return (
+      <div className="fx-layer fx-light" aria-hidden>
+        {theme !== 'contrast' && (
+          <>
+            <div className="fx-sky" />
+            <div className="fx-sun" />
+            <div className="fx-haze" />
+          </>
+        )}
+      </div>
+    );
   return (
     <div className={`fx-layer fx-${theme}`} aria-hidden>
       {theme === 'hud' && (
@@ -32,25 +47,6 @@ export function BackgroundFX() {
           <div className="fx-grain" />
         </>
       )}
-      {theme === 'surveillance' && (
-        <>
-          <div className="fx-feeds">
-            {Array.from({ length: 9 }, (_, i) => (
-              <i key={i} />
-            ))}
-          </div>
-          <div className="fx-sweep" />
-          <div className="fx-grain" />
-          <div className="fx-vignette" />
-        </>
-      )}
-      {theme === 'daylight' && (
-        <>
-          <div className="fx-sky" />
-          <div className="fx-sun" />
-          <div className="fx-haze" />
-        </>
-      )}
       {/* contrast: deliberately nothing — a flat black background, no motion */}
       {theme === 'terminal' && (
         <>
@@ -69,7 +65,8 @@ function GlyphRain() {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const canvas = ref.current;
-    if (!canvas || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // phones: no endless canvas loop (battery) — the static scanlines carry the look
+    if (!canvas || matchMedia('(prefers-reduced-motion: reduce), (hover: none) and (pointer: coarse)').matches) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     const glyphs = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄ01234567890<>/{}[]=+*#$%';

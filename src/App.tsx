@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { TopBar } from './components/TopBar';
 import { BackgroundFX } from './components/BackgroundFX';
@@ -13,22 +13,25 @@ import { initLibrary, useLibrary } from './store/library';
 import { useSettings } from './store/settings';
 import { scheduleRecommendations } from './recommend/pipeline';
 import { enrichLibrary } from './store/enrich';
+import { backfillLibraryArtwork } from './providers/artwork';
 import { startSheetAutoSync } from './store/sheetSync';
 import { HomeRouter } from './designs/HomeRouter';
+import { lazyRoute } from './lib/lazyRoute';
+import { RouteErrorBoundary } from './components/RouteErrorBoundary';
 import { notifyPref, useAiringNotifications } from './components/NewEpisodesBanner';
 import { useUpcoming } from './hooks/useUpcoming';
 
-const Discover = lazy(() => import('./pages/Discover'));
-const Library = lazy(() => import('./pages/Library'));
-const Show = lazy(() => import('./pages/Show'));
-const Stats = lazy(() => import('./pages/Stats'));
-const Taste = lazy(() => import('./pages/Taste'));
-const Settings = lazy(() => import('./pages/Settings'));
-const Import = lazy(() => import('./pages/Import'));
-const Welcome = lazy(() => import('./pages/Welcome'));
-const Wrapped = lazy(() => import('./pages/Wrapped'));
-const Upcoming = lazy(() => import('./pages/Upcoming'));
-const Assistant = lazy(() => import('./pages/Assistant'));
+const Discover = lazyRoute(() => import('./pages/Discover'));
+const Library = lazyRoute(() => import('./pages/Library'));
+const Show = lazyRoute(() => import('./pages/Show'));
+const Stats = lazyRoute(() => import('./pages/Stats'));
+const Taste = lazyRoute(() => import('./pages/Taste'));
+const Settings = lazyRoute(() => import('./pages/Settings'));
+const Import = lazyRoute(() => import('./pages/Import'));
+const Welcome = lazyRoute(() => import('./pages/Welcome'));
+const Wrapped = lazyRoute(() => import('./pages/Wrapped'));
+const Upcoming = lazyRoute(() => import('./pages/Upcoming'));
+const Assistant = lazyRoute(() => import('./pages/Assistant'));
 
 function ScrollReset() {
   const { pathname } = useLocation();
@@ -70,6 +73,7 @@ function Shell() {
       <div className="vt-scanbar" aria-hidden />
       {pathname !== '/welcome' && <TopBar />}
       <main className="main">
+        <RouteErrorBoundary resetKey={pathname}>
         <Suspense fallback={<div className="page"><div className="spinner" /></div>}>
           <Routes>
             <Route path="/" element={<HomeRouter />} />
@@ -89,6 +93,7 @@ function Shell() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
+        </RouteErrorBoundary>
       </main>
       <CommandPalette />
       <Toasts />
@@ -110,6 +115,7 @@ export default function App() {
     void verifyTmdbKey();
     void initLibrary().then(() => {
       setTimeout(() => void enrichLibrary(), 4000);
+      setTimeout(backfillLibraryArtwork, 1500);
       startSheetAutoSync();
     });
     // Re-rank whenever the library changes (debounced; network parts are cached).
