@@ -13,8 +13,7 @@
 @keyframes hud-in {
   from {
     opacity: 0;
-    transform: translateY(10px);
-    filter: blur(3px);
+    transform: translateY(8px);
   }
 }
 .hud-eyebrow {
@@ -342,7 +341,7 @@ div.hud-compact__text {
   left: calc(var(--card-w) / -2);
   top: calc(var(--card-w) * -0.75);
   transform-style: preserve-3d;
-  transition: transform 0.5s var(--ease), opacity 0.4s, filter 0.4s;
+  transition: transform 0.5s var(--ease), opacity 0.4s;
 }
 .ring-card {
   position: absolute;
@@ -374,6 +373,17 @@ div.hud-compact__text {
   object-fit: cover;
   pointer-events: none;
   -webkit-user-drag: none;
+}
+/* distance dimming (set per card as --dim) */
+.ring-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--bg);
+  opacity: var(--dim, 0);
+  pointer-events: none;
+  transition: opacity 0.4s;
 }
 .ring-item.active .ring-card {
   border-color: var(--accent);
@@ -989,6 +999,8 @@ div.hud-compact__text {
 }
 .sky-panel__poster {
   position: relative;
+  padding: 0;
+  background: var(--bg-2);
   width: 120px;
   aspect-ratio: 2 / 3;
   overflow: hidden;
@@ -1330,6 +1342,27 @@ div.hud-compact__text {
   mask-image: radial-gradient(circle at 50% 42%, transparent 18%, black 60%);
   opacity: 0.08;
   transition: opacity 0.4s, transform 0.6s var(--ease);
+}
+/* flat side walls + ceiling for phones / calm mode: one static layer instead of three huge 3D ones */
+.tunnel-sides,
+.tunnel-sides::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.tunnel-sides {
+  --vy: 42%;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 16%, transparent), transparent 34%, transparent 66%, color-mix(in srgb, var(--accent) 16%, transparent)),
+    repeating-linear-gradient(90deg, color-mix(in srgb, var(--accent) 22%, transparent) 0 1px, transparent 1px 46px);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 64% calc(var(--vy) + 14%), 36% calc(var(--vy) + 14%), 0 100%, 0 0, 36% calc(var(--vy) - 14%), 64% calc(var(--vy) - 14%), 100% 0);
+  -webkit-mask-image: radial-gradient(ellipse 60% 55% at 50% var(--vy), transparent 30%, #000 75%);
+  mask-image: radial-gradient(ellipse 60% 55% at 50% var(--vy), transparent 30%, #000 75%);
+  opacity: 0.5;
+}
+.tunnel-stage--land .tunnel-sides {
+  --vy: 60%;
+  right: 42%;
 }
 .tunnel-stage.warping .tunnel-streaks {
   opacity: 0.55;

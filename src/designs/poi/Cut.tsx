@@ -35,8 +35,9 @@ export function Cut({ spec, onDone }: { spec: CutSpec; onDone: () => void }) {
     if (spec.mode !== 'in') return undefined;
     const vw = innerWidth;
     const vh = innerHeight;
-    const h = Math.min(vh * 0.8, vw * 0.92 * 1.5);
-    const w = h / 1.5;
+    // a true zoom into the feed: same 4:3 shape as the monitor on the wall
+    const w = Math.min(vw * 0.9, vh * 0.78 * (4 / 3));
+    const h = w * 0.75;
     const left = (vw - w) / 2;
     const top = (vh - h) / 2;
     const f = spec.from;
@@ -45,7 +46,7 @@ export function Cut({ spec, onDone }: { spec: CutSpec; onDone: () => void }) {
       top,
       width: w,
       height: h,
-      '--from': f ? `translate(${f.left - left}px, ${f.top - top}px) scale(${f.width / w}, ${f.height / h})` : 'scale(0.55)',
+      '--from': f ? `translate(${f.left - left}px, ${f.top - top}px) scale(${f.width / w})` : 'scale(0.55)',
     } as CSSProperties;
     return style;
   }, [spec]);
@@ -66,6 +67,10 @@ export function Cut({ spec, onDone }: { spec: CutSpec; onDone: () => void }) {
             </span>
             <span>{timecodeFor(f.show.id, i * 7)}</span>
           </div>
+          <div className="poi-cut__id">
+            {camFor(f.show.id)}
+            <small>{f.show.title}</small>
+          </div>
         </div>
       ))}
       <div className="poi-cut__static" />
@@ -73,7 +78,7 @@ export function Cut({ spec, onDone }: { spec: CutSpec; onDone: () => void }) {
         <div className={`poi-cut__subject poi-tone--${KIND[kind].tone}`}>
           <div className="poi-cut__zoom" style={zoom}>
             <div className="poi-cut__img">
-              <Poster show={subject.show} eager />
+              <Poster show={subject.show} variant="wide" eager />
             </div>
             <div className="poi-cut__osd">
               <span>

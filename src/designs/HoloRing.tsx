@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { defaultCollection, useCollections, type CollectionId, type Item } from './useCollections';
 import { HudSheet, ShowHud, useCalmFx, useCompact, useFitArtTitles } from './ShowHud';
 import { Poster } from '../components/Poster';
+import { prefetchArtwork } from '../providers/artwork';
 import { remember, showPath } from '../lib/showCache';
 import { progressOf } from '../lib/progress';
 
@@ -82,6 +83,15 @@ export default function HoloRing() {
 
   const active = n ? ((Math.round(rot / step) % slots) + slots) % slots : 0;
   const activeIdx = active < n ? active : -1;
+
+  // Pictures: the front card first, then its neighbours either side (layout effect, so this
+  // order reaches the artwork queue before the cards' own requests).
+  useLayoutEffect(() => {
+    if (!n) return;
+    const at = Math.max(0, activeIdx);
+    const order = [0, 1, -1, 2, -2, 3, -3, 4, -4].map((k) => (((at + k) % n) + n) % n);
+    prefetchArtwork([...new Set(order)].map((i) => items[i].show));
+  }, [activeIdx, items, n]);
   const current = activeIdx >= 0 ? items[activeIdx] : undefined;
 
   // reset when switching collections
@@ -127,7 +137,7 @@ export default function HoloRing() {
 
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement;
+      const t = e.target instanceof Element ? e.target : document.body;
       if (t.closest('input, textarea, select, [role="menu"], .menu') || document.querySelector('.overlay, .hud-sheet-wrap')) return;
       if (e.key === 'Enter' && t.closest('button, a')) return; // let focused controls handle Enter
       if (e.key === 'ArrowRight') move(1);
@@ -290,13 +300,15 @@ export default function HoloRing() {
                         {
                           transform: `rotateY(${ang}deg) translateZ(${radius}px) ${isActive ? 'translateZ(90px) scale(1.16)' : ''}`,
                           opacity: Math.max(0.12, 1 - d / 165),
-                          filter: `brightness(${Math.max(0.35, 1 - d / 140)})`,
+                          // a dimming overlay instead of filter: brightness() — filters re-rasterise 3D layers every frame
+                          '--dim': Math.min(0.65, d / 140).toFixed(2),
                           '--i': i,
                         } as React.CSSProperties
                       }
                     >
                       <div className="ring-card">
-                        <Poster show={it.show} />
+                        {/* eager: lazy-loading never fires inside 3D transforms (and the ring holds at most 20) */}
+                        <Poster show={it.show} eager={d < 100} />
                         {it.rec && <span className="ring-card__match">{it.rec.match}%</span>}
                         {p && p.total > 0 && (
                           <span className="ring-card__bar">
@@ -306,7 +318,7 @@ export default function HoloRing() {
                       </div>
                       {(!calm || d < 60) && (
                         <div className="ring-reflect" aria-hidden>
-                          <Poster show={it.show} />
+                          <Poster show={it.show} eager={d < 100} />
                         </div>
                       )}
                     </div>

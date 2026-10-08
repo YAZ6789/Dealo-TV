@@ -228,7 +228,7 @@ export default function WarpTunnel() {
 
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement;
+      const t = e.target instanceof Element ? e.target : document.body;
       if (t.closest('input, textarea, select, [role="menu"], .menu') || document.querySelector('.overlay, .hud-sheet-wrap')) return;
       if (e.key === 'Enter' && t.closest('button, a')) return; // let focused controls handle Enter
       if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'PageDown') go(1);
@@ -306,7 +306,8 @@ export default function WarpTunnel() {
 
   const current = items[Math.min(hudIdx, count - 1)];
   const len = (count + 4) * SPACING;
-  const planeLen = Math.min(len, 5600);
+  const lite = compact || calm;
+  const planeLen = Math.min(len, lite ? 3600 : 5600);
   const closeSheet = useCallback(() => setSheet(false), []);
 
   return (
@@ -320,14 +321,20 @@ export default function WarpTunnel() {
       onLostPointerCapture={onUp}
     >
       <div className="tunnel-streaks" aria-hidden />
+      {lite && <div className="tunnel-sides" aria-hidden />}
       <div className="tunnel-view" ref={view} style={{ '--card-w': `${cardW}px` } as React.CSSProperties}>
         <div className="tunnel-world" ref={world}>
           {/* corridor */}
           <div className="tunnel-corridor" ref={corridor}>
             <div className="tunnel-plane tunnel-floor" style={{ width: wallX * 2, height: planeLen, transform: `translate3d(${-wallX}px, ${H / 2}px, 0) rotateX(-90deg)` }} />
-            <div className="tunnel-plane tunnel-ceil" style={{ width: wallX * 2, height: planeLen, transform: `translate3d(${-wallX}px, ${-H / 2}px, 0) rotateX(-90deg)` }} />
-            <div className="tunnel-plane tunnel-wall" style={{ width: planeLen, height: H, transform: `translate3d(${-wallX}px, ${-H / 2}px, 0) rotateY(90deg)` }} />
-            <div className="tunnel-plane tunnel-wall" style={{ width: planeLen, height: H, transform: `translate3d(${wallX}px, ${-H / 2}px, 0) rotateY(90deg)` }} />
+            {/* Walls and ceiling are huge 3D layers (most of the frame cost); phones and calm mode draw them flat instead (.tunnel-sides). */}
+            {!lite && (
+              <>
+                <div className="tunnel-plane tunnel-ceil" style={{ width: wallX * 2, height: planeLen, transform: `translate3d(${-wallX}px, ${-H / 2}px, 0) rotateX(-90deg)` }} />
+                <div className="tunnel-plane tunnel-wall" style={{ width: planeLen, height: H, transform: `translate3d(${-wallX}px, ${-H / 2}px, 0) rotateY(90deg)` }} />
+                <div className="tunnel-plane tunnel-wall" style={{ width: planeLen, height: H, transform: `translate3d(${wallX}px, ${-H / 2}px, 0) rotateY(90deg)` }} />
+              </>
+            )}
           </div>
           {gates.map((g) => (
             <div key={g.label + g.z} className="tunnel-gate" style={{ width: wallX * 2, height: H, transform: `translate3d(${-wallX}px, ${-H / 2}px, ${g.z}px)` }}>

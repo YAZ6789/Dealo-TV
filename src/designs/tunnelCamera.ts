@@ -44,7 +44,8 @@ export function easeCam(cam: number, target: number, k: number) {
 /** Opacity of card `i` with the camera at `cam`: gone once passed, fading out with distance ahead. */
 export function cardOpacity(i: number, cam: number) {
   const z = -i * SPACING - 260 + cam;
-  if (z > 200) return 0;
+  if (z > 160) return 0;
+  if (z > 0) return 1 - z / 160; // just passed: fade out before it fills the screen
   if (z > -200) return 1;
   return Math.max(0, 1 + (z + 200) / 3600);
 }

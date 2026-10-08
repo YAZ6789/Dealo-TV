@@ -1315,8 +1315,21 @@
   .ch-rocker .ch-btn span {
     display: none;
   }
+  .ch-btn {
+    min-width: 40px;
+    height: 40px;
+  }
+  .ch-lcd {
+    min-width: 2.6em;
+  }
   .ch-tools {
     gap: 5px;
+  }
+}
+/* tall phones: a bigger, squarer picture uses the height instead of leaving it empty */
+@media (max-width: 600px) and (max-aspect-ratio: 10 / 19) {
+  .ch-screen {
+    aspect-ratio: 1 / 1;
   }
 }
 @media (max-width: 380px) {
@@ -1367,8 +1380,9 @@
     gap: 10px;
   }
   .ch-screen {
-    width: calc((max(160px, var(--ch-h)) - 28px) * 4 / 3);
-    aspect-ratio: 4 / 3;
+    width: calc((max(160px, var(--ch-h)) - 28px) * 1.6);
+    max-width: calc(100vw - 32px - 200px - 40px);
+    aspect-ratio: 16 / 10;
   }
   .ch-chin {
     display: flex;

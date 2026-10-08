@@ -7,6 +7,7 @@ import { GENRE_LABELS } from '../lib/genres';
 import { STATUS_LABEL } from '../lib/labels';
 import { remember, showPath } from '../lib/showCache';
 import { Poster } from '../components/Poster';
+import { prefetchArtwork } from '../providers/artwork';
 import { HudSheet, ShowHud, useCalmFx, useCompact } from './ShowHud';
 import { layoutSky, R, type StarNode } from './constellationLayout';
 
@@ -259,6 +260,11 @@ export default function Constellation() {
 
   /** Pick a star. On phones the card covers the bottom of the map, so keep the star in sight above it. */
   const select = (n: StarNode | null) => {
+    // poster for the card now, backdrop for the show page if they open it
+    if (n) {
+      prefetchArtwork([n.show]);
+      prefetchArtwork([n.show], 'backdrop');
+    }
     setSelected(n);
     setSheet(false);
     if (!n || !compact || !svg.current) return;
@@ -361,7 +367,11 @@ export default function Constellation() {
             const dim = focus && !related.has(n.id);
             return (
               <g key={n.id} data-star={n.id} transform={`translate(${n.x} ${n.y})`} className={`star star--${n.kind} ${st ? `star--${st}` : ''} ${dim ? 'dim' : ''} ${selected?.id === n.id ? 'sel' : ''}`}
-                onPointerEnter={(e) => e.pointerType === 'mouse' && !gesture.current && setHover(n)}
+                onPointerEnter={(e) => {
+                  if (e.pointerType !== 'mouse' || gesture.current) return;
+                  prefetchArtwork([n.show]);
+                  setHover(n);
+                }}
                 onPointerLeave={() => setHover((h) => (h?.id === n.id ? null : h))}
               >
                 <circle r={n.r + 14} className="star-hit" />
@@ -445,7 +455,7 @@ export default function Constellation() {
             }}
             aria-label={`Open ${selected.show.title}`}
           >
-            <Poster show={selected.show} />
+            <Poster show={selected.show} eager />
           </button>
           <ShowHud item={{ show: selected.show, rec: selected.rec, entry: selected.entry }} side="compact" onMore={() => setSheet(true)} />
           <button className="btn btn--icon btn--sm sky-peek__close" onClick={() => setSelected(null)} aria-label="Close">
@@ -466,12 +476,17 @@ export default function Constellation() {
           <button className="btn btn--icon btn--sm sky-panel__close" onClick={() => setSelected(null)} aria-label="Close">
             <X size={16} />
           </button>
-          <div className="sky-panel__poster" onClick={() => {
-            remember(selected.show);
-            nav(showPath(selected.show.id));
-          }}>
-            <Poster show={selected.show} />
-          </div>
+          <button
+            type="button"
+            className="sky-panel__poster"
+            aria-label={`Open ${selected.show.title}`}
+            onClick={() => {
+              remember(selected.show);
+              nav(showPath(selected.show.id));
+            }}
+          >
+            <Poster show={selected.show} eager />
+          </button>
           <ShowHud key={selected.id} item={{ show: selected.show, rec: selected.rec, entry: selected.entry }} />
           <button className="btn btn--sm btn--ghost" onClick={() => flyTo(selected)}>
             <Crosshair size={14} /> Fly to
@@ -501,7 +516,7 @@ function HoverCard({ node, svg, view }: { node: StarNode; svg: SVGSVGElement | n
   return (
     <div className="sky-hover" style={{ left, top }}>
       <div className="sky-hover__poster">
-        <Poster show={node.show} />
+        <Poster show={node.show} eager />
       </div>
       <div style={{ minWidth: 0 }}>
         <div className="sky-hover__title">{node.show.title}</div>
