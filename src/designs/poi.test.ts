@@ -100,6 +100,7 @@ describe('wallColumns', () => {
     expect(wallColumns(430, 932)).toBe(2);
     expect(wallColumns(768, 1024)).toBe(3);
     expect(wallColumns(1440, 900)).toBe(5);
+    expect(wallColumns(1920, 1080)).toBe(6);
     expect(wallColumns(844, 390)).toBe(4);
   });
 });

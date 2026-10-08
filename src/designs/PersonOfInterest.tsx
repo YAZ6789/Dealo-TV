@@ -162,8 +162,8 @@ export default function PersonOfInterest() {
   const eagerCount = cols * 3;
   useEffect(() => {
     const lib = allFeeds.filter((x) => x.entry);
-    prefetchArtwork(lib.slice(eagerCount, eagerCount + 30).map((x) => x.show));
-    if (suggest) prefetchArtwork(suggest.items.slice(0, 8).map((x) => x.show));
+    prefetchArtwork(lib.slice(eagerCount, eagerCount + 30).map((x) => x.show), 'backdrop');
+    if (suggest) prefetchArtwork(suggest.items.slice(0, 8).map((x) => x.show), 'backdrop');
   }, [allFeeds, eagerCount, suggest]);
 
   const jump = (id: Section['id']) => {

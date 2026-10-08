@@ -99,6 +99,16 @@ export default function ChannelSurfer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [curKey]);
 
+  // keep the active network tab in view on narrow screens (without scrolling the page)
+  const netsEl = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const bar = netsEl.current;
+    const tab = bar?.querySelector<HTMLElement>('.ch-net.on');
+    if (!bar || !tab) return;
+    const l = tab.offsetLeft - bar.offsetLeft;
+    if (l < bar.scrollLeft || l + tab.offsetWidth > bar.scrollLeft + bar.clientWidth) bar.scrollTo({ left: l - (bar.clientWidth - tab.offsetWidth) / 2, behavior: reduced ? 'auto' : 'smooth' });
+  }, [netIdx, collections.length, reduced]);
+
   const lastPerNet = useRef<Partial<Record<string, string>>>({});
   const prevKey = useRef<string | undefined>(undefined);
   const [canRecall, setCanRecall] = useState(false);
@@ -355,7 +365,8 @@ export default function ChannelSurfer() {
   });
 
   // ── wheel + swipe on the screen ──
-  const wheel = useRef({ acc: 0, at: 0 });
+  // wheel: a mouse notch = one channel; a trackpad flick (dozens of small events) = a few, not dozens
+  const wheel = useRef({ acc: 0, last: 0, stepAt: 0 });
   const stepRef = useRef(step);
   stepRef.current = step;
   useEffect(() => {
@@ -363,14 +374,18 @@ export default function ChannelSurfer() {
     if (!el) return;
     const w = (e: WheelEvent) => {
       e.preventDefault();
+      const dy = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : 0;
+      if (!dy) return;
       const s = wheel.current;
       const now = performance.now();
-      if (now - s.at < 220) return; // one notch per burst; trackpads send dozens
-      s.acc += Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : 0;
-      if (Math.abs(s.acc) > 40) {
-        stepRef.current(s.acc > 0 ? 1 : -1);
+      const fresh = now - s.last > 160; // a new gesture
+      s.last = now;
+      if (fresh) s.acc = 0;
+      s.acc += dy;
+      if ((fresh && Math.abs(dy) >= 4) || (Math.abs(s.acc) > 320 && now - s.stepAt > 280)) {
+        stepRef.current(dy > 0 ? 1 : -1);
         s.acc = 0;
-        s.at = now;
+        s.stepAt = now;
       }
     };
     el.addEventListener('wheel', w, { passive: false });
@@ -406,7 +421,7 @@ export default function ChannelSurfer() {
 
   return (
     <div className={`ch-stage ${reduced ? 'ch-reduced' : ''}`}>
-      <nav className="ch-nets" aria-label="Networks">
+      <nav className="ch-nets" aria-label="Networks" ref={netsEl}>
         {collections.map((c, i) => (
           <button key={c.id} className={`ch-net ${i === netIdx ? 'on' : ''}`} aria-pressed={i === netIdx} onClick={() => tuneNet(i)}>
             {c.label}

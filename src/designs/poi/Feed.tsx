@@ -57,7 +57,7 @@ export const Feed = memo(function Feed({ item, eager, onOpen, small }: { item: I
     >
       <span className="poi-feed__screen">
         <span className="poi-feed__img">
-          <Poster show={item.show} eager={eager} />
+          <Poster show={item.show} variant="wide" eager={eager} />
         </span>
         <span className="poi-feed__fx" aria-hidden />
         <span className="poi-feed__osd" aria-hidden>

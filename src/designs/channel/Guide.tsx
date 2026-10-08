@@ -110,8 +110,9 @@ export function Guide({ channels, collections, currentKey, fmtCh, onTune, onClos
     const { show, rec } = ch.item;
     const len = slotMinutes(show.runtime);
     // each channel's programmes start at a slightly different time, like a real schedule
-    const shift = hash(show.id) % Math.max(1, Math.floor(len * 0.7));
-    const first = time.nowMin - shift;
+    // the programme on now started at or before the left edge and is still running
+    const lo = Math.min(time.nowMin, len - 1);
+    const first = time.nowMin - (lo + (hash(show.id) % Math.max(1, Math.floor(len - lo))));
     const count = Math.min(6, Math.ceil((SPAN - first) / len) + 1);
     const slots = schedule(ch.item, entry, count);
     const on = keyOf(ch) === currentKey;
@@ -136,7 +137,12 @@ export function Guide({ channels, collections, currentKey, fmtCh, onTune, onClos
             {on ? <b>On now · </b> : null}
             {rec ? `${rec.match}% match` : [yearRange(show), show.networks?.[0]].filter(Boolean).join(' · ')}
           </span>
-          <span className="ch-g-sched">{slots.slice(0, 2).map((s) => slotText(s)).join(' · ')}</span>
+          <span className="ch-g-sched">
+            {slots
+              .slice(0, slots[0]?.kind === 'rerun' ? 1 : 2)
+              .map((s) => slotText(s))
+              .join(' · ')}
+          </span>
         </span>
         <span className="ch-g-line" aria-hidden>
           {slots.map((s, si) => {
@@ -151,7 +157,7 @@ export function Guide({ channels, collections, currentKey, fmtCh, onTune, onClos
                 className={`ch-g-slot ch-g-slot--${s.kind} ${from < 0 ? 'cut' : ''} ${from <= time.nowMin && time.nowMin < to ? 'live' : ''}`}
                 style={{ left: `${(l / SPAN) * 100}%`, width: `${((r - l) / SPAN) * 100}%` }}
               >
-                <b>{s.tag}</b> {s.label}
+                {(si === 0 || s.kind === 'offair') && <b>{s.tag}</b>} {s.label}
               </span>
             );
           })}

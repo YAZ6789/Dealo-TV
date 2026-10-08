@@ -22,7 +22,10 @@ export function Clock({ calm }: { calm: boolean }) {
   const d = now;
   return (
     <span className="poi-clock">
-      {d.getFullYear()}.{p2(d.getMonth() + 1)}.{p2(d.getDate())} {p2(d.getHours())}:{p2(d.getMinutes())}
+      <span className="poi-clock__d">
+        {d.getFullYear()}.{p2(d.getMonth() + 1)}.{p2(d.getDate())}{' '}
+      </span>
+      {p2(d.getHours())}:{p2(d.getMinutes())}
       {!calm && <span className="poi-clock__s">:{p2(d.getSeconds())}</span>}
     </span>
   );

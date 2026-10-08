@@ -28,7 +28,7 @@
 /* ───────────── networks ───────────── */
 .ch-nets {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 4px;
   overflow-x: auto;
   scrollbar-width: none;
@@ -37,6 +37,13 @@
 }
 .ch-nets::-webkit-scrollbar {
   display: none;
+}
+/* centred when it fits, scrollable from the start when it doesn't */
+.ch-nets > :first-child {
+  margin-left: auto;
+}
+.ch-nets > :last-child {
+  margin-right: auto;
 }
 .ch-net {
   flex: none;
@@ -923,6 +930,7 @@
   height: min(860px, 100%);
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   background: var(--panel-solid);
   border: 1px solid var(--panel-border-strong);
   border-radius: var(--radius);
@@ -973,7 +981,7 @@
 }
 .ch-guide__net {
   flex: none;
-  height: 36px;
+  height: 40px;
   padding: 0 12px;
   font-family: var(--font-mono);
   font-size: var(--fs-xs);
@@ -1402,6 +1410,7 @@
   .ch-guide {
     padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
     place-items: stretch;
+    grid-template-columns: minmax(0, 1fr);
   }
   .ch-guide__panel {
     width: 100%;

@@ -211,7 +211,7 @@ export function nextFeed(boxes: Box[], from: number, key: 'ArrowLeft' | 'ArrowRi
 
 /** Columns for the wall: 2 on phones, up to 5 on wide screens; more on short landscape screens. */
 export function wallColumns(width: number, height: number): number {
-  let cols = width < 560 ? 2 : width < 900 ? 3 : width < 1250 ? 4 : 5;
-  if (height < 520 && width >= 640) cols = Math.max(cols, width < 900 ? 4 : 6);
+  let cols = width < 560 ? 2 : width < 900 ? 3 : width < 1200 ? 4 : width < 1650 ? 5 : 6;
+  if (height < 520 && width >= 640) cols = Math.max(cols, 4);
   return cols;
 }
