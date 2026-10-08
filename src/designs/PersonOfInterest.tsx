@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronDown, ChevronUp, Compass, Upload } from 'lucide-react';
 import { useCollections, type Item } from './useCollections';
 import { useCalmFx, useFitArtTitles, useMedia } from './ShowHud';
@@ -10,7 +10,7 @@ import { Feed } from './poi/Feed';
 import { Cut, type CutSpec } from './poi/Cut';
 import { Dossier } from './poi/Dossier';
 import { Boot, Clock, Ticker } from './poi/Hud';
-import { KIND, buildSections, cutFrames, nextFeed, wallColumns, type Section } from './poi/logic';
+import { KIND, buildSections, cutFrames, nextFeed, resolveSubject, wallColumns, type Section } from './poi/logic';
 
 /**
  * PERSON OF INTEREST — your TV life from the Machine's point of view.
@@ -59,15 +59,28 @@ export default function PersonOfInterest() {
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   useFitArtTitles(root, [sections, cols, expanded]);
-  const [open, setOpen] = useState<{ sid: Section['id']; list: Item[]; index: number } | null>(null);
   const [cut, setCut] = useState<CutSpec | null>(null);
   const cutSeq = useRef(0);
   const returnTo = useRef<string | null>(null);
   const lockTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
+  /*
+   * The open file lives in the URL (#/?subject=<id>), so the phone's Back
+   * button / browser back closes it. Opening pushes a history entry; moving
+   * between subjects replaces it; our own Back/Esc goes back one step when we
+   * pushed it (else just drops the param). A reload opens straight onto the
+   * file (no cut); an unknown id is ignored.
+   */
+  const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
+  const subjectId = params.get('subject');
+  const [from, setFrom] = useState<{ sid: Section['id']; list: Item[] } | null>(null);
+  const pushed = useRef(false);
+  const open = useMemo(() => resolveSubject(sections, subjectId, from?.sid, from?.list), [sections, subjectId, from]);
+
   // latest values for the stable callbacks below
-  const live = useRef({ sections, fade });
-  live.current = { sections, fade };
+  const live = useRef({ sections, fade, params });
+  live.current = { sections, fade, params };
   const allFeeds = useMemo(() => sections.flatMap((s) => s.items), [sections]);
   const allRef = useRef(allFeeds);
   allRef.current = allFeeds;
@@ -85,29 +98,60 @@ export default function PersonOfInterest() {
   }, []);
   useEffect(() => () => clearTimeout(lockTimer.current), []);
 
-  const openFeed = useCallback((item: Item, el: HTMLElement) => {
-    const sid = el.closest('[data-poi-section]')?.getAttribute('data-poi-section') as Section['id'] | undefined;
-    const sec = live.current.sections.find((s) => s.id === sid);
-    const list = sec?.items.length ? sec.items : [item];
-    const index = Math.max(0, list.findIndex((x) => x.show.id === item.show.id));
-    returnTo.current = item.show.id;
-    prefetchArtwork([item.show], 'backdrop');
-    setOpen({ sid: sec?.id ?? 'suggest', list, index });
-    if (live.current.fade) return;
-    const r = (el.querySelector('.poi-feed__screen') ?? el).getBoundingClientRect();
-    const id = ++cutSeq.current;
-    setCut({ id, mode: 'in', subject: item, from: { left: r.left, top: r.top, width: r.width, height: r.height }, frames: cutFrames(allRef.current, item.show.id, 2, id) });
+  const withSubject = useCallback((id: string | null) => {
+    const next = new URLSearchParams(live.current.params);
+    if (id) next.set('subject', id);
+    else next.delete('subject');
+    return next;
   }, []);
 
+  const openFeed = useCallback(
+    (item: Item, el: HTMLElement) => {
+      const sid = el.closest('[data-poi-section]')?.getAttribute('data-poi-section') as Section['id'] | undefined;
+      const sec = live.current.sections.find((s) => s.id === sid);
+      returnTo.current = item.show.id;
+      prefetchArtwork([item.show], 'backdrop');
+      setFrom({ sid: sec?.id ?? 'suggest', list: sec?.items.length ? sec.items : [item] });
+      pushed.current = true;
+      setParams(withSubject(item.show.id)); // push: Back closes the file
+      if (live.current.fade) return;
+      const r = (el.querySelector('.poi-feed__screen') ?? el).getBoundingClientRect();
+      const id = ++cutSeq.current;
+      setCut({ id, mode: 'in', subject: item, from: { left: r.left, top: r.top, width: r.width, height: r.height }, frames: cutFrames(allRef.current, item.show.id, 2, id) });
+    },
+    [setParams, withSubject],
+  );
+
   const closeFile = useCallback(() => {
-    setOpen(null);
-    if (live.current.fade) {
-      requestAnimationFrame(markReturn);
-      return;
+    if (pushed.current) {
+      pushed.current = false;
+      navigate(-1);
+    } else setParams(withSubject(null), { replace: true });
+  }, [navigate, setParams, withSubject]);
+
+  const showSubject = useCallback(
+    (id: string) => {
+      returnTo.current = id;
+      setParams(withSubject(id), { replace: true });
+    },
+    [setParams, withSubject],
+  );
+
+  // however the file closes (our Back/Esc, the phone's Back, browser back): cut out to the wall
+  const wasOpen = useRef(!!open);
+  useEffect(() => {
+    const now = !!open;
+    if (wasOpen.current && !now) {
+      pushed.current = false;
+      if (live.current.fade) requestAnimationFrame(markReturn);
+      else {
+        const id = ++cutSeq.current;
+        setCut({ id, mode: 'out', frames: cutFrames(allRef.current, returnTo.current ?? '', 1, id) });
+      }
     }
-    const id = ++cutSeq.current;
-    setCut({ id, mode: 'out', frames: cutFrames(allRef.current, returnTo.current ?? '', 1, id) });
-  }, [markReturn]);
+    if (now && subjectId) returnTo.current = subjectId;
+    wasOpen.current = now;
+  }, [open, subjectId, markReturn]);
 
   const cutMode = useRef<CutSpec['mode'] | null>(null);
   cutMode.current = cut?.mode ?? null;
@@ -130,15 +174,16 @@ export default function PersonOfInterest() {
   }, [cut, finishCut]);
 
   // the page behind a file doesn't scroll
+  const isOpen = !!open;
   useEffect(() => {
-    if (!open) return;
+    if (!isOpen) return;
     const html = document.documentElement;
     const prev = html.style.overflow;
     html.style.overflow = 'hidden';
     return () => {
       html.style.overflow = prev;
     };
-  }, [open]);
+  }, [isOpen]);
 
   // arrow keys move between feeds across the whole wall
   const onWallKey = (e: React.KeyboardEvent) => {
@@ -185,7 +230,7 @@ export default function PersonOfInterest() {
   }, [library, libCount, suggest]);
 
   let running = 0;
-  const openSection = open ? sections.find((s) => s.id === open.sid) : undefined;
+  const openSection = open?.sid ? sections.find((s) => s.id === open.sid) : undefined;
 
   return (
     <div className={`poi poi-theme ${calm ? 'poi--calm' : ''}`} ref={root} style={{ '--cols': cols } as React.CSSProperties} onKeyDown={onWallKey}>
@@ -308,8 +353,8 @@ export default function PersonOfInterest() {
           index={open.index}
           sectionLabel={openSection ? KIND[openSection.kind].plain : 'File'}
           onIndex={(index) => {
-            returnTo.current = open.list[index]?.show.id ?? returnTo.current;
-            setOpen((o) => (o ? { ...o, index } : o));
+            const id = open.list[index]?.show.id;
+            if (id) showSubject(id);
           }}
           onClose={closeFile}
           fade={fade}

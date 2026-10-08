@@ -215,3 +215,24 @@ export function wallColumns(width: number, height: number): number {
   if (height < 520 && width >= 640) cols = Math.max(cols, 4);
   return cols;
 }
+
+/**
+ * Which list a subject's file browses: the section it was opened from if it
+ * is still there, else whichever section holds it now (its status may have
+ * changed while the file was open), else a snapshot. Unknown ids → null.
+ */
+export function resolveSubject<T extends { show: { id: string } }>(
+  sections: { id: Section['id']; items: T[] }[],
+  id: string | null | undefined,
+  preferred?: Section['id'],
+  snapshot?: T[],
+): { sid: Section['id'] | null; list: T[]; index: number } | null {
+  if (!id) return null;
+  const order = preferred ? [...sections.filter((s) => s.id === preferred), ...sections.filter((s) => s.id !== preferred)] : sections;
+  for (const s of order) {
+    const index = s.items.findIndex((x) => x.show.id === id);
+    if (index >= 0) return { sid: s.id, list: s.items, index };
+  }
+  const index = snapshot?.findIndex((x) => x.show.id === id) ?? -1;
+  return snapshot && index >= 0 ? { sid: preferred ?? null, list: snapshot, index } : null;
+}

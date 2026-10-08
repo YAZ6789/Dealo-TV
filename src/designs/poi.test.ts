@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildSections, camFor, cutFrames, kindOf, lastSeen, nextFeed, seasonLog, ssnFor, timecodeFor, wallColumns, type Box } from './poi/logic';
+import { buildSections, camFor, cutFrames, kindOf, lastSeen, nextFeed, resolveSubject, seasonLog, ssnFor, timecodeFor, wallColumns, type Box } from './poi/logic';
 import type { Collection } from './useCollections';
 
 const show = (id: string) => ({ show: { id, title: id, genres: [], source: 'catalog' } }) as unknown as Collection['items'][number];
@@ -102,5 +102,23 @@ describe('wallColumns', () => {
     expect(wallColumns(1440, 900)).toBe(5);
     expect(wallColumns(1920, 1080)).toBe(6);
     expect(wallColumns(844, 390)).toBe(4);
+  });
+});
+
+describe('resolveSubject', () => {
+  const secs = [
+    { id: 'closed' as const, items: [show('a'), show('b')] },
+    { id: 'active' as const, items: [show('c')] },
+    { id: 'suggest' as const, items: [show('b'), show('d')] },
+  ];
+  it('finds the subject, preferring the section it was opened from', () => {
+    expect(resolveSubject(secs, 'b')).toMatchObject({ sid: 'closed', index: 1 });
+    expect(resolveSubject(secs, 'b', 'suggest')).toMatchObject({ sid: 'suggest', index: 0 });
+    expect(resolveSubject(secs, 'c', 'closed')).toMatchObject({ sid: 'active', index: 0 });
+  });
+  it('falls back to a snapshot and ignores unknown or empty ids', () => {
+    expect(resolveSubject(secs, 'zz')).toBeNull();
+    expect(resolveSubject(secs, null)).toBeNull();
+    expect(resolveSubject(secs, 'x', 'closed', [show('x')])).toMatchObject({ index: 0, sid: 'closed' });
   });
 });
