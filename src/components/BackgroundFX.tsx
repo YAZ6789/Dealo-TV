@@ -65,7 +65,8 @@ function GlyphRain() {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const canvas = ref.current;
-    if (!canvas || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // phones: no endless canvas loop (battery) — the static scanlines carry the look
+    if (!canvas || matchMedia('(prefers-reduced-motion: reduce), (hover: none) and (pointer: coarse)').matches) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     const glyphs = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄ01234567890<>/{}[]=+*#$%';

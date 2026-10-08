@@ -2314,3 +2314,11 @@ input[type='range'].slider::-moz-range-thumb {
   min-height: 24px;
   white-space: normal;
 }
+
+/* Phones: the skins' ambient backgrounds are still, not endlessly animated (battery). */
+@media (hover: none) and (pointer: coarse) {
+  .fx-layer *,
+  .topbar::after {
+    animation: none !important;
+  }
+}

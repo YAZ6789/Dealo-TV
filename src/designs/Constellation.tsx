@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Crosshair, HelpCircle, Minus, Plus, X } from 'lucide-react';
 import { useLibrary } from '../store/library';
 import { useRecommendations } from '../hooks/useRecommendations';
@@ -494,11 +494,19 @@ export default function Constellation() {
         </aside>
       )}
 
-      {sky.nodes.length === 0 && (
-        <div className="sky-empty">
-          <div className="spinner" /> Mapping your universe…
-        </div>
-      )}
+      {sky.nodes.length === 0 &&
+        (recs.stage === 'ready' || Object.keys(entries).length === 0 ? (
+          <div className="sky-empty">
+            <p>Your map starts with the shows you've watched. Add a few and they'll light up here.</p>
+            <Link to="/discover" className="btn btn--primary">
+              Find shows
+            </Link>
+          </div>
+        ) : (
+          <div className="sky-empty">
+            <div className="spinner" /> Mapping your universe…
+          </div>
+        ))}
     </div>
   );
 }

@@ -77,7 +77,7 @@ export default function HoloRing() {
 
   const [rot, setRot] = useState(0); // degrees, continuous
   const [dragging, setDragging] = useState(false);
-  const drag = useRef<{ x: number; rot: number; moved: boolean; id: number; t: number; v: number; lx: number } | null>(null);
+  const drag = useRef<{ x: number; y: number; rot: number; moved: boolean; id: number; t: number; v: number; lx: number } | null>(null);
   const wheelTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const stage = useRef<HTMLDivElement>(null);
 
@@ -199,7 +199,7 @@ export default function HoloRing() {
   const onPointerDown = (e: React.PointerEvent) => {
     if ((e.target as HTMLElement).closest('button, a')) return;
     if (drag.current && !e.isPrimary) return; // second finger: ignore (a new primary pointer replaces a drag whose "up" never came)
-    drag.current = { x: e.clientX, rot, moved: false, id: e.pointerId, t: performance.now(), v: 0, lx: e.clientX };
+    drag.current = { x: e.clientX, y: e.clientY, rot, moved: false, id: e.pointerId, t: performance.now(), v: 0, lx: e.clientX };
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     setDragging(true);
   };
@@ -208,7 +208,8 @@ export default function HoloRing() {
     const d = drag.current;
     if (!d || e.pointerId !== d.id) return;
     const dx = e.clientX - d.x;
-    if (Math.abs(dx) > 6) d.moved = true;
+    // any real movement (a vertical swipe too) means this is not a tap on a poster
+    if (Math.abs(dx) > 6 || Math.abs(e.clientY - d.y) > 10) d.moved = true;
     const now = performance.now();
     if (now > d.t) d.v = 0.7 * ((e.clientX - d.lx) / (now - d.t)) + 0.3 * d.v; // px per ms, smoothed
     d.t = now;
@@ -354,7 +355,7 @@ export default function HoloRing() {
                 })}
               </div>
               <div className="ring-beam" aria-hidden />
-              <div className="ring-floor" aria-hidden>
+              <div className="ring-floor" aria-hidden style={{ '--floor-turn': `${-rot}deg` } as React.CSSProperties}>
                 <div className="ring-floor__disc" />
                 <div className="ring-floor__ticks" />
                 <div className="ring-floor__ring" />

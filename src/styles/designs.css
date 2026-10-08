@@ -331,7 +331,8 @@ div.hud-compact__text {
   transform-style: preserve-3d;
   transition: transform 0.85s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.ring-viewport.dragging .ring-carousel {
+.ring-viewport.dragging .ring-carousel,
+.ring-viewport.dragging .ring-floor > div {
   transition: none;
 }
 .ring-item {
@@ -396,7 +397,7 @@ div.hud-compact__text {
   pointer-events: none;
   background: linear-gradient(to bottom, transparent 0%, color-mix(in srgb, var(--accent) 22%, transparent) 49%, color-mix(in srgb, var(--accent) 55%, transparent) 50%, transparent 51%);
   background-size: 100% 300%;
-  animation: ring-scan 3.2s linear infinite;
+  animation: ring-scan 3.2s linear 2; /* sweeps when a card comes to the front, then rests (nothing runs while idle) */
   mix-blend-mode: screen;
 }
 @keyframes ring-scan {
@@ -480,14 +481,16 @@ div.hud-compact__text {
   background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--accent) 55%, transparent) 0deg 0.6deg, transparent 0.6deg 6deg);
   -webkit-mask-image: radial-gradient(circle, transparent 66%, black 67%, black 70%, transparent 71%);
   mask-image: radial-gradient(circle, transparent 66%, black 67%, black 70%, transparent 71%);
-  animation: ring-spin 60s linear infinite;
+  transform: rotate(var(--floor-turn, 0deg));
+  transition: transform 0.85s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .ring-floor__ring {
   inset: 14% !important;
   border: 2px solid color-mix(in srgb, var(--accent-2) 60%, transparent);
   box-shadow: 0 0 40px color-mix(in srgb, var(--accent-2) 40%, transparent), inset 0 0 40px color-mix(in srgb, var(--accent) 25%, transparent);
   border-style: dashed;
-  animation: ring-spin 90s linear infinite reverse;
+  transform: rotate(calc(var(--floor-turn, 0deg) * -0.5));
+  transition: transform 0.85s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 @keyframes ring-spin {
   to {
@@ -556,6 +559,15 @@ div.hud-compact__text {
 .tunnel-card .art__kicker {
   font-size: clamp(0.5rem, 6.4cqi, 0.68rem);
   overflow-wrap: anywhere;
+}
+
+/* Wide screens: the stages already fill the window, so cancel the page's bottom padding (no stray 80px scroll). */
+@media (min-width: 861px) {
+  .ring-stage,
+  .sky-stage,
+  .tunnel-stage {
+    margin-bottom: -80px;
+  }
 }
 
 /* Holo Ring — phones (JS adds .ring-stage--compact at the tab-bar breakpoint) */
@@ -665,6 +677,17 @@ div.hud-compact__text {
   }
 }
 
+/* phones / calm: the platform is drawn flat (a squashed 2D ellipse) instead of a huge
+   3D-rotated layer — half the frame cost while spinning, nearly the same look */
+.ring-stage--compact .ring-floor,
+.fx-calm .ring-floor {
+  top: calc(45% + var(--card-w) * 0.75 + 10px);
+  transform: translate(-50%, -50%) scaleY(0.14);
+}
+.ring-stage--compact .ring-carousel ~ .ring-floor {
+  top: calc(41% + var(--card-w) * 0.75 + 10px);
+}
+
 /* calm: reduceFx, reduced motion or touch devices — no idle animation */
 .fx-calm .ring-item.active .ring-card::after,
 .fx-calm .ring-floor__ticks,
@@ -752,10 +775,10 @@ div.hud-compact__text {
   stroke-width: 2;
   stroke-dasharray: 6 8;
   transform-origin: 0 0;
-  animation: ring-spin 30s linear infinite;
+  animation: ring-spin 8s cubic-bezier(0.2, 0.7, 0.3, 1) 1;
 }
 .sky-core-glow {
-  animation: sky-breathe 4s ease-in-out infinite;
+  animation: sky-breathe 4s ease-in-out 2;
   transform-origin: 0 0;
 }
 @keyframes sky-breathe {
@@ -812,7 +835,7 @@ div.hud-compact__text {
   stroke: var(--accent-2);
   stroke-width: 2;
   transform-origin: 0 0;
-  animation: star-pulse 2s ease-out infinite;
+  animation: star-pulse 2s ease-out 3; /* then rests as a still ring */
 }
 @keyframes star-pulse {
   from {
@@ -1014,8 +1037,18 @@ div.hud-compact__text {
   display: grid;
   place-items: center;
   align-content: center;
-  gap: 10px;
+  gap: 14px;
+  padding: 0 var(--gutter);
+  text-align: center;
   color: var(--text-dim);
+  pointer-events: none;
+}
+.sky-empty > * {
+  pointer-events: auto;
+}
+.sky-empty p {
+  max-width: 34ch;
+  margin: 0;
 }
 
 /* map moves from buttons / fly-to glide; gestures follow the finger */

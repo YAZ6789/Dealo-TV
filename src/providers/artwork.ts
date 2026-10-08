@@ -86,7 +86,16 @@ function pump() {
 }
 
 function enqueue(s: ShowSummary) {
-  if (queued.has(s.id) || memo.has(s.id)) return;
+  if (memo.has(s.id)) return;
+  if (queued.has(s.id)) {
+    // Asked again (it's on screen now): jump to the front of the line instead of waiting behind later requests.
+    const i = queue.findIndex((q) => q.id === s.id);
+    if (i >= 0 && i !== queue.length - 1) {
+      queue.splice(i, 1);
+      queue.push(s);
+    }
+    return;
+  }
   queued.add(s.id);
   // Fast path: a cached answer skips the rate-limited queue entirely.
   void peek<Artwork | null>(keyFor(s)).then((hit) => {
