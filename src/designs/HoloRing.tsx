@@ -331,8 +331,8 @@ export default function HoloRing() {
                       }
                     >
                       <div className="ring-card">
-                        {/* eager: lazy-loading never fires inside 3D transforms (and the ring holds at most 20) */}
-                        <Poster show={it.show} eager={d < 100} />
+                        {/* eager: lazy-loading never fires inside 3D transforms (the ring holds at most 20; the front ones are queued first above) */}
+                        <Poster show={it.show} eager />
                         {it.rec && <span className="ring-card__match">{it.rec.match}%</span>}
                         {p && p.total > 0 && (
                           <span className="ring-card__bar">
@@ -342,7 +342,7 @@ export default function HoloRing() {
                       </div>
                       {(!calm || d < 60) && (
                         <div className="ring-reflect" aria-hidden>
-                          <Poster show={it.show} eager={d < 100} />
+                          <Poster show={it.show} eager />
                         </div>
                       )}
                     </div>

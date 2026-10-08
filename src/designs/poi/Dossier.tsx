@@ -87,8 +87,9 @@ export function Dossier({
         goRef.current(e.key === 'ArrowLeft' ? -1 : 1);
       }
     };
-    addEventListener('keydown', k);
-    return () => removeEventListener('keydown', k);
+    // capture: runs before the status menu's own Esc handler closes it, so Esc closes only the menu
+    addEventListener('keydown', k, true);
+    return () => removeEventListener('keydown', k, true);
   }, [onClose]);
 
   // horizontal swipe between subjects; vertical stays a scroll

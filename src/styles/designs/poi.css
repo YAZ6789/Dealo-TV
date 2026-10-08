@@ -55,6 +55,23 @@
   --tone: var(--poi-red);
 }
 
+/* popovers opened from inside the design (status menu) wear its colours too */
+body:has(.poi) .menu {
+  --panel-solid: #101011;
+  --panel-border: rgba(255, 255, 255, 0.16);
+  --panel-border-strong: rgba(255, 255, 255, 0.42);
+  --text: #eeeeee;
+  --text-dim: #b8b8b8;
+  --text-faint: #9a9a9a;
+  --accent: #f2d600;
+  --danger: #ff4a4f;
+  --radius: 0px;
+  --radius-sm: 0px;
+  --glow-soft: 0 0 0 1px rgba(242, 214, 0, 0.3);
+  color-scheme: dark;
+  font-family: 'JetBrains Mono Variable', ui-monospace, monospace;
+}
+
 /* the whole screen goes dark while this design is up (also in light mode) */
 body:has(.poi) {
   background: #050505;
