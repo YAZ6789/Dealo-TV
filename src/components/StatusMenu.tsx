@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Ban, Check, ChevronDown, Clock, Eye, Pause, Plus, Trash2, X } from 'lucide-react';
 import type { ShowSummary, WatchStatus } from '../types';
@@ -33,6 +33,24 @@ export function StatusMenu({ show, primary }: { show: ShowSummary; primary?: boo
     setPos({ x: Math.min(r.left, innerWidth - 240), y: r.bottom + 6 + scrollY });
     setOpen((o) => !o);
   };
+
+  // Once rendered, keep the menu on screen: open upwards when there's no room below
+  // (buttons low on a phone screen, above the tab bar), and clamp between the bars.
+  useLayoutEffect(() => {
+    if (!open || !menu.current || !btn.current) return;
+    const r = btn.current.getBoundingClientRect();
+    const m = menu.current.getBoundingClientRect();
+    const css = getComputedStyle(document.documentElement);
+    const topBar = parseFloat(css.getPropertyValue('--topbar-h')) || 0;
+    const tabBar = innerWidth <= 860 ? parseFloat(css.getPropertyValue('--tabbar-h')) || 0 : 0;
+    const minY = topBar + 6;
+    const maxY = innerHeight - tabBar - 8;
+    let top = r.bottom + 6;
+    if (top + m.height > maxY && r.top - 6 - m.height >= minY) top = r.top - 6 - m.height;
+    top = Math.max(minY, Math.min(top, maxY - m.height));
+    const left = Math.max(8, Math.min(r.left, innerWidth - m.width - 8));
+    if (Math.abs(top + scrollY - pos.y) > 0.5 || Math.abs(left - pos.x) > 0.5) setPos({ x: left, y: top + scrollY });
+  }, [open, pos]);
 
   const Icon = entry ? STATUS_ICON[entry.status] : Plus;
   const label = entry ? STATUS_LABEL[entry.status] : blocked ? 'Not interested' : 'Add to list';
