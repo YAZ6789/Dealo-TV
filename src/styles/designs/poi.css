@@ -1471,6 +1471,46 @@ body:has(.poi) .fx-layer {
   .poi-feed__osd {
     padding: 5px 6px;
   }
+  /* narrow monitors: camera id only, box a little lower so its tag clears it */
+  .poi-feed__osd > span + span {
+    display: none;
+  }
+  .poi-box {
+    top: 38%;
+    bottom: 9%;
+  }
+}
+/* short landscape screens: a compact header so feeds show straight away */
+@media (max-height: 520px) {
+  .poi-hud {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .poi-hud__title {
+    font-size: 1.3rem;
+  }
+  .poi-hud__sub {
+    display: none;
+  }
+  .poi-board__tile {
+    min-height: 0;
+    grid-template-columns: auto auto;
+    grid-template-areas: 'code code' 'n plain';
+    align-items: baseline;
+    justify-content: start;
+    column-gap: 8px;
+    padding: 6px 10px;
+  }
+  .poi-board__code {
+    grid-area: code;
+  }
+  .poi-board__n {
+    grid-area: n;
+    font-size: 1.3rem;
+  }
+  .poi-board__plain {
+    grid-area: plain;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

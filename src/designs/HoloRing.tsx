@@ -98,7 +98,11 @@ export default function HoloRing() {
   useEffect(() => {
     setRot(0);
     setSheet(false);
+    setDragging(false);
+    drag.current = null;
+    clearTimeout(wheelTimer.current);
   }, [cid]);
+  useEffect(() => () => clearTimeout(wheelTimer.current), []);
 
   // Keep the chosen tab visible in the scrolling tab row (phones).
   useEffect(() => {
