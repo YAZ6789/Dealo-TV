@@ -63,6 +63,25 @@ export async function cached<T>(key: string, ttl: number, load: () => Promise<T>
   }
 }
 
+/** A cached value if there is a fresh one (memory or disk) — never hits the network. */
+export async function peek<T>(key: string): Promise<T | undefined> {
+  const now = Date.now();
+  const hit = memory.get(key) as Boxed<T> | undefined;
+  if (hit && hit.exp > now) return hit.v;
+  const s = store();
+  if (!s) return undefined;
+  try {
+    const disk = (await get(key, s)) as Boxed<T> | undefined;
+    if (disk && disk.exp > now) {
+      memory.set(key, disk);
+      return disk.v;
+    }
+  } catch {
+    /* unavailable */
+  }
+  return undefined;
+}
+
 export async function invalidate(key: string): Promise<void> {
   memory.delete(key);
   const s = store();

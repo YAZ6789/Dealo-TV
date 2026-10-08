@@ -104,6 +104,8 @@ export interface LibraryState extends LibraryDoc {
   setSeasonWatched: (id: ShowId, season: number, count: number, watched: boolean, runtime?: number) => void;
   /** Store fresh metadata (poster, aired episode counts…) on an existing entry. */
   refresh: (id: ShowId, show: ShowSummary, seasonSizes?: number[]) => void;
+  /** Store looked-up poster/backdrop URLs on entries (batched; doesn't count as activity). */
+  setArtwork: (art: Record<ShowId, { poster?: string; backdrop?: string }>) => void;
   /** Move an entry to a new id (e.g. catalog → TMDB after adding a key). */
   rekey: (oldId: ShowId, show: ShowSummary) => void;
 
@@ -307,6 +309,19 @@ export const useLibrary = create<LibraryState>()((set, get) => ({
       },
       events,
     );
+  },
+
+  setArtwork(art) {
+    set((s) => {
+      let entries: typeof s.entries | undefined;
+      for (const [id, a] of Object.entries(art)) {
+        const e = (entries ?? s.entries)[id];
+        if (!e || e.show.poster || !a.poster) continue;
+        entries ??= { ...s.entries };
+        entries[id] = { ...e, show: { ...e.show, poster: a.poster, backdrop: e.show.backdrop ?? a.backdrop } };
+      }
+      return entries ? { entries, updatedAt: now() } : {};
+    });
   },
 
   refresh(id, show, seasonSizes) {

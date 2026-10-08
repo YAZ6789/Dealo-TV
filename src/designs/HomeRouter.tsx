@@ -4,13 +4,11 @@ import { Home } from '../pages/Home';
 import { lazyRoute } from '../lib/lazyRoute';
 
 const DESIGNS: Record<Exclude<DesignId, 'stream'>, LazyExoticComponent<ComponentType>> = {
+  poi: lazyRoute(() => import('./PersonOfInterest')),
   ring: lazyRoute(() => import('./HoloRing')),
   constellation: lazyRoute(() => import('./Constellation')),
   tunnel: lazyRoute(() => import('./WarpTunnel')),
-  swipe: lazyRoute(() => import('./SwipeDeck')),
   channel: lazyRoute(() => import('./ChannelSurfer')),
-  timeline: lazyRoute(() => import('./LifeTimeline')),
-  mission: lazyRoute(() => import('./MissionControl')),
 };
 
 export function HomeRouter() {

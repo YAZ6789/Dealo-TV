@@ -1284,6 +1284,17 @@ div.hud-compact__text {
   pointer-events: none;
   -webkit-user-drag: none;
 }
+.tunnel-card__blank {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 10%, var(--bg-2)), var(--bg-2));
+}
+/* pictures are pre-loaded, so they only need the briefest fade */
+.tunnel-card .fade-img,
+.ring-card .fade-img,
+.ring-reflect .fade-img {
+  animation-duration: 0.15s;
+}
 .tunnel-item.active .tunnel-card {
   border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent), 0 0 60px color-mix(in srgb, var(--accent) 55%, transparent);

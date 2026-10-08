@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="hud">
+<html lang="en" data-theme="hud" data-mode="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -17,7 +17,13 @@
       // Paint the saved theme before React boots (no flash of the default theme).
       try {
         var s = JSON.parse(localStorage.getItem('dealo:settings') || '{}');
-        if (s.state && s.state.theme) document.documentElement.dataset.theme = s.state.theme;
+        var st = s.state || {};
+        var legacy = st.theme === 'daylight';
+        if (st.theme) document.documentElement.dataset.theme = legacy ? 'aurora' : st.theme === 'surveillance' ? 'hud' : st.theme;
+        var mode = legacy ? 'light' : st.mode || 'dark';
+        if (mode === 'auto') mode = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        if (st.theme === 'contrast') mode = 'dark';
+        document.documentElement.dataset.mode = mode;
         if (s.state && s.state.textScale) document.documentElement.style.fontSize = Math.round(s.state.textScale * 100) + '%';
       } catch (e) {}
     </script>

@@ -1,12 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
-import { Palette, Play, Square } from 'lucide-react';
-import { DESIGN_IDS, THEME_IDS, useSettings, type DesignId, type ThemeId } from '../store/settings';
+import { useRef, useState } from 'react';
+import { MonitorSmartphone, Moon, Palette, Sun } from 'lucide-react';
+import { DESIGN_IDS, THEME_IDS, useSettings, type ColorMode, type DesignId, type ThemeId } from '../store/settings';
 import { DESIGNS, THEMES } from '../theme/themes';
-import { switchDesign, switchTheme } from '../theme/switch';
+import { switchDesign, switchMode, switchTheme } from '../theme/switch';
 import { useClickOutside } from '../hooks/useClickOutside';
-import { Art } from './Poster';
-
-const SAMPLE = { id: 'preview', title: 'Severance', year: 2022, genres: ['scifi' as const] };
 
 export function TextSizePicker() {
   const scale = useSettings((s) => s.textScale);
@@ -77,15 +74,6 @@ function DesignGlyph({ id }: { id: DesignId }) {
           <circle cx="80" cy="40" r="13" fill="none" stroke={b} strokeDasharray="2 3" />
         </>
       )}
-      {id === 'swipe' && (
-        <>
-          <rect x="58" y="12" width="40" height="58" rx="4" fill="none" stroke={dim} transform="rotate(-8 78 41)" />
-          <rect x="62" y="10" width="40" height="58" rx="4" fill="none" stroke={b} transform="rotate(6 82 39)" />
-          <rect x="60" y="10" width="40" height="58" rx="4" fill="none" stroke={a} strokeWidth="1.6" />
-          <path d="M28 40h16M36 34l-8 6 8 6" stroke={dim} fill="none" />
-          <path d="M116 40h16M124 34l8 6-8 6" stroke={a} fill="none" />
-        </>
-      )}
       {id === 'channel' && (
         <>
           <rect x="34" y="8" width="92" height="62" rx="10" fill="none" stroke={a} strokeWidth="1.6" />
@@ -96,27 +84,14 @@ function DesignGlyph({ id }: { id: DesignId }) {
           <path d="M60 70l-8 8M100 70l8 8" stroke={dim} />
         </>
       )}
-      {id === 'timeline' && (
+      {id === 'poi' && (
         <>
-          <line x1="8" y1="70" x2="152" y2="70" stroke={dim} />
-          {[20, 50, 80, 110, 140].map((x) => (
-            <line key={x} x1={x} y1="66" x2={x} y2="74" stroke={dim} />
-          ))}
-          <rect x="14" y="14" width="58" height="8" rx="4" fill={a} />
-          <rect x="44" y="28" width="84" height="8" rx="4" fill="none" stroke={b} />
-          <rect x="90" y="42" width="56" height="8" rx="4" fill={a} opacity="0.6" />
-          <rect x="24" y="54" width="40" height="8" rx="4" fill="none" stroke={a} />
-        </>
-      )}
-      {id === 'mission' && (
-        <>
-          <rect x="8" y="8" width="68" height="36" rx="2" fill="none" stroke={a} />
-          <rect x="82" y="8" width="70" height="20" rx="2" fill="none" stroke={dim} />
-          <rect x="82" y="32" width="70" height="40" rx="2" fill="none" stroke={b} />
-          <rect x="8" y="50" width="32" height="22" rx="2" fill="none" stroke={dim} />
-          <rect x="44" y="50" width="32" height="22" rx="2" fill="none" stroke={dim} />
-          <polyline points="14,36 26,24 38,30 50,16 62,22 70,14" fill="none" stroke={a} />
-          <circle cx="117" cy="52" r="12" fill="none" stroke={a} strokeDasharray="40 80" />
+          {[0, 1, 2].map((r) =>
+            [0, 1, 2, 3].map((c) => <rect key={`${r}${c}`} x={8 + c * 37} y={6 + r * 24} width="33" height="20" fill="none" stroke={dim} />),
+          )}
+          <path d="M52 34h-6v-6M72 28h6v6M78 46v6h-6M46 52v-6h6" fill="none" stroke="#f2d600" strokeWidth="2" />
+          <path d="M89 10h-4v-4M106 6h4v4M110 22v4h-4M85 26v-4h4" fill="none" stroke="#ec3a3f" strokeWidth="1.6" />
+          <circle cx="16" cy="12" r="2" fill="#ec3a3f" />
         </>
       )}
       {id === 'tunnel' && (
@@ -163,39 +138,46 @@ export function DesignPicker({ onPick }: { onPick?: () => void }) {
   );
 }
 
+/** Skin = colours & type. A plain dropdown (native on phones), with the current skin's colours beside it. */
 export function SkinPicker() {
   const theme = useSettings((s) => s.theme);
-  const pick = (id: ThemeId, e: React.MouseEvent) => switchTheme(id, { x: e.clientX, y: e.clientY });
+  const t = THEMES[theme];
   return (
-    <div className="reality__grid">
-      {THEME_IDS.map((id) => {
-        const t = THEMES[id];
-        return (
-          <button key={id} data-theme={id} className={`reality__card ${theme === id ? 'on' : ''}`} onClick={(e) => pick(id, e)}>
-            <div className="reality__preview">
-              <div className="reality__poster">
-                <Art show={SAMPLE} />
-              </div>
-              <div className="reality__lines">
-                <span className="reality__h">
-                  {t.logo.pre}
-                  <b>{t.logo.accent}</b>
-                  {t.logo.post}
-                </span>
-                <span className="reality__bar">
-                  <i />
-                </span>
-                <span className="reality__btn">Watch</span>
-              </div>
-            </div>
-            <div className="reality__meta">
-              <strong>{t.name}</strong>
-              <span>{t.tagline}</span>
-              <em>↳ {t.transition}</em>
-            </div>
-          </button>
-        );
-      })}
+    <div className="skin-pick">
+      <span className="skin-pick__swatch" aria-hidden>
+        {t.swatch.map((c) => (
+          <i key={c} style={{ background: c }} />
+        ))}
+      </span>
+      <select className="select" value={theme} onChange={(e) => switchTheme(e.target.value as ThemeId)} aria-label="Skin">
+        {THEME_IDS.map((id) => (
+          <option key={id} value={id}>
+            {THEMES[id].name} — {THEMES[id].tagline}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+const MODES: { id: ColorMode; label: string; icon: typeof Sun }[] = [
+  { id: 'dark', label: 'Dark', icon: Moon },
+  { id: 'light', label: 'Light', icon: Sun },
+  { id: 'auto', label: 'Auto', icon: MonitorSmartphone },
+];
+
+/** Light / dark / follow the device — works with every skin. */
+export function ModePicker() {
+  const mode = useSettings((s) => s.mode);
+  const theme = useSettings((s) => s.theme);
+  if (theme === 'contrast') return <span className="hint">High Contrast is always dark</span>;
+  return (
+    <div className="seg" role="radiogroup" aria-label="Light or dark">
+      {MODES.map(({ id, label, icon: Icon }) => (
+        <button key={id} role="radio" aria-checked={mode === id} className={mode === id ? 'on' : ''} onClick={() => switchMode(id)} title={id === 'auto' ? 'Follow your device' : undefined}>
+          <Icon size={14} /> {label}
+        </button>
+      ))}
     </div>
   );
 }
@@ -203,37 +185,16 @@ export function SkinPicker() {
 /** "Reality shift" — choose a Design (how you browse) and a Skin (colours & type). */
 export function ThemeSwitcher() {
   const [open, setOpen] = useState(false);
-  const [touring, setTouring] = useState(false);
   const btn = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   useClickOutside([btn, panel], () => setOpen(false), open);
 
-  useEffect(() => {
-    if (!touring) return;
-    const stop = () => setTouring(false);
-    const id = setInterval(() => {
-      const cur = useSettings.getState().theme;
-      const next = THEME_IDS[(THEME_IDS.indexOf(cur) + 1) % THEME_IDS.length];
-      switchTheme(next, { x: innerWidth * (0.2 + Math.random() * 0.6), y: innerHeight * (0.2 + Math.random() * 0.6) });
-    }, 4200);
-    const t = setTimeout(() => window.addEventListener('pointerdown', stop, { once: true }), 50);
-    return () => {
-      clearInterval(id);
-      clearTimeout(t);
-      window.removeEventListener('pointerdown', stop);
-    };
-  }, [touring]);
 
   return (
     <div style={{ position: 'relative' }}>
       <button ref={btn} className={`icon-btn ${open ? 'on' : ''}`} onClick={() => setOpen((o) => !o)} aria-label="Design and skin" title="Design & skin (Alt+D / Alt+T)">
         <Palette size={19} />
       </button>
-      {touring && (
-        <button className="tour-pill" onClick={() => setTouring(false)}>
-          <Square size={12} /> Stop skin tour
-        </button>
-      )}
       {open && (
         <div ref={panel} className="reality" role="dialog" aria-label="Design and skin">
           <div className="reality__head">
@@ -243,29 +204,17 @@ export function ThemeSwitcher() {
             </div>
           </div>
           <DesignPicker />
-          <div className="reality__head" style={{ marginTop: 18 }}>
-            <div>
-              <div className="label">Skin</div>
-              <div className="reality__title">Colours & type — works with every design</div>
-            </div>
-            <button
-              className="btn btn--sm"
-              onClick={() => {
-                setOpen(false);
-                setTouring(true);
-              }}
-            >
-              <Play size={13} /> Tour skins
-            </button>
+          <div className="reality__row">
+            <div className="label">Skin</div>
+            <SkinPicker />
           </div>
-          <SkinPicker />
-          <div className="reality__head" style={{ marginTop: 18 }}>
-            <div>
-              <div className="label">Text size</div>
-            </div>
-            <div style={{ marginLeft: 'auto' }}>
-              <TextSizePicker />
-            </div>
+          <div className="reality__row">
+            <div className="label">Mode</div>
+            <ModePicker />
+          </div>
+          <div className="reality__row">
+            <div className="label">Text size</div>
+            <TextSizePicker />
           </div>
           <div className="reality__foot">
             <kbd>Alt</kbd>+<kbd>D</kbd> next design · <kbd>Alt</kbd>+<kbd>T</kbd> next skin

@@ -1,5 +1,6 @@
 import { flushSync } from 'react-dom';
-import { THEME_IDS, useSettings, type DesignId, type ThemeId } from '../store/settings';
+import { THEME_IDS, useSettings, type ColorMode, type DesignId, type ThemeId } from '../store/settings';
+import { applyMode, resolveMode, watchSystemMode } from './mode';
 
 const reduceMotion = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -24,6 +25,7 @@ export function switchTheme(next: ThemeId, origin?: { x: number; y: number }): v
     root.dataset.theme = next;
     root.dataset.vtPhase = 'new';
     flushSync(() => useSettings.getState().setTheme(next));
+    applyMode(); // High Contrast is always dark; leaving it restores light if chosen
   };
 
   const doc = document as Document & { startViewTransition?: (cb: () => void) => { finished: Promise<void> } };
@@ -56,9 +58,30 @@ export function cycleTheme(dir = 1, origin?: { x: number; y: number }): void {
   switchTheme(THEME_IDS[(i + dir + THEME_IDS.length) % THEME_IDS.length], origin);
 }
 
-/** Apply the persisted theme on boot (no animation). */
+/** Apply the persisted skin and light/dark mode on boot (no animation). */
 export function applyInitialTheme(): void {
   document.documentElement.dataset.theme = useSettings.getState().theme;
+  applyMode();
+  watchSystemMode();
+}
+
+/** Switch light/dark with a soft "sunrise" wipe that rises from the bottom. */
+export function switchMode(next: ColorMode): void {
+  const root = document.documentElement;
+  const before = resolveMode(useSettings.getState().mode);
+  const apply = () => {
+    flushSync(() => useSettings.getState().setMode(next));
+    applyMode(next);
+  };
+  const doc = document as Document & { startViewTransition?: (cb: () => void) => { finished: Promise<void> } };
+  if (before === resolveMode(next) || !doc.startViewTransition || reduceMotion() || busy) return apply();
+  busy = true;
+  root.dataset.transition = 'mode';
+  const t = doc.startViewTransition(apply);
+  t.finished.finally(() => {
+    delete root.dataset.transition;
+    busy = false;
+  });
 }
 
 /** Switch the browsing design with a "warp" transition (skin-independent). */

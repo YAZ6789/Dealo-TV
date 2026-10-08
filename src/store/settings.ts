@@ -2,15 +2,18 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
 /** Skin = colours + fonts + small decorative touches. Applies to every design. */
-export type ThemeId = 'hud' | 'neon' | 'aurora' | 'terminal' | 'surveillance' | 'daylight' | 'contrast';
-export const THEME_IDS: ThemeId[] = ['hud', 'neon', 'aurora', 'terminal', 'surveillance', 'daylight', 'contrast'];
+export type ThemeId = 'hud' | 'neon' | 'aurora' | 'terminal' | 'contrast';
+/** Light/dark is separate from the skin: every skin has both. 'auto' follows the device. */
+export type ColorMode = 'dark' | 'light' | 'auto';
+export const THEME_IDS: ThemeId[] = ['hud', 'neon', 'aurora', 'terminal', 'contrast'];
 
 /** Design = the whole browsing experience on the home screen. */
-export type DesignId = 'stream' | 'ring' | 'constellation' | 'tunnel' | 'swipe' | 'channel' | 'timeline' | 'mission';
-export const DESIGN_IDS: DesignId[] = ['ring', 'constellation', 'tunnel', 'swipe', 'channel', 'timeline', 'mission', 'stream'];
+export type DesignId = 'poi' | 'ring' | 'constellation' | 'stream' | 'channel' | 'tunnel';
+export const DESIGN_IDS: DesignId[] = ['poi', 'ring', 'constellation', 'stream', 'channel', 'tunnel'];
 
 export interface SettingsState {
   theme: ThemeId;
+  mode: ColorMode;
   design: DesignId;
   /** TMDB v3 key or v4 read token, entered by the user (never committed). */
   tmdbKey: string;
@@ -31,6 +34,7 @@ export interface SettingsState {
   anthropicKey: string;
   onboarded: boolean;
   setTheme: (t: ThemeId) => void;
+  setMode: (m: ColorMode) => void;
   setDesign: (d: DesignId) => void;
   setTmdbKey: (key: string, valid?: boolean) => void;
   setRegion: (r: string) => void;
@@ -54,7 +58,8 @@ export const useSettings = create<SettingsState>()(
   persist(
     (set) => ({
       theme: 'hud',
-      design: 'ring',
+      mode: 'dark',
+      design: 'poi',
       tmdbKey: ENV_KEY,
       region: guessRegion(),
       reduceFx: false,
@@ -65,6 +70,7 @@ export const useSettings = create<SettingsState>()(
       anthropicKey: '',
       onboarded: false,
       setTheme: (theme) => set({ theme }),
+      setMode: (mode) => set({ mode }),
       setDesign: (design) => set({ design }),
       setTmdbKey: (tmdbKey, tmdbValid) => set({ tmdbKey: tmdbKey.trim(), tmdbValid }),
       setRegion: (region) => set({ region }),
@@ -84,7 +90,13 @@ export const useSettings = create<SettingsState>()(
       // reaches browsers that already saved settings.
       partialize: (s) => ({ ...s, tmdbKey: s.tmdbKey === ENV_KEY ? '' : s.tmdbKey }),
       merge: (persisted, current) => {
-        const p = (persisted ?? {}) as Partial<SettingsState>;
+        const p = { ...((persisted ?? {}) as Partial<SettingsState>) };
+        // Designs/skins that were retired fall back to the flagship ones.
+        if (p.design && !DESIGN_IDS.includes(p.design)) p.design = 'poi';
+        const legacy = p.theme as string | undefined;
+        if (legacy === 'daylight') Object.assign(p, { theme: 'aurora', mode: 'light' });
+        else if (legacy === 'surveillance') Object.assign(p, { theme: 'hud', design: 'poi' });
+        else if (legacy && !THEME_IDS.includes(legacy as ThemeId)) p.theme = 'hud';
         return p.tmdbKey ? { ...current, ...p } : { ...current, ...p, tmdbKey: ENV_KEY, tmdbValid: undefined };
       },
     },

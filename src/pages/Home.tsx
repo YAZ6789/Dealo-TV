@@ -13,6 +13,7 @@ import { ShowCard, matchClass } from '../components/ShowCard';
 import { WatchingCard } from '../components/WatchingCard';
 import { Poster } from '../components/Poster';
 import { useAmbientShow } from '../lib/ambient';
+import { prefetchArtwork } from '../providers/artwork';
 import { NewEpisodesBanner } from '../components/NewEpisodesBanner';
 import { StatusMenu } from '../components/StatusMenu';
 import { toast } from '../components/toast';
@@ -35,6 +36,8 @@ function Hero({ slides }: { slides: Slide[] }) {
   }, [slides.length]);
   const slide = slides[Math.min(i, slides.length - 1)];
   useAmbientShow(slide?.show);
+  // the billboard rotates: have the next backdrops ready before they slide in
+  useEffect(() => prefetchArtwork(slides.map((x) => x.show), 'backdrop'), [slides]);
   if (!slide) return null;
   const { show, entry, rec } = slide;
   const p = entry ? progressOf(entry) : undefined;

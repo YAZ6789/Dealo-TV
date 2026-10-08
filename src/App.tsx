@@ -13,6 +13,7 @@ import { initLibrary, useLibrary } from './store/library';
 import { useSettings } from './store/settings';
 import { scheduleRecommendations } from './recommend/pipeline';
 import { enrichLibrary } from './store/enrich';
+import { backfillLibraryArtwork } from './providers/artwork';
 import { startSheetAutoSync } from './store/sheetSync';
 import { HomeRouter } from './designs/HomeRouter';
 import { lazyRoute } from './lib/lazyRoute';
@@ -114,6 +115,7 @@ export default function App() {
     void verifyTmdbKey();
     void initLibrary().then(() => {
       setTimeout(() => void enrichLibrary(), 4000);
+      setTimeout(backfillLibraryArtwork, 1500);
       startSheetAutoSync();
     });
     // Re-rank whenever the library changes (debounced; network parts are cached).

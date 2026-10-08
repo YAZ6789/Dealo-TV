@@ -7,16 +7,15 @@ It's a static site: build it once and host the `dist/` folder anywhere.
 ## Highlights
 
 - **Your shows first** — Home, the library and every design lead with **Watched → Currently watching → Watchlist**; recommendations are the extra underneath.
-- **Eight ways to browse** (Home screen "designs"), each usable with any skin:
-  - **Holo Ring** — a 3D rotating carousel on a holographic platform, with data panels for the show in front. Drag, scroll, ← → or click to spin; Enter opens.
-  - **Constellation** — your taste as a star map. You're the core; your library orbits close (loved = closer), recommendations float in the discovery field (better match = closer) with beams back to the show that inspired them. Pan, zoom, hover.
-  - **Warp Tunnel** — fly down a neon corridor through your history (with glowing year gates) or into your recommendations. Scroll / ↑ ↓.
-  - **Swipe Deck** — Tinder-style cards: → want to watch, ← not for me, ↑ seen it (then rate), ↓ skip; Z undoes. Decks for *For you*, *Quick binges*, *Hidden gems* and a fast *Rate my watched* mode.
-  - **Channel Surfer** — a retro TV: every list is a network, every show a channel. Static-burst channel changes, number-pad tuning, an on-screen guide (G).
-  - **Life Timeline** — every show drawn as a bar across the years it aired (still-running shows glow into today), packed into lanes, with TV-era bands, zoom & pan.
-  - **Mission Control** — a live dashboard: now watching, up-next queue, airing radar, recommendation radar, telemetry, taste DNA, wildcard and a system log.
-  - **Stream** — classic streaming rows with a hero billboard and "Because you watched …" shelves.
-- **Seven skins** — Cyan HUD, Neon, Aurora, Phosphor (terminal), **Surveillance** (Person-of-Interest-style camera feeds with tracking brackets and a camera-cut transition), **Daylight** (light mode, sunrise wipe) and **High Contrast** (hard cut, no effects). Each has its own switch-over effect.
+- **Six ways to browse** (Home screen "designs"):
+  - **Person of Interest** — the Machine's view: your shows as a wall of camera feeds, cut together like the show, with dossiers for every "number".
+  - **Holo Ring** — a 3D rotating carousel on a holographic platform. Swipe, drag, ← → to spin.
+  - **Constellation** — your taste as a star map: your library orbits close, recommendations further out.
+  - **Stream** — classic streaming rows with a hero billboard.
+  - **Channel Surfer** — a retro TV: every list is a network, every show a channel.
+  - **Warp Tunnel** — fly down a neon corridor through your history and into what's next.
+- **Skins** — Cyan HUD, Neon, Aurora, Phosphor and High Contrast, picked from a dropdown. Each has its own switch-over effect.
+- **Light & dark mode** — every skin works in both (or "Auto" follows your phone).
 - **Show-coloured background** — the page glows in the colours of the poster you're looking at.
 - **Airing** — new episodes since your last visit, a week calendar, "add to calendar" (.ics) and optional new-episode alerts.
 - **Wrapped** — your year in TV, story-style.
@@ -106,9 +105,7 @@ Everything is stored in your browser (`localStorage`; metadata cache in IndexedD
 | `Alt D` / `Alt T` | Next design / next skin |
 | `← →` | Spin the Holo Ring |
 | `↑ ↓` | Fly the Warp Tunnel · change channel (Channel Surfer) |
-| `← → ↑ ↓`, `Z` | Swipe / undo (Swipe Deck) |
 | `0–9`, `G` | Tune a channel / open the guide (Channel Surfer) |
-| `+ − 0` | Zoom / fit the Life Timeline |
 | `Alt V` | Voice command |
 | `Enter` | Open the focused show |
 | `Shift Enter` | Add a search result to your watchlist |
