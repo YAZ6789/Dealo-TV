@@ -26,6 +26,17 @@ export function stepTarget(target: number, d: number, count: number) {
 }
 
 /**
+ * Snap after a wheel or a slow drag: settle on the next card in the direction
+ * of travel, so one wheel notch (less than half a card) still moves you on
+ * instead of springing back.
+ */
+export function snapToward(target: number, dir: number, count: number) {
+  const t = clampCam(target, count) / SPACING;
+  const card = dir > 0 ? Math.ceil(t - 0.12) : dir < 0 ? Math.floor(t + 0.12) : Math.round(t);
+  return clampCam(card * SPACING, count);
+}
+
+/**
  * Where a released drag comes to rest: a flick (velocity in camera px per ms)
  * carries on for up to `maxCards`, then snaps to the nearest card.
  */

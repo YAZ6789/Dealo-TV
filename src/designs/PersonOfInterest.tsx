@@ -173,7 +173,7 @@ export default function PersonOfInterest() {
   };
 
   const ticker = useMemo(() => {
-    const lines = [`ANALYZING ${libCount} SUBJECT${libCount === 1 ? '' : 'S'}…`];
+    const lines = [libCount ? `ANALYZING ${libCount} SUBJECT${libCount === 1 ? '' : 'S'}…` : 'STANDING BY · NO SUBJECTS UNDER OBSERVATION'];
     const active = library.find((s) => s.id === 'active')?.items[0];
     const next = active?.entry ? progressOf(active.entry).next : undefined;
     if (active && next) lines.push(`NEXT ACTIVE NUMBER: ${active.show.title.toUpperCase()} ${fmtEp(next)}`);
@@ -206,22 +206,24 @@ export default function PersonOfInterest() {
           <h1 className="poi-hud__title">Your numbers</h1>
           <p className="poi-hud__sub">Every show you track is a live feed. Select one to pull its file.</p>
         </div>
-        <nav className="poi-board" aria-label="Jump to a list">
-          {LIB_ORDER.map((id) => {
-            const s = library.find((x) => x.id === id);
-            const k = KIND[id as keyof typeof KIND];
-            const count = s?.items.length ?? 0;
-            return (
-              <button key={id} type="button" className={`poi-board__tile poi-tone--${k.tone} ${k.dashed ? 'poi-feed--dashed' : ''}`} onClick={() => jump(id)} disabled={!count}>
-                <span className="poi-board__code" aria-hidden>
-                  {k.code}
-                </span>
-                <span className="poi-board__n">{count}</span>
-                <span className="poi-board__plain">{k.plain}</span>
-              </button>
-            );
-          })}
-        </nav>
+        {libCount > 0 && (
+          <nav className="poi-board" aria-label="Jump to a list">
+            {LIB_ORDER.map((id) => {
+              const s = library.find((x) => x.id === id);
+              const k = KIND[id as keyof typeof KIND];
+              const count = s?.items.length ?? 0;
+              return (
+                <button key={id} type="button" className={`poi-board__tile poi-tone--${k.tone} ${k.dashed ? 'poi-feed--dashed' : ''}`} onClick={() => jump(id)} disabled={!count}>
+                  <span className="poi-board__code" aria-hidden>
+                    {k.code}
+                  </span>
+                  <span className="poi-board__n">{count}</span>
+                  <span className="poi-board__plain">{k.plain}</span>
+                </button>
+              );
+            })}
+          </nav>
+        )}
       </header>
 
       {libCount === 0 && (

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cardOpacity, clampCam, easeCam, flingTarget, focusIndex, maxCamFor, nearWindow, prefetchOrder, SPACING, stepTarget } from './tunnelCamera';
+import { cardOpacity, clampCam, snapToward, easeCam, flingTarget, focusIndex, maxCamFor, nearWindow, prefetchOrder, SPACING, stepTarget } from './tunnelCamera';
 
 describe('tunnel camera', () => {
   it('never leaves the track, even for empty or 1-card tracks', () => {
@@ -26,6 +26,16 @@ describe('tunnel camera', () => {
     // was on card 30 of a long track, the track now has 3 cards
     expect(stepTarget(SPACING * 30, 0, 3)).toBe(SPACING * 2);
     expect(stepTarget(SPACING * 30, -1, 3)).toBe(SPACING * 1);
+  });
+
+  it('moves on one card for a single wheel notch, either way', () => {
+    expect(snapToward(168, 1, 10)).toBe(SPACING);
+    expect(snapToward(SPACING - 168, -1, 10)).toBe(0);
+    expect(snapToward(SPACING * 2 + 20, 1, 10)).toBe(SPACING * 2); // overshoot of a few px is not another card
+    expect(snapToward(SPACING * 2 - 20, -1, 10)).toBe(SPACING * 2);
+    expect(snapToward(SPACING * 9 + 100, 1, 10)).toBe(SPACING * 9);
+    expect(snapToward(-50, -1, 10)).toBe(0);
+    expect(snapToward(300, 0, 10)).toBe(SPACING);
   });
 
   it('flings a few cards and snaps', () => {

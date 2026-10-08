@@ -157,23 +157,44 @@ export default function HoloRing() {
   }, [move, current, nav]);
 
   /** Nearest slot that actually holds a show (the ring has empty slots when n < MIN_SLOTS). */
-  const snap = (r: number) => {
-    let idx = Math.round(r / step);
+  /** Nearest slot that holds a show; with `dir`, the next one that way (so one wheel notch always moves on). */
+  const snap = (r: number, dir = 0) => {
+    const t = r / step;
+    let idx = dir > 0 ? Math.ceil(t - 0.12) : dir < 0 ? Math.floor(t + 0.12) : Math.round(t);
     const m = ((idx % slots) + slots) % slots;
-    if (m >= n && n) idx += m - n < slots - m ? -(m - n + 1) : slots - m;
+    if (m >= n && n) {
+      const back = -(m - n + 1);
+      const fwd = slots - m;
+      idx += dir > 0 ? fwd : dir < 0 ? back : m - n < slots - m ? back : fwd;
+    }
     return idx * step;
   };
 
-  const onWheel = (e: React.WheelEvent) => {
-    const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+  // Wheel / trackpad spins the ring (a native listener, so it can stop the page scrolling underneath when the page fits).
+  const wheel = useRef<(e: WheelEvent) => void>(() => {});
+  wheel.current = (e) => {
+    const horizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY);
+    const pageScrolls = document.documentElement.scrollHeight - innerHeight > 120;
+    if (!horizontal && pageScrolls) return; // let the page scroll to the panels
+    e.preventDefault();
+    const raw = horizontal ? e.deltaX : e.deltaY;
+    const d = e.deltaMode === 1 ? raw * 40 : raw;
+    if (!d) return;
     setDragging(true);
-    setRot((r) => r + d * 0.12);
+    setRot((r) => r + Math.max(-90, Math.min(90, d * 0.12)));
     clearTimeout(wheelTimer.current);
     wheelTimer.current = setTimeout(() => {
       setDragging(false);
-      setRot(snap);
+      setRot((r) => snap(r, Math.sign(d)));
     }, 140);
   };
+  useEffect(() => {
+    const el = viewport.current;
+    if (!el) return;
+    const h = (e: WheelEvent) => wheel.current(e);
+    el.addEventListener('wheel', h, { passive: false });
+    return () => el.removeEventListener('wheel', h);
+  }, [n]);
 
   const onPointerDown = (e: React.PointerEvent) => {
     if ((e.target as HTMLElement).closest('button, a')) return;
@@ -262,7 +283,6 @@ export default function HoloRing() {
           ref={viewport}
           className={`ring-viewport ${dragging ? 'dragging' : ''}`}
           style={{ '--card-w': `${cardW}px`, '--ring-r': `${radius}px` } as React.CSSProperties}
-          onWheel={onWheel}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}

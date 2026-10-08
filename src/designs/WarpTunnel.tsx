@@ -6,7 +6,7 @@ import { HudSheet, ShowHud, useCalmFx, useCompact, useFitArtTitles } from './Sho
 import { Poster } from '../components/Poster';
 import { prefetchArtwork } from '../providers/artwork';
 import { remember, showPath } from '../lib/showCache';
-import { cardOpacity, clampCam, easeCam, flingTarget, focusIndex, nearWindow, prefetchOrder, SPACING, stepTarget } from './tunnelCamera';
+import { cardOpacity, clampCam, easeCam, flingTarget, focusIndex, nearWindow, prefetchOrder, snapToward, SPACING, stepTarget } from './tunnelCamera';
 
 /**
  * WARP TUNNEL — fly down a neon corridor. Posters line the walls; scroll,
@@ -250,9 +250,11 @@ export default function WarpTunnel() {
       if ((e.target as HTMLElement).closest('.tunnel-hud, .tunnel-tracks, .hud-sheet-wrap') || e.ctrlKey) return;
       e.preventDefault(); // the wheel flies the camera; it must not also scroll the page
       const dy = e.deltaMode === 1 ? e.deltaY * 40 : e.deltaMode === 2 ? e.deltaY * 800 : e.deltaY;
+      if (!dy) return;
       setTarget(target.current + Math.max(-600, Math.min(600, dy * 1.4)));
       clearTimeout(snapTimer.current);
-      snapTimer.current = setTimeout(() => go(0), 160);
+      const dirn = Math.sign(dy);
+      snapTimer.current = setTimeout(() => setTarget(snapToward(target.current, dirn, live.current.count)), 160);
     };
     el.addEventListener('wheel', wheel, { passive: false });
     return () => el.removeEventListener('wheel', wheel);
@@ -292,7 +294,9 @@ export default function WarpTunnel() {
     if (!d.moved) return;
     // a flick keeps flying for a few cards, then everything snaps to a card
     const quick = e.type === 'pointerup' && performance.now() - d.at < 90;
-    setTarget(quick ? flingTarget(target.current, d.v, live.current.count) : stepTarget(target.current, 0, live.current.count));
+    const n = live.current.count;
+    const pulled = d.y - d.last; // finger travel: up = forwards
+    setTarget(quick ? flingTarget(target.current, d.v, n) : Math.abs(pulled) > 30 ? snapToward(target.current, Math.sign(pulled), n) : stepTarget(target.current, 0, n));
   };
 
   const pick = useCallback(
