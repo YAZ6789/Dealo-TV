@@ -230,9 +230,12 @@ export default function HoloRing() {
     if (d.moved) {
       // a flick carries on for up to ~3 cards
       const fling = performance.now() - d.t < 80 ? Math.max(-3, Math.min(3, -d.v * 0.9)) * step : 0;
-      setRot((r) => snap(r + fling));
+      // a deliberate drag always moves on at least one card in its direction
+      const dx = e.clientX - d.x;
+      setRot((r) => snap(r + fling, Math.abs(dx) > 30 ? -Math.sign(dx) : 0));
       return;
     }
+    if (Math.abs(rot / step - Math.round(rot / step)) > 0.001) setRot((r) => snap(r)); // settle anything a replaced drag left mid-way
     // A tap: the front-most poster whose projected box holds the point. (3D hit-testing
     // misses the angled side cards, so this compares boxes and angles instead.)
     const angleFromFront = (i: number) => Math.abs(((((i * step - rot) % 360) + 540) % 360) - 180);
