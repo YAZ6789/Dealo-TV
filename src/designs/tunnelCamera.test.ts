@@ -50,11 +50,25 @@ describe('tunnel camera', () => {
     let s = { cam: 0, settled: false };
     let frames = 0;
     while (!s.settled && frames < 500) {
-      s = easeCam(s.cam, 880, 0.12);
+      s = easeCam(s.cam, 880, 16.7);
       frames++;
     }
     expect(s.cam).toBe(880);
-    expect(frames).toBeLessThan(120);
+    expect(frames).toBeLessThan(80); // ~1.3 s at 60 fps
+  });
+
+  it('arrives in about the same time on a slow device', () => {
+    const run = (dt: number) => {
+      let s = { cam: 0, settled: false };
+      let t = 0;
+      while (!s.settled && t < 10000) {
+        s = easeCam(s.cam, 880, dt);
+        t += dt;
+      }
+      return t;
+    };
+    expect(Math.abs(run(16.7) - run(50))).toBeLessThan(250);
+    expect(easeCam(0, 880, 0).cam).toBe(0);
   });
 
   it('fades cards that are behind or far ahead', () => {

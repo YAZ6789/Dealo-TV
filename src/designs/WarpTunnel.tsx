@@ -131,14 +131,18 @@ export default function WarpTunnel() {
     }
   }, []);
 
-  const step = useCallback(() => {
+  const lastT = useRef(0);
+  const step = useCallback((now: number) => {
     raf.current = 0;
+    const dt = lastT.current ? now - lastT.current : 16.7;
+    lastT.current = now;
     const prev = cam.current;
-    const s = easeCam(cam.current, target.current, live.current.calm ? 0.22 : 0.12);
+    const s = easeCam(cam.current, target.current, dt, live.current.calm ? 70 : 120);
     cam.current = s.cam;
     apply();
     setWarping(!live.current.calm && Math.abs(s.cam - prev) > 18);
     if (!s.settled) raf.current = requestAnimationFrame(step);
+    else lastT.current = 0;
   }, [apply]);
   /** Make sure the loop is running (idempotent). */
   const kick = useCallback(() => {
@@ -162,6 +166,7 @@ export default function WarpTunnel() {
       document.removeEventListener('visibilitychange', vis);
       cancelAnimationFrame(raf.current);
       raf.current = 0;
+      lastT.current = 0;
       clearTimeout(snapTimer.current);
     };
   }, [kick]);
@@ -291,7 +296,11 @@ export default function WarpTunnel() {
     if (!d || d.id !== e.pointerId) return;
     drag.current = null;
     tapGuard.current = d.moved;
-    if (!d.moved) return;
+    if (!d.moved) {
+      // a tap; also settles any position a replaced drag left between two cards
+      if (target.current % SPACING) setTarget(stepTarget(target.current, 0, live.current.count));
+      return;
+    }
     // a flick keeps flying for a few cards, then everything snaps to a card
     const quick = e.type === 'pointerup' && performance.now() - d.at < 90;
     const n = live.current.count;

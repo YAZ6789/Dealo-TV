@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronDown, ChevronUp, Compass, Upload } from 'lucide-react';
 import { useCollections, type Item } from './useCollections';
 import { useCalmFx, useFitArtTitles, useMedia } from './ShowHud';
@@ -73,7 +73,12 @@ export default function PersonOfInterest() {
    */
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
-  const subjectId = params.get('subject');
+  const { key: locationKey } = useLocation();
+  // The router applies URL changes as a low-priority transition; show our own
+  // changes immediately and let the URL take over again once it has committed.
+  const [pending, setPending] = useState<{ id: string | null } | null>(null);
+  useEffect(() => setPending(null), [locationKey]);
+  const subjectId = pending ? pending.id : params.get('subject');
   const [from, setFrom] = useState<{ sid: Section['id']; list: Item[] } | null>(null);
   const pushed = useRef(false);
   const open = useMemo(() => resolveSubject(sections, subjectId, from?.sid, from?.list), [sections, subjectId, from]);
@@ -113,6 +118,7 @@ export default function PersonOfInterest() {
       prefetchArtwork([item.show], 'backdrop');
       setFrom({ sid: sec?.id ?? 'suggest', list: sec?.items.length ? sec.items : [item] });
       pushed.current = true;
+      setPending({ id: item.show.id });
       setParams(withSubject(item.show.id)); // push: Back closes the file
       if (live.current.fade) return;
       const r = (el.querySelector('.poi-feed__screen') ?? el).getBoundingClientRect();
@@ -123,6 +129,7 @@ export default function PersonOfInterest() {
   );
 
   const closeFile = useCallback(() => {
+    setPending({ id: null });
     if (pushed.current) {
       pushed.current = false;
       navigate(-1);
@@ -132,6 +139,7 @@ export default function PersonOfInterest() {
   const showSubject = useCallback(
     (id: string) => {
       returnTo.current = id;
+      setPending({ id });
       setParams(withSubject(id), { replace: true });
     },
     [setParams, withSubject],

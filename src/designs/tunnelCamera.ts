@@ -45,8 +45,13 @@ export function flingTarget(target: number, velocity: number, count: number, max
   return stepTarget(target + cards * SPACING, 0, count);
 }
 
-/** One frame of easing towards the target. Returns the new position and whether it has arrived. */
-export function easeCam(cam: number, target: number, k: number) {
+/**
+ * Ease towards the target over `dt` ms (time-based, so a slow phone arrives as
+ * quickly as a fast one; `tau` is the time constant). Returns the new position
+ * and whether it has arrived.
+ */
+export function easeCam(cam: number, target: number, dt: number, tau = 120) {
+  const k = 1 - Math.exp(-Math.max(0, Math.min(dt, 1000)) / tau);
   const next = cam + (target - cam) * k;
   if (Math.abs(target - next) < 0.5) return { cam: target, settled: true };
   return { cam: next, settled: false };

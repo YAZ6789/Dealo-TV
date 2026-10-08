@@ -198,7 +198,7 @@ export default function HoloRing() {
 
   const onPointerDown = (e: React.PointerEvent) => {
     if ((e.target as HTMLElement).closest('button, a')) return;
-    if (drag.current) return; // second finger: ignore
+    if (drag.current && !e.isPrimary) return; // second finger: ignore (a new primary pointer replaces a drag whose "up" never came)
     drag.current = { x: e.clientX, rot, moved: false, id: e.pointerId, t: performance.now(), v: 0, lx: e.clientX };
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     setDragging(true);
@@ -287,6 +287,7 @@ export default function HoloRing() {
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerCancel}
+          onLostPointerCapture={onPointerCancel}
           role="listbox"
           aria-label={col?.label}
           aria-activedescendant={current ? `ring-${activeIdx}` : undefined}
